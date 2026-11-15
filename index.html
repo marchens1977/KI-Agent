@@ -56,7 +56,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span id="activeModelBadge" class="text-xs text-slate-400">gemini-3.8-flash</span>
+          <span id="activeModelBadge" class="text-xs text-slate-400">v2.4 · gemini-3.8-flash</span>
         </div>
 
         <div>
@@ -196,8 +196,9 @@
   </main>
 
   <script>
+    const APP_VERSION = 'v2.4';
     const STORAGE_KEY = 'ki_agent_config_v1';
-    const MODEL_CACHE_KEY = 'ki_agent_active_model_v2';
+    const MODEL_CACHE_KEY = 'ki_agent_active_model_v24';
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
@@ -305,6 +306,10 @@
       return /^gemini-(1\.0|1\.5|2\.0|2\.5)/i.test(name);
     }
 
+    function updateModelBadge(modelName) {
+      document.getElementById('activeModelBadge').textContent = `${APP_VERSION} · ${modelName}`;
+    }
+
     function getSavedModel(apiKey) {
       try {
         const cached = JSON.parse(localStorage.getItem(MODEL_CACHE_KEY) || '{}');
@@ -327,7 +332,7 @@
           model
         }));
       } catch (e) {}
-      document.getElementById('activeModelBadge').textContent = model;
+      updateModelBadge(model);
     }
 
     function loadSettingsToUI() {
@@ -335,12 +340,8 @@
       document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
       document.getElementById('cfgClientId').value = cfg.clientId;
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
-      if (cfg.geminiKey) {
-        const cached = getSavedModel(cfg.geminiKey);
-        if (cached) {
-          document.getElementById('activeModelBadge').textContent = cached;
-        }
-      }
+      const cached = cfg.geminiKey ? getSavedModel(cfg.geminiKey) : null;
+      updateModelBadge(cached || 'gemini-3.8-flash');
     }
 
     function saveSettings() {
@@ -350,10 +351,9 @@
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
       localStorage.removeItem(MODEL_CACHE_KEY);
-      localStorage.removeItem('ki_agent_fast_model_v1');
       tokenClient = null;
       skippedModels.clear();
-      document.getElementById('activeModelBadge').textContent = 'gemini-3.8-flash';
+      updateModelBadge('gemini-3.8-flash');
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
 
@@ -516,16 +516,27 @@
       return ordered.length > 0 ? ordered : ['gemini-3.8-flash'];
     }
 
-    async function postGenerateFast(apiKey, modelName, parts, thinkingMode, timeoutMs = 18000) {
+    async function postGenerateFast(apiKey, modelName, parts, thinkingMode, timeoutMs = 35000) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       const payload = { contents: [{ parts }] };
 
-      if (thinkingMode === 'zero') {
-        payload.generationConfig = { thinkingConfig: { thinkingBudget: 0 }, temperature: 0.3 };
-      } else if (thinkingMode === 'minimal') {
-        payload.generationConfig = { thinkingConfig: { thinkingLevel: 'minimal' }, temperature: 0.3 };
+      if (thinkingMode === 'minimal') {
+        payload.generationConfig = {
+          thinkingConfig: { thinkingLevel: 'minimal' },
+          temperature: 0.3,
+          maxOutputTokens: 700
+        };
+      } else if (thinkingMode === 'zero') {
+        payload.generationConfig = {
+          thinkingConfig: { thinkingBudget: 0 },
+          temperature: 0.3,
+          maxOutputTokens: 700
+        };
       } else {
-        payload.generationConfig = { temperature: 0.3 };
+        payload.generationConfig = {
+          temperature: 0.3,
+          maxOutputTokens: 700
+        };
       }
 
       const controller = new AbortController();
@@ -561,16 +572,16 @@
       let lastError = 'Kein aktives Gemini-Modell verfügbar.';
 
       for (const modelName of models) {
-        document.getElementById('activeModelBadge').textContent = modelName;
+        updateModelBadge(modelName);
         if (onStatus) onStatus(`Verbinde mit ${modelName}...`);
 
-        let res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'zero', 18000);
+        let res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'minimal', 35000);
 
         if (!res.ok && res.status === 400) {
-          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'minimal', 18000);
+          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'zero', 35000);
         }
         if (!res.ok && res.status === 400) {
-          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'none', 18000);
+          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'none', 35000);
         }
 
         if (res.ok) {
@@ -587,7 +598,7 @@
         localStorage.removeItem(MODEL_CACHE_KEY);
 
         if (res.timedOut) {
-          lastError = `Zeitüberschreitung (18s) bei ${modelName}. Prüfe deine Internetverbindung oder deaktiviere aktive Werbeblocker für diese Seite.`;
+          lastError = `Zeitüberschreitung (35s) bei ${modelName}. Google antwortet aktuell verzögert – bitte erneut antippen.`;
           continue;
         }
 
@@ -614,7 +625,7 @@
         const reply = await callGemini([{ text: 'Antworte nur mit: OK' }], (s) => { btn.textContent = s; });
         const sec = ((Date.now() - start) / 1000).toFixed(1);
         const active = getSavedModel(getConfig().geminiKey) || 'gemini-3.8-flash';
-        showAlert(`Verbindung erfolgreich in ${sec}s! Aktives Modell: ${active} (Antwort: ${reply.trim()})`, 'success');
+        showAlert(`Verbindung steht in ${sec}s! Aktives Modell: ${active} (Antwort: ${reply.trim()})`, 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
@@ -642,13 +653,23 @@
 
       const btn = document.getElementById('btnGenerateMail');
       btn.disabled = true;
-      btn.textContent = 'Generiere Entwurf...';
+      let sec = 0;
+      let statusPrefix = 'Generiere Entwurf';
+      btn.textContent = `${statusPrefix}...`;
+
+      const tick = setInterval(() => {
+        sec++;
+        btn.textContent = `${statusPrefix} (${sec}s)...`;
+      }, 1000);
 
       try {
-        const instruction = `Formuliere aus der folgenden Anweisung eine kurze, natürliche E-Mail auf Deutsch.
-Korrigiere dabei Diktierfehler in E-Mail-Adressen (z. B. Leerzeichen nach Punkten wie "Marc. hens@gmx.de" zu "marc.hens@gmx.de").
+        const instruction = `Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine kurze, natürliche E-Mail auf Deutsch.
+WICHTIG zur E-Mail-Adresse:
+- Wende gesprochene Buchstabier-Korrekturen direkt an (z. B. wenn jemand diktiert "Mark mark.tens@gmx.de dabei schreibt sich Mark mit C und Henz mit S", dann ist die korrekte Adresse "marc.hens@gmx.de").
+- Entferne versehentliche Leerzeichen vor oder nach Punkten und @-Zeichen.
+
 Antworte direkt und ohne Umschweife exakt in diesen drei Zeilen:
-EMPFAENGER: [E-Mail-Adresse oder leer lassen]
+EMPFAENGER: [korrigierte E-Mail-Adresse oder leer lassen]
 BETREFF: [kurzer passender Betreff]
 TEXT:
 [E-Mail-Text mit Anrede und Grußformel]
@@ -656,7 +677,8 @@ TEXT:
 Anweisung: ${prompt}`;
 
         const rawResult = await callGemini([{ text: instruction }], (statusText) => {
-          btn.textContent = statusText;
+          statusPrefix = statusText.replace(/\.\.\.$/, '');
+          btn.textContent = `${statusPrefix} (${sec}s)...`;
         });
 
         const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
@@ -675,10 +697,11 @@ Anweisung: ${prompt}`;
           document.getElementById('mailSubject').value = rawSub;
         }
         document.getElementById('mailBody').value = rawBody;
-        showAlert('E-Mail-Entwurf erstellt und in Empfänger, Betreff und Inhalt aufgeteilt.', 'success');
+        showAlert('E-Mail-Entwurf erstellt und aufgeteilt.', 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
+        clearInterval(tick);
         btn.disabled = false;
         btn.textContent = 'Entwurf mit KI generieren';
       }
