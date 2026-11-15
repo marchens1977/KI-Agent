@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 12:55</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 13:10</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -446,7 +446,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 12:55';
+    const BUILD_TIMESTAMP = '15.11.2026 · 13:10';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -2310,6 +2310,21 @@ Anforderung: ${prompt}`;
       }
 
       return snippetFallback;
+    }
+
+    function extractAttachmentNames(payload) {
+      const names = [];
+      function walk(part) {
+        if (!part) return;
+        if (part.filename && part.filename.trim() && part.body && (part.body.attachmentId || part.body.size > 0)) {
+          names.push(part.filename.trim());
+        }
+        if (Array.isArray(part.parts)) {
+          part.parts.forEach(walk);
+        }
+      }
+      walk(payload);
+      return names;
     }
 
     async function fetchAttachmentData(messageId, attachmentId) {
