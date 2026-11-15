@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 08:43</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 08:54</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -58,7 +58,7 @@
     <section id="view-mail" class="space-y-4">
       <div id="mailComposeCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between gap-2">
-          <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
+          <h2 id="composeCardTitle" class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
           <select id="modelSelect" onchange="onModelChange()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 max-w-[195px]">
             <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
             <option value="gemini-3.5-flash">gemini-3.5-flash</option>
@@ -67,9 +67,20 @@
           </select>
         </div>
 
+        <div id="replyContextBanner" class="hidden rounded-xl bg-indigo-950/70 border border-indigo-700/80 p-3 space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold text-indigo-200">Antwort-Modus aktiv</span>
+            <button type="button" onclick="cancelReplyMode()" class="text-[11px] px-2 py-0.5 rounded-md bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-700 transition">
+              Abbrechen
+            </button>
+          </div>
+          <p id="replyContextMeta" class="text-xs text-indigo-300 truncate"></p>
+          <p id="replyContextExcerpt" class="text-[11px] text-slate-300 bg-slate-950/70 rounded-lg p-2 border border-indigo-900/60 max-h-24 overflow-y-auto whitespace-pre-wrap"></p>
+        </div>
+
         <div>
           <div class="flex items-center justify-between gap-2 mb-1.5">
-            <label for="mailPrompt" class="block text-xs text-slate-400">Empfänger und Inhalt einsprechen (Betreff entsteht automatisch)</label>
+            <label id="mailPromptLabel" for="mailPrompt" class="block text-xs text-slate-400">Empfänger und Inhalt einsprechen (Betreff entsteht automatisch)</label>
             <button type="button" onclick="toggleVoiceInput('mailPrompt', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
               <span>Einsprechen</span>
@@ -83,7 +94,7 @@
         </button>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div id="mailReviewCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <h2 class="text-sm font-semibold text-white">Nachricht prüfen und senden</h2>
 
         <div class="space-y-1.5">
@@ -105,7 +116,7 @@
               <span>Diktieren</span>
             </button>
           </div>
-          <textarea id="mailBody" oninput="hideSendConfirmation()" rows="7" placeholder="Hier erscheint der generierte Text samt Signatur..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailBody" oninput="hideSendConfirmation()" rows="8" placeholder="Hier erscheint der generierte Text samt Signatur..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="sendGmailMessage()" id="btnSendMail" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-sm font-medium text-white transition">
@@ -133,7 +144,7 @@
             Aktualisieren
           </button>
         </div>
-        <div id="inboxList" class="space-y-2 text-sm text-slate-400">
+        <div id="inboxList" class="space-y-2.5 text-sm text-slate-400">
           <p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene Nachrichten zu laden.</p>
         </div>
       </div>
@@ -236,17 +247,20 @@
   </main>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 08:43';
+    const BUILD_TIMESTAMP = '15.11.2026 · 08:54';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v27';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v30';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
-    const EMAIL_SIGNATURE = 'Viele Grüße,\nAssistent von Marc Hens';
+    const SENDER_DISPLAY_NAME = 'KI-Assistent von Marc Hens';
+    const EMAIL_SIGNATURE = 'Viele Grüße,\n\nKI-Assistent von Marc Hens';
 
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
     let availableModels = [];
+    let inboxMessagesCache = {};
+    let replyContext = null;
 
     let activeRecognition = null;
     let activeVoiceBtn = null;
@@ -598,9 +612,44 @@
       }
     }
 
+    function updateReplyBannerUI() {
+      const banner = document.getElementById('replyContextBanner');
+      const titleEl = document.getElementById('composeCardTitle');
+      const promptLabel = document.getElementById('mailPromptLabel');
+      const promptInput = document.getElementById('mailPrompt');
+      const genBtn = document.getElementById('btnGenerateMail');
+
+      if (replyContext) {
+        banner.classList.remove('hidden');
+        document.getElementById('replyContextMeta').textContent = `Antwort an: ${replyContext.senderRaw} · Betreff: ${replyContext.replySubject}`;
+        document.getElementById('replyContextExcerpt').textContent = replyContext.body || '(Kein Nachrichtentext vorhanden)';
+        titleEl.textContent = 'Antwort per KI erstellen';
+        promptLabel.textContent = 'Zusätzliche Vorgaben einsprechen (optional – leer lassen für automatische Antwort)';
+        promptInput.placeholder = 'Optional: z. B. Sag zu, aber erst ab 15 Uhr...';
+        genBtn.textContent = 'Antwort-Entwurf mit KI generieren';
+      } else {
+        banner.classList.add('hidden');
+        titleEl.textContent = 'E-Mail per KI verfassen';
+        promptLabel.textContent = 'Empfänger und Inhalt einsprechen (Betreff entsteht automatisch)';
+        promptInput.placeholder = 'Einfach einsprechen: z. B. Schreibe an Marc, dass wir uns morgen um 14 Uhr treffen...';
+        genBtn.textContent = 'Entwurf mit KI generieren';
+      }
+    }
+
+    function cancelReplyMode() {
+      replyContext = null;
+      updateReplyBannerUI();
+      document.getElementById('mailTo').value = '';
+      document.getElementById('mailSubject').value = '';
+      document.getElementById('mailBody').value = '';
+      document.getElementById('mailPrompt').value = '';
+    }
+
     function startNewEmail() {
       hideSendConfirmation();
       hideAlert();
+      replyContext = null;
+      updateReplyBannerUI();
       document.getElementById('mailPrompt').value = '';
       document.getElementById('mailTo').value = '';
       document.getElementById('mailSubject').value = '';
@@ -709,7 +758,7 @@
         contents: [{ parts }],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 650
+          maxOutputTokens: 700
         }
       };
 
@@ -866,7 +915,9 @@
 
     function cleanExtractedEmail(rawEmail) {
       if (!rawEmail) return '';
-      return rawEmail
+      const angleMatch = rawEmail.match(/<([^>]+)>/);
+      const target = angleMatch ? angleMatch[1] : rawEmail;
+      return target
         .replace(/<|>/g, '')
         .replace(/\s+(at|ät)\s+/gi, '@')
         .replace(/\[at\]|\(at\)|\[ät\]|\(ät\)/gi, '@')
@@ -887,13 +938,13 @@
     function ensureSignature(bodyText) {
       const cleaned = (bodyText || '').trim();
       if (!cleaned) return EMAIL_SIGNATURE;
-      if (/Assistent von Marc Hens\s*$/i.test(cleaned)) {
+      if (/Viele Grüße,\s*\n\s*\n\s*KI-Assistent von Marc Hens\s*$/i.test(cleaned)) {
         return cleaned;
       }
-      const withoutTrailingGreeting = cleaned
-        .replace(/\n*(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Freundliche Grüße),?\s*$/i, '')
+      const withoutOldSig = cleaned
+        .replace(/\n*(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Freundliche Grüße),?\s*(\n+(KI-)?Assistent von Marc Hen[sz])?\s*$/i, '')
         .trim();
-      return `${withoutTrailingGreeting}\n\n${EMAIL_SIGNATURE}`;
+      return `${withoutOldSig}\n\n${EMAIL_SIGNATURE}`;
     }
 
     function applyDraftToFields(rawResult, appendSignature = false) {
@@ -901,7 +952,7 @@
       const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
       const textStartMatch = rawResult.match(/TEXT:\s*/i);
 
-      if (toMatch) {
+      if (!replyContext && toMatch) {
         const cleanedTo = cleanExtractedEmail(toMatch[1].replace(/\[|\]/g, '').trim());
         if (cleanedTo && cleanedTo.includes('@')) {
           document.getElementById('mailTo').value = cleanedTo;
@@ -914,7 +965,7 @@
         document.getElementById('mailBody').value = appendSignature ? ensureSignature(extractedBody) : extractedBody;
       }
 
-      if (subMatch) {
+      if (!replyContext && subMatch) {
         const rawSub = subMatch[1].replace(/\[|\]/g, '').trim();
         if (rawSub) {
           document.getElementById('mailSubject').value = rawSub;
@@ -924,7 +975,7 @@
 
     async function generateEmailDraft() {
       const prompt = document.getElementById('mailPrompt').value.trim();
-      if (!prompt) {
+      if (!prompt && !replyContext) {
         showAlert('Bitte gib zuerst eine Anweisung oder Stichpunkte ein.', 'error');
         return;
       }
@@ -945,7 +996,40 @@
       const contactsContext = contacts.map(c => `${c.name}: ${c.email}`).join(', ');
 
       try {
-        const instruction = `Du bist ein deutscher E-Mail-Assistent. Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine natürliche, höfliche E-Mail in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
+        let instruction = '';
+
+        if (replyContext) {
+          const userNoteBlock = prompt
+            ? `Zusätzliche Vorgabe von Marc Hens für die Antwort: ${prompt}`
+            : 'Es gibt keine spezielle Zusatzvorgabe; formuliere eine passende, höfliche und zielführende Antwort auf den Inhalt der eingegangenen E-Mail.';
+
+          instruction = `Du bist der persönliche KI-Assistent von Marc Hens. Formuliere eine natürliche, höfliche deutsche Antwort auf die untenstehende eingegangene E-Mail.
+
+Absender der eingegangenen E-Mail: ${replyContext.senderRaw} (${replyContext.senderEmail})
+Ursprünglicher Betreff: ${replyContext.originalSubject}
+
+Inhalt der eingegangenen E-Mail:
+"""
+${replyContext.body}
+"""
+
+${userNoteBlock}
+
+Regeln für den Antworttext (TEXT):
+- Gehe konkret auf die Fragen, Informationen oder Wünsche in der eingegangenen E-Mail ein.
+- Schreibe in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
+- Beende den Text exakt mit dieser Signatur (inklusive der Leerzeile dazwischen):
+Viele Grüße,
+
+KI-Assistent von Marc Hens
+
+Gib deine Antwort exakt in diesem Format zurück:
+EMPFAENGER: ${replyContext.senderEmail}
+TEXT:
+[vollständiger Antworttext inklusive Signatur]
+BETREFF: ${replyContext.replySubject}`;
+        } else {
+          instruction = `Du bist ein deutscher E-Mail-Assistent. Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine natürliche, höfliche E-Mail in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
 
 Regeln für den Empfänger (EMPFAENGER):
 - Prüfe zuerst die gespeicherten Kontakte: ${contactsContext}. Wenn ein genannter Name oder eine ähnlich klingende diktierte Adresse zu einem Kontakt passt (z. B. "Marc", "Mark Henz" oder "mark.tens@gmx.de" -> "marc.hens@gmx.de"), verwende diese hinterlegte E-Mail-Adresse.
@@ -954,9 +1038,10 @@ Regeln für den Empfänger (EMPFAENGER):
 
 Regeln für den Text (TEXT):
 - Formuliere den Inhalt klar, natürlich und vollständig aus.
-- Beende den Text exakt mit dieser Signatur:
+- Beende den Text exakt mit dieser Signatur (inklusive der Leerzeile dazwischen):
 Viele Grüße,
-Assistent von Marc Hens
+
+KI-Assistent von Marc Hens
 
 Regeln für den Betreff (BETREFF):
 - Leite den Betreff direkt und natürlich aus dem gerade formulierten E-Mail-Text ab.
@@ -969,6 +1054,7 @@ TEXT:
 BETREFF: [automatisch abgeleiteter Betreff in korrekter Schreibweise]
 
 Anweisung: ${prompt}`;
+        }
 
         const rawResult = await callGemini(
           [{ text: instruction }],
@@ -985,13 +1071,19 @@ Anweisung: ${prompt}`;
         if (!rawResult.match(/TEXT:\s*/i)) {
           document.getElementById('mailBody').value = ensureSignature(rawResult);
         }
-        showAlert(`E-Mail-Entwurf in ${sec}s erstellt.`, 'success');
+
+        if (replyContext) {
+          showAlert(`Antwort-Entwurf in ${sec}s erstellt. Bitte prüfe den Text unten vor dem Absenden.`, 'success');
+          document.getElementById('mailReviewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          showAlert(`E-Mail-Entwurf in ${sec}s erstellt.`, 'success');
+        }
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
         clearInterval(tick);
         btn.disabled = false;
-        btn.textContent = 'Entwurf mit KI generieren';
+        btn.textContent = replyContext ? 'Antwort-Entwurf mit KI generieren' : 'Entwurf mit KI generieren';
       }
     }
 
@@ -1004,12 +1096,61 @@ Anweisung: ${prompt}`;
       return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
+    function decodeBase64UrlUtf8(data) {
+      if (!data) return '';
+      try {
+        let b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function extractMessagePlainText(payload, snippetFallback = '') {
+      if (!payload) return snippetFallback;
+
+      function findPartByMime(part, targetMime) {
+        if (!part) return null;
+        if (part.mimeType === targetMime && part.body && part.body.data) {
+          return decodeBase64UrlUtf8(part.body.data);
+        }
+        if (Array.isArray(part.parts)) {
+          for (const child of part.parts) {
+            const found = findPartByMime(child, targetMime);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      const plain = findPartByMime(payload, 'text/plain');
+      if (plain && plain.trim()) {
+        return plain.trim().slice(0, 3000);
+      }
+
+      const html = findPartByMime(payload, 'text/html');
+      if (html && html.trim()) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const text = (doc.body?.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+        if (text) return text.slice(0, 3000);
+      }
+
+      return snippetFallback;
+    }
+
     async function sendGmailMessage() {
       if (!accessToken) {
         showAlert('Bitte verbinde oben rechts zuerst dein Assistenten-Konto mit Gmail.', 'error');
         return;
       }
 
+      const cfg = getConfig();
       const to = cleanExtractedEmail(document.getElementById('mailTo').value);
       const subject = document.getElementById('mailSubject').value.trim();
       const rawBody = document.getElementById('mailBody').value.trim();
@@ -1026,13 +1167,32 @@ Anweisung: ${prompt}`;
 
       try {
         const encodedSubject = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(subject))) + '?=';
-        const rawMail = [
-          `To: ${to}`,
-          `Subject: ${encodedSubject}`,
-          'Content-Type: text/plain; charset="UTF-8"',
-          '',
-          body
-        ].join('\r\n');
+        const encodedSenderName = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(SENDER_DISPLAY_NAME))) + '?=';
+
+        const mailHeaders = [];
+        if (cfg.agentEmail) {
+          mailHeaders.push(`From: ${encodedSenderName} <${cfg.agentEmail}>`);
+        }
+        mailHeaders.push(`To: ${to}`);
+        mailHeaders.push(`Subject: ${encodedSubject}`);
+
+        if (replyContext && replyContext.messageIdHeader) {
+          mailHeaders.push(`In-Reply-To: ${replyContext.messageIdHeader}`);
+          const refs = replyContext.referencesHeader
+            ? `${replyContext.referencesHeader} ${replyContext.messageIdHeader}`
+            : replyContext.messageIdHeader;
+          mailHeaders.push(`References: ${refs}`);
+        }
+
+        mailHeaders.push('Content-Type: text/plain; charset="UTF-8"');
+        mailHeaders.push('');
+        mailHeaders.push(body);
+
+        const rawMail = mailHeaders.join('\r\n');
+        const sendPayload = { raw: encodeBase64Url(rawMail) };
+        if (replyContext && replyContext.threadId) {
+          sendPayload.threadId = replyContext.threadId;
+        }
 
         const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
           method: 'POST',
@@ -1040,7 +1200,7 @@ Anweisung: ${prompt}`;
             Authorization: 'Bearer ' + accessToken,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ raw: encodeBase64Url(rawMail) })
+          body: JSON.stringify(sendPayload)
         });
 
         if (!res.ok) {
@@ -1049,6 +1209,9 @@ Anweisung: ${prompt}`;
         }
 
         rememberContactEmail(to);
+
+        replyContext = null;
+        updateReplyBannerUI();
 
         document.getElementById('mailPrompt').value = '';
         document.getElementById('mailTo').value = '';
@@ -1068,6 +1231,35 @@ Anweisung: ${prompt}`;
         btn.disabled = false;
         btn.textContent = 'Über Assistenten-Konto senden';
       }
+    }
+
+    function startReplyToMessage(messageId) {
+      const msg = inboxMessagesCache[messageId];
+      if (!msg) return;
+
+      hideSendConfirmation();
+      hideAlert();
+
+      const replySubject = /^re:/i.test(msg.subject) ? msg.subject : `Re: ${msg.subject}`;
+      replyContext = {
+        threadId: msg.threadId,
+        messageIdHeader: msg.messageIdHeader,
+        referencesHeader: msg.referencesHeader,
+        senderRaw: msg.from,
+        senderEmail: msg.replyToEmail,
+        originalSubject: msg.subject,
+        replySubject: replySubject,
+        body: msg.body
+      };
+
+      document.getElementById('mailTo').value = msg.replyToEmail;
+      document.getElementById('mailSubject').value = replySubject;
+      document.getElementById('mailPrompt').value = '';
+      document.getElementById('mailBody').value = '';
+      updateReplyBannerUI();
+
+      document.getElementById('mailComposeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      generateEmailDraft();
     }
 
     async function loadInbox() {
@@ -1091,22 +1283,49 @@ Anweisung: ${prompt}`;
           return;
         }
 
+        inboxMessagesCache = {};
         listEl.innerHTML = '';
+
         for (const msg of messages) {
-          const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
+          const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`, {
             headers: { Authorization: 'Bearer ' + accessToken }
           });
           const detail = await detailRes.json();
           const headers = detail.payload?.headers || [];
-          const from = headers.find(h => h.name === 'From')?.value || 'Unbekannt';
-          const subject = headers.find(h => h.name === 'Subject')?.value || '(Kein Betreff)';
+          const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+
+          const from = getHeader('From') || 'Unbekannt';
+          const replyToRaw = getHeader('Reply-To') || from;
+          const replyToEmail = cleanExtractedEmail(replyToRaw);
+          const subject = getHeader('Subject') || '(Kein Betreff)';
+          const messageIdHeader = getHeader('Message-ID');
+          const referencesHeader = getHeader('References');
+          const plainBody = extractMessagePlainText(detail.payload, detail.snippet || '');
+
+          inboxMessagesCache[msg.id] = {
+            id: msg.id,
+            threadId: detail.threadId || msg.threadId || '',
+            from,
+            replyToEmail,
+            subject,
+            messageIdHeader,
+            referencesHeader,
+            body: plainBody
+          };
 
           const item = document.createElement('div');
-          item.className = 'p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1';
+          item.className = 'p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2';
           item.innerHTML = `
-            <div class="text-xs font-medium text-slate-200 truncate">${escapeHtml(subject)}</div>
-            <div class="text-[11px] text-slate-400 truncate">${escapeHtml(from)}</div>
-            <div class="text-xs text-slate-500 line-clamp-2">${escapeHtml(detail.snippet || '')}</div>
+            <div class="space-y-0.5">
+              <div class="text-xs font-medium text-slate-200 truncate">${escapeHtml(subject)}</div>
+              <div class="text-[11px] text-slate-400 truncate">${escapeHtml(from)}</div>
+              <div class="text-xs text-slate-500 line-clamp-2 pt-0.5">${escapeHtml(detail.snippet || plainBody)}</div>
+            </div>
+            <div class="flex justify-end pt-0.5">
+              <button type="button" onclick="startReplyToMessage('${escapeHtml(msg.id)}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 active:bg-indigo-700 text-xs font-medium text-white transition">
+                Mit KI antworten
+              </button>
+            </div>
           `;
           listEl.appendChild(item);
         }
@@ -1190,7 +1409,7 @@ Anweisung: ${prompt}`;
     }
 
     function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+      return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
     loadSettingsToUI();
