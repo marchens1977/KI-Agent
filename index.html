@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 11:00</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 11:10</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -446,7 +446,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 11:00';
+    const BUILD_TIMESTAMP = '15.11.2026 · 11:10';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -1469,7 +1469,13 @@
         tokenClient = null;
         accessToken = null;
         updateGmailBadge(false);
-        clearLocalMailData();
+        storageRemove(CORRESPONDENTS_CACHE_KEY);
+        allMessagesList = [];
+        inboxMessagesCache = {};
+        expandedMessageIds.clear();
+        replyContext = null;
+        updateReplyBannerUI();
+        updateFilterButtonsUI();
       }
 
       if (prevCfg.geminiKey !== geminiKey) {
@@ -1605,8 +1611,21 @@
       }
     }
 
-    function clearLocalMailData() {
-      clearLocalMailData();
+    function disconnectGmail() {
+      const tokenToRevoke = accessToken;
+      accessToken = null;
+      clearStoredToken();
+      storageRemove(CORRESPONDENTS_CACHE_KEY);
+      allMessagesList = [];
+      inboxMessagesCache = {};
+      expandedMessageIds.clear();
+      replyContext = null;
+      updateReplyBannerUI();
+      updateFilterButtonsUI();
+      const listEl = document.getElementById('inboxList');
+      if (listEl) {
+        listEl.innerHTML = '<p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene und gesendete Nachrichten zu laden.</p>';
+      }
       updateGmailBadge(false);
       if (tokenToRevoke && window.google && google.accounts && google.accounts.oauth2) {
         try {
@@ -2438,7 +2457,7 @@ Anweisung: ${prompt}`;
 
         document.getElementById('mailPrompt').value = '';
         document.getElementById('mailTo').value = '';
-      mailToIsManual = false;
+        mailToIsManual = false;
         document.getElementById('mailSubject').value = '';
         document.getElementById('mailBody').value = '';
 
