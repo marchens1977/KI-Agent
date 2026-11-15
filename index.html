@@ -9,22 +9,22 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500 selection:text-white">
 
-  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3">
-    <div class="max-w-3xl mx-auto flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 space-y-3">
+    <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
           KI
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 13:10</span>
+            <span id="buildVersionBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 12:25</span>
           </div>
-          <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
+          <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[200px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <div class="flex items-center gap-2 shrink-0">
         <span id="gmailStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
           <span id="gmailStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
           <span id="gmailStatusText">Getrennt</span>
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <nav class="max-w-3xl mx-auto mt-3 grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+    <nav class="max-w-3xl mx-auto grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
       <button type="button" onclick="switchTab('mail')" id="tab-mail" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium bg-blue-600 text-white transition truncate">
         E-Mail-Agent
       </button>
@@ -446,7 +446,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 13:10';
+    const BUILD_TIMESTAMP = '15.11.2026 · 12:25';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
