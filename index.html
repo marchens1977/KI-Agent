@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:39</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:49</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -404,10 +404,11 @@
   </main>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 09:39';
+    const BUILD_TIMESTAMP = '15.11.2026 · 09:49';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
+    const CORRESPONDENTS_CACHE_KEY = 'ki_agent_correspondents_cache_v1';
     const PERSONA_KEY = 'ki_agent_persona_v2';
     const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v35';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
@@ -845,6 +846,197 @@
         .join(' ');
       list.push({ name: derivedName || clean, email: clean });
       saveContacts(list);
+    }
+
+    function extractDisplayNameAndEmail(rawHeader) {
+      if (!rawHeader) return null;
+      const email = cleanExtractedEmail(rawHeader);
+      if (!email || !email.includes('@')) return null;
+
+      let displayName = '';
+      const angleIdx = rawHeader.indexOf('<');
+      if (angleIdx > 0) {
+        displayName = rawHeader.slice(0, angleIdx).replace(/["']/g, '').trim();
+      }
+      if (!displayName || displayName.includes('@')) {
+        displayName = email.split('@')[0]
+          .split(/[._-]+/)
+          .filter(Boolean)
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+      }
+      return { name: displayName, email };
+    }
+
+    function getCachedCorrespondents() {
+      try {
+        const raw = localStorage.getItem(CORRESPONDENTS_CACHE_KEY);
+        const parsed = JSON.parse(raw || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function cacheCorrespondentsFromMessages(messages) {
+      const cfg = getConfig();
+      const ownEmails = new Set([cfg.agentEmail, connectedAccountEmail].filter(Boolean).map(e => e.toLowerCase()));
+      const map = new Map();
+
+      getCachedCorrespondents().forEach(entry => {
+        if (entry && entry.email && !ownEmails.has(entry.email.toLowerCase())) {
+          map.set(entry.email.toLowerCase(), { name: entry.name || '', email: entry.email.toLowerCase() });
+        }
+      });
+
+      (messages || []).forEach(msg => {
+        [msg.from, msg.to].forEach(headerVal => {
+          if (!headerVal) return;
+          headerVal.split(',').forEach(part => {
+            const parsed = extractDisplayNameAndEmail(part);
+            if (!parsed || ownEmails.has(parsed.email)) return;
+            const existing = map.get(parsed.email);
+            if (!existing || (parsed.name && parsed.name.length > existing.name.length)) {
+              map.set(parsed.email, parsed);
+            }
+          });
+        });
+      });
+
+      const merged = Array.from(map.values()).slice(0, 40);
+      try {
+        localStorage.setItem(CORRESPONDENTS_CACHE_KEY, JSON.stringify(merged));
+      } catch (e) {}
+    }
+
+    function getKnownDirectory() {
+      const cfg = getConfig();
+      const ownEmails = new Set([cfg.agentEmail, connectedAccountEmail].filter(Boolean).map(e => e.toLowerCase()));
+      const dirMap = new Map();
+
+      getContacts().forEach(c => {
+        const email = cleanExtractedEmail(c.email);
+        if (!email || !email.includes('@') || ownEmails.has(email)) return;
+        dirMap.set(email, {
+          name: (c.name || '').trim(),
+          email,
+          source: 'Gespeicherter Kontakt'
+        });
+      });
+
+      getCachedCorrespondents().forEach(c => {
+        const email = cleanExtractedEmail(c.email);
+        if (!email || !email.includes('@') || ownEmails.has(email)) return;
+        if (!dirMap.has(email)) {
+          dirMap.set(email, {
+            name: (c.name || '').trim(),
+            email,
+            source: 'Nachrichtenverlauf'
+          });
+        }
+      });
+
+      return Array.from(dirMap.values());
+    }
+
+    function phoneticNormalizeGerman(str) {
+      return String(str || '')
+        .toLowerCase()
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        .replace(/chr/g, 'kr')
+        .replace(/ph/g, 'f')
+        .replace(/th/g, 't')
+        .replace(/dt/g, 't')
+        .replace(/tz/g, 's')
+        .replace(/z/g, 's')
+        .replace(/c(?=[aouklr]|$)/g, 'k')
+        .replace(/ck/g, 'k')
+        .replace(/c(?=[eiäöü])/g, 's')
+        .replace(/v/g, 'f')
+        .replace(/y/g, 'i')
+        .replace(/([a-z])\1+/g, '$1')
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    function findBestContactMatch(promptText) {
+      if (!promptText || !promptText.trim()) return null;
+      const directory = getKnownDirectory();
+      if (directory.length === 0) return null;
+
+      const lowerPrompt = promptText.toLowerCase();
+
+      for (const entry of directory) {
+        if (lowerPrompt.includes(entry.email.toLowerCase())) {
+          return entry;
+        }
+      }
+
+      const recipientTriggerTokens = new Set();
+      const triggerRegex = /\b(?:an|für|fuer|schreibe|mail|nachricht|email|e-mail)\s+(?:den|die|dem|der|herrn|frau)?\s*([a-zäöüß-]{2,})/gi;
+      let m;
+      while ((m = triggerRegex.exec(lowerPrompt)) !== null) {
+        const word = m[1].replace(/[^a-zäöüß]/g, '');
+        if (word.length >= 3) {
+          recipientTriggerTokens.add(word);
+        }
+      }
+
+      const allPromptWords = lowerPrompt
+        .split(/[^a-zäöüß0-9]+/)
+        .filter(w => w.length >= 3);
+
+      let bestEntry = null;
+      let bestScore = 0;
+
+      for (const entry of directory) {
+        let score = 0;
+        const nameParts = (entry.name || '')
+          .toLowerCase()
+          .split(/[^a-zäöüß0-9]+/)
+          .filter(p => p.length >= 3);
+        const emailLocalParts = entry.email
+          .split('@')[0]
+          .toLowerCase()
+          .split(/[^a-z0-9]+/)
+          .filter(p => p.length >= 3);
+
+        const candidateParts = Array.from(new Set([...nameParts, ...emailLocalParts]));
+        const phoneticCandidates = candidateParts.map(p => phoneticNormalizeGerman(p)).filter(p => p.length >= 3);
+
+        for (const trigWord of recipientTriggerTokens) {
+          const trigPhon = phoneticNormalizeGerman(trigWord);
+          if (candidateParts.includes(trigWord)) {
+            score = Math.max(score, 120);
+          } else if (trigPhon.length >= 3 && phoneticCandidates.includes(trigPhon)) {
+            score = Math.max(score, 105);
+          }
+        }
+
+        if (score === 0) {
+          for (const word of allPromptWords) {
+            const wordPhon = phoneticNormalizeGerman(word);
+            if (candidateParts.includes(word)) {
+              score = Math.max(score, 75);
+            } else if (wordPhon.length >= 3 && phoneticCandidates.includes(wordPhon)) {
+              score = Math.max(score, 65);
+            }
+          }
+        }
+
+        if (entry.source === 'Gespeicherter Kontakt' && score > 0) {
+          score += 5;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestEntry = entry;
+        }
+      }
+
+      return bestScore >= 65 ? bestEntry : null;
     }
 
     function addContactFromForm() {
@@ -1587,8 +1779,16 @@
         btn.textContent = `${statusLabel} (${sec}s)...`;
       }, 1000);
 
-      const contacts = getContacts();
-      const contactsContext = contacts.map(c => `${c.name}: ${c.email}`).join(', ');
+      const directory = getKnownDirectory();
+      const directoryContext = directory.length > 0
+        ? directory.map(c => `${c.name ? c.name + ': ' : ''}${c.email} (${c.source})`).join(', ')
+        : 'Keine hinterlegten Kontakte vorhanden.';
+
+      const preMatchedContact = !replyContext ? findBestContactMatch(prompt) : null;
+      if (preMatchedContact) {
+        document.getElementById('mailTo').value = preMatchedContact.email;
+      }
+
       const personaBlock = buildPersonaPromptBlock();
 
       try {
@@ -1606,6 +1806,9 @@ ${personaBlock}
 Absender der eingegangenen E-Mail: ${replyContext.senderRaw} (${replyContext.senderEmail})
 Ursprünglicher Betreff: ${replyContext.originalSubject}
 
+Bekannte Kontakte und bisherige Gesprächspartner (für korrekte Namensschreibweise):
+${directoryContext}
+
 Inhalt der eingegangenen E-Mail:
 """
 ${replyContext.body}
@@ -1615,6 +1818,7 @@ ${userNoteBlock}
 
 Regeln für den Antworttext (TEXT):
 - Halte dich bei Rolle, Ton, Satzbau, Wortwahl und Signatur strikt an das oben definierte persönliche KI-Profil.
+- Übernimm bei Personennamen (z. B. in der Anrede oder im Text) die exakte Schreibweise aus dem Absender, der ursprünglichen E-Mail oder der Kontaktliste (z. B. "Marc" mit C statt "Mark" mit K, wenn Marc in der Kontaktliste oder als Absender steht).
 - Gehe konkret auf die Fragen, Informationen oder Wünsche in der eingegangenen E-Mail ein.
 - Schreibe in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
 
@@ -1624,17 +1828,26 @@ TEXT:
 [vollständiger Antworttext inklusive Abschluss/Signatur gemäß KI-Profil]
 BETREFF: ${replyContext.replySubject}`;
         } else {
+          const preMatchHint = preMatchedContact
+            ? `\n- WICHTIGER VORAB-TREFFER: Aus der Spracheingabe wurde bereits der Kontakt "${preMatchedContact.name}" (${preMatchedContact.email}) erkannt. Verwende zwingend "${preMatchedContact.email}" als EMPFAENGER und schreibe den Namen dieser Person im gesamten E-Mail-Text exakt als "${preMatchedContact.name}" (bzw. den Vornamen "${preMatchedContact.name.split(' ')[0]}"), auch wenn die Spracherkennung ihn phonetisch anders geschrieben hat (z. B. "Mark" -> "Marc").`
+            : '';
+
           instruction = `Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine deutsche E-Mail in einwandfreier Rechtschreibung und Zeichensetzung.
 
 ${personaBlock}
 
+Bekannte Kontakte und Gesprächspartner aus bisherigen Nachrichten:
+${directoryContext}
+
 Regeln für den Empfänger (EMPFAENGER):
-- Prüfe zuerst die gespeicherten Kontakte: ${contactsContext}. Wenn ein genannter Name oder eine ähnlich klingende diktierte Adresse zu einem Kontakt passt (z. B. "Marc", "Mark Henz" oder "mark.tens@gmx.de" -> "marc.hens@gmx.de"), verwende diese hinterlegte E-Mail-Adresse.
-- Wenn eine neue E-Mail-Adresse diktiert wurde, bereinige alle typischen Spracherkennungsfehler (gesprochenes "at"/"ät", "punkt", Leerzeichen vor/nach Punkten, Buchstabier-Hinweise wie "mit C" oder "mit S").
+- Gleiche jeden in der Anweisung genannten Namen oder diktierten E-Mail-Teil phonetisch mit der obigen Liste aus Kontakten und bisherigen Gesprächspartnern ab (z. B. gesprochenes "Mark", "Mark Henz", "mark.henze@gmx.de" oder "mark.tens@gmx.de" -> "marc.hens@gmx.de"; "Klaudi" -> "Claudi"; "Filipp" -> "Philipp").
+- Verwende immer die exakte E-Mail-Adresse aus der Liste, sobald ein Name phonetisch passt.${preMatchHint}
+- Wenn eine komplett neue E-Mail-Adresse diktiert wurde, bereinige typische Spracherkennungsfehler (gesprochenes "at"/"ät", "punkt", Leerzeichen).
 - Wenn gar kein Empfänger erkennbar ist, lasse EMPFAENGER leer.
 
-Regeln für den Text (TEXT):
+Regeln für den Text (TEXT) und die Schreibweise von Namen:
 - Halte dich bei Rolle, Ton, Satzbau, Wortwahl und Signatur strikt an das oben definierte persönliche KI-Profil.
+- Prüfe alle Personennamen im gesamten E-Mail-Text (insbesondere in der Anrede wie "Hallo Marc," sowie bei Erwähnungen im Text) gegen die obige Kontakt- und Verlaufsliste. Korrigiere phonetische Fehler der Spracherkennung konsequent auf die dort hinterlegte Schreibweise (z. B. "Marc" mit C statt "Mark" mit K).
 - Formuliere den Inhalt klar, natürlich und vollständig aus.
 
 Regeln für den Betreff (BETREFF):
@@ -1664,6 +1877,13 @@ Anweisung: ${prompt}`;
         applyDraftToFields(rawResult);
         if (!rawResult.match(/TEXT:\s*/i)) {
           document.getElementById('mailBody').value = rawResult.trim();
+        }
+
+        if (!replyContext && preMatchedContact) {
+          const currentTo = cleanExtractedEmail(document.getElementById('mailTo').value);
+          if (!currentTo || !currentTo.includes('@')) {
+            document.getElementById('mailTo').value = preMatchedContact.email;
+          }
         }
 
         if (replyContext) {
@@ -2087,10 +2307,10 @@ Anweisung: ${prompt}`;
 
       try {
         const [inboxRes, sentRes] = await Promise.all([
-          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=INBOX&maxResults=8', {
+          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=INBOX&maxResults=10', {
             headers: { Authorization: 'Bearer ' + accessToken }
           }),
-          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SENT&maxResults=8', {
+          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SENT&maxResults=10', {
             headers: { Authorization: 'Bearer ' + accessToken }
           })
         ]);
@@ -2125,7 +2345,7 @@ Anweisung: ${prompt}`;
         }
 
         const details = await Promise.all(
-          uniqueIds.slice(0, 14).map(id =>
+          uniqueIds.slice(0, 16).map(id =>
             fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`, {
               headers: { Authorization: 'Bearer ' + accessToken }
             }).then(r => r.json())
@@ -2179,6 +2399,7 @@ Anweisung: ${prompt}`;
         }
 
         allMessagesList.sort((a, b) => b.timestampMs - a.timestampMs);
+        cacheCorrespondentsFromMessages(allMessagesList);
         updateFilterButtonsUI();
         renderMessageList();
       } catch (err) {
