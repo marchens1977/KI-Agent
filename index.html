@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 12:25</span>
+            <span id="buildVersionBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 13:20</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[200px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -111,7 +111,7 @@
 
         <div class="space-y-1.5">
           <label for="mailTo" class="block text-xs text-slate-400">Empfänger (E-Mail-Adresse)</label>
-          <input type="email" id="mailTo" oninput="hideSendConfirmation(); mailToIsManual = true" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <input type="email" id="mailTo" oninput="hideSendConfirmation(); mailToIsManual = Boolean(this.value.trim())" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
           <div id="quickContactChips" class="flex flex-wrap gap-1.5 pt-0.5"></div>
         </div>
 
@@ -446,7 +446,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 12:25';
+    const BUILD_TIMESTAMP = '15.11.2026 · 13:20';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -463,6 +463,14 @@
     const EMAIL_MAX_TOKENS = 1500;
     const DOC_TIMEOUT_MS = 45000;
     const DOC_MAX_TOKENS = 4096;
+    const MAX_REPLY_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+    const GEMINI_INLINE_MIME_TYPES = new Set([
+      'application/pdf',
+      'image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif',
+      'text/plain', 'text/csv', 'text/markdown', 'text/html'
+    ]);
+    const DEFAULT_DOC_INSTRUCTION = 'Fasse die wichtigsten Punkte, Fristen und erforderlichen Schritte klar zusammen.';
+    const INBOX_PLACEHOLDER_HTML = '<p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene und gesendete Nachrichten zu laden.</p>';
 
     const MIC_ICON_SVG = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>';
 
@@ -511,6 +519,15 @@
     let activeVoiceBtn = null;
     let alertTimer = null;
 
+    let tokenExpiryTimer = null;
+    let tokenExpiresAt = 0;
+    let mailboxEpoch = 0;
+    let isPreparingReply = false;
+    let draftAbortController = null;
+    let pendingAttachmentReads = 0;
+    let docFileReadToken = 0;
+    const modelsWithoutZeroThinking = new Set();
+
     function storageGet(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
@@ -528,7 +545,10 @@
     function storageSet(key, value) {
       try {
         localStorage.setItem(key, JSON.stringify(value));
-      } catch (e) {}
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     function storageRemove(key) {
@@ -589,23 +609,41 @@
       scheduleTokenRefresh(expiresAt);
     }
 
-    function clearStoredToken() {
-      storageRemove(TOKEN_STORAGE_KEY);
+    function clearTokenTimers() {
       if (tokenRefreshTimer) {
         clearTimeout(tokenRefreshTimer);
         tokenRefreshTimer = null;
+      }
+      if (tokenExpiryTimer) {
+        clearTimeout(tokenExpiryTimer);
+        tokenExpiryTimer = null;
       }
     }
 
+    function clearStoredToken() {
+      storageRemove(TOKEN_STORAGE_KEY);
+      clearTokenTimers();
+      tokenExpiresAt = 0;
+    }
+
     function scheduleTokenRefresh(expiresAt) {
-      if (tokenRefreshTimer) {
-        clearTimeout(tokenRefreshTimer);
-        tokenRefreshTimer = null;
-      }
-      const delayMs = Math.max(Number(expiresAt) - Date.now() - 30000, 15000);
+      clearTokenTimers();
+      tokenExpiresAt = Number(expiresAt) || 0;
+      const remainingMs = tokenExpiresAt - Date.now();
       tokenRefreshTimer = setTimeout(() => {
         requestGmailToken({ silent: true });
-      }, delayMs);
+      }, Math.max(remainingMs - 30000, 15000));
+      // expiresAt enthält bereits 120 s Sicherheitsabstand. Gelingt die stille
+      // Erneuerung nicht (z. B. Pop-up blockiert), wird die Sitzung sichtbar beendet.
+      tokenExpiryTimer = setTimeout(handleTokenExpiry, Math.max(remainingMs + 60000, 20000));
+    }
+
+    function handleTokenExpiry() {
+      if (!accessToken) return;
+      accessToken = null;
+      clearStoredToken();
+      updateGmailBadge(false);
+      showAlert('Die Gmail-Sitzung ist abgelaufen. Tippe oben auf „Gmail verbinden“, um sie zu erneuern.', 'info');
     }
 
     function waitForGoogleGsi(timeoutMs = 5000) {
@@ -751,7 +789,7 @@
       const signature = document.getElementById('personaSignature').value.replace(/^\n+|\n+$/g, '');
       const exactSignature = document.getElementById('personaExactSignature').checked;
 
-      storageSet(PERSONA_KEY, {
+      const saved = storageSet(PERSONA_KEY, {
         role,
         styleRules,
         background,
@@ -760,6 +798,10 @@
       });
       updateSignaturePreview();
       updatePersonaStatusChip();
+      if (!saved) {
+        showAlert('Das KI-Profil konnte nicht gespeichert werden (Browser-Speicher blockiert oder voll).', 'error');
+        return;
+      }
       showAlert('KI-Profil, Formulierungsregeln und Signatur gespeichert.', 'success');
     }
 
@@ -833,6 +875,24 @@
       return fallbackForBinary;
     }
 
+    function sanitizeMimeType(rawMime) {
+      const clean = String(rawMime || '').split(';')[0].trim().toLowerCase();
+      return /^[a-z0-9][a-z0-9.+-]*\/[a-z0-9][a-z0-9.+-]*$/.test(clean) ? clean : 'application/octet-stream';
+    }
+
+    function resolveGeminiMimeType(rawMime, filename) {
+      let mime = sanitizeMimeType(rawMime);
+      if (mime === 'image/jpg') mime = 'image/jpeg';
+      if (GEMINI_INLINE_MIME_TYPES.has(mime)) return mime;
+      const byName = inferMimeType({ name: filename || '', type: '' }, '');
+      if (byName && GEMINI_INLINE_MIME_TYPES.has(byName)) return byName;
+      const lower = String(filename || '').toLowerCase();
+      if (lower.endsWith('.png')) return 'image/png';
+      if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+      if (lower.endsWith('.webp')) return 'image/webp';
+      return '';
+    }
+
     function renderMailAttachments() {
       const listEl = document.getElementById('mailAttachmentList');
       if (!listEl) return;
@@ -885,20 +945,22 @@
       hideSendConfirmation();
 
       let currentTotal = mailAttachments.reduce((sum, item) => sum + (item.size || 0), 0);
+      const rejected = [];
 
       files.forEach(file => {
         if (currentTotal + file.size > MAX_ATTACHMENT_TOTAL_BYTES) {
-          showAlert(`Die Datei ${file.name} überschreitet das Gesamtlimit von 15 MB für Anhänge.`, 'error');
+          rejected.push(file.name);
           return;
         }
         currentTotal += file.size;
 
         const reader = new FileReader();
+        pendingAttachmentReads++;
         reader.onerror = () => {
           showAlert(`Die Datei ${file.name} konnte nicht gelesen werden.`, 'error');
         };
         reader.onload = () => {
-          const base64Data = reader.result.split(',')[1] || '';
+          const base64Data = String(reader.result || '').split(',')[1] || '';
           mailAttachments.push({
             name: file.name,
             mimeType: inferMimeType(file, 'application/octet-stream'),
@@ -907,8 +969,15 @@
           });
           renderMailAttachments();
         };
+        reader.onloadend = () => {
+          pendingAttachmentReads = Math.max(pendingAttachmentReads - 1, 0);
+        };
         reader.readAsDataURL(file);
       });
+
+      if (rejected.length > 0) {
+        showAlert(`Nicht angehängt (Gesamtlimit von 15 MB überschritten): ${rejected.join(', ')}`, 'error');
+      }
     }
 
     function attachDocFileToMail() {
@@ -940,7 +1009,9 @@
       if (!Array.isArray(parsed)) {
         return [];
       }
-      return parsed;
+      return parsed
+        .filter(c => c && typeof c.email === 'string' && c.email.includes('@'))
+        .map(c => ({ name: typeof c.name === 'string' ? c.name : '', email: c.email }));
     }
 
     function saveContacts(list) {
@@ -967,6 +1038,23 @@
         .join(' ');
       list.push({ name: derivedName || clean, email: clean });
       saveContacts(list);
+    }
+
+    function splitAddressList(headerVal) {
+      const out = [];
+      let current = '';
+      let inQuotes = false;
+      for (const ch of String(headerVal || '')) {
+        if (ch === '"') inQuotes = !inQuotes;
+        if (ch === ',' && !inQuotes) {
+          if (current.trim()) out.push(current.trim());
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      if (current.trim()) out.push(current.trim());
+      return out;
     }
 
     function extractDisplayNameAndEmail(rawHeader) {
@@ -999,16 +1087,10 @@
       const ownEmails = new Set([cfg.agentEmail, connectedAccountEmail].filter(Boolean).map(e => e.toLowerCase()));
       const map = new Map();
 
-      getCachedCorrespondents().forEach(entry => {
-        if (entry && entry.email && !ownEmails.has(entry.email.toLowerCase())) {
-          map.set(entry.email.toLowerCase(), { name: entry.name || '', email: entry.email.toLowerCase() });
-        }
-      });
-
+      // Aktuelle Nachrichten zuerst, damit neue Gesprächspartner nicht hinter alten Einträgen abgeschnitten werden.
       (messages || []).forEach(msg => {
         [msg.from, msg.to].forEach(headerVal => {
-          if (!headerVal) return;
-          headerVal.split(',').forEach(part => {
+          splitAddressList(headerVal).forEach(part => {
             const parsed = extractDisplayNameAndEmail(part);
             if (!parsed || ownEmails.has(parsed.email)) return;
             const existing = map.get(parsed.email);
@@ -1017,6 +1099,13 @@
             }
           });
         });
+      });
+
+      getCachedCorrespondents().forEach(entry => {
+        if (!entry || typeof entry.email !== 'string') return;
+        const email = entry.email.toLowerCase();
+        if (ownEmails.has(email) || map.has(email)) return;
+        map.set(email, { name: typeof entry.name === 'string' ? entry.name : '', email });
       });
 
       storageSet(CORRESPONDENTS_CACHE_KEY, Array.from(map.values()).slice(0, 40));
@@ -1090,7 +1179,7 @@
       const stopWords = new Set(['an', 'für', 'fuer', 'zu', 'eine', 'einen', 'bitte', 'mal', 'dass', 'das', 'mir', 'uns', 'den', 'die', 'dem', 'der', 'herrn', 'frau']);
       const recipientTriggerTokens = new Set();
 
-      const prepositionRegex = /(?:^|[\s,.;:!?])(?:an|für|fuer|zu)\s+(?:den|die|dem|der|herrn|frau)?\s*([a-zäöüß-]{2,})/gi;
+      const prepositionRegex = /(?:^|[\s,.;:!?])(?:an|für|fuer|zu)\s+(?:(?:den|die|dem|der|herrn|frau)\s+)?([a-zäöüß-]{2,})/gi;
       let m;
       while ((m = prepositionRegex.exec(lowerPrompt)) !== null) {
         const word = m[1].replace(/[^a-zäöüß]/g, '');
@@ -1099,7 +1188,7 @@
         }
       }
 
-      const directVerbRegex = /(?:^|[\s,.;:!?])(?:schreibe|schreib|mail|nachricht|email|e-mail|sag|sage|sende|schicke|schick|frag|frage|informiere|teile|melde)\s+(?:herrn|frau)?\s*([a-zäöüß-]{2,})/gi;
+      const directVerbRegex = /(?:^|[\s,.;:!?])(?:schreibe|schreib|mail|nachricht|email|e-mail|sag|sage|sende|schicke|schick|frag|frage|informiere|teile|melde)\s+(?:(?:herrn|frau)\s+)?([a-zäöüß-]{2,})/gi;
       while ((m = directVerbRegex.exec(lowerPrompt)) !== null) {
         const word = m[1].replace(/[^a-zäöüß]/g, '');
         if (word.length >= 3 && !stopWords.has(word)) {
@@ -1268,14 +1357,34 @@
 
       if (activeRecognition) {
         const wasSameBtn = activeVoiceBtn === btn;
+        const prevRecognition = activeRecognition;
         const prevBtn = activeVoiceBtn;
         activeRecognition = null;
         activeVoiceBtn = null;
         resetVoiceButton(prevBtn);
-        try { prevBtn && prevBtn._recognition && prevBtn._recognition.stop(); } catch (e) {}
-        if (wasSameBtn) return;
+
+        if (wasSameBtn) {
+          try { prevRecognition.stop(); } catch (e) {}
+          return;
+        }
+
+        // Wechsel auf ein anderes Feld: erst starten, wenn die vorherige Aufnahme wirklich beendet ist.
+        let started = false;
+        const startNext = () => {
+          if (started) return;
+          started = true;
+          if (!activeRecognition) startVoiceRecognition(SpeechRecognition, targetId, btn);
+        };
+        prevRecognition.addEventListener('end', startNext, { once: true });
+        setTimeout(startNext, 700);
+        try { prevRecognition.abort(); } catch (e) { startNext(); }
+        return;
       }
 
+      startVoiceRecognition(SpeechRecognition, targetId, btn);
+    }
+
+    function startVoiceRecognition(SpeechRecognition, targetId, btn) {
       const targetEl = document.getElementById(targetId);
       if (!targetEl) return;
 
@@ -1290,7 +1399,6 @@
       const separator = baseText && !/\s$/.test(baseText) ? ' ' : '';
       let finalChunk = '';
 
-      btn._recognition = recognition;
       activeRecognition = recognition;
       activeVoiceBtn = btn;
 
@@ -1313,10 +1421,13 @@
         if (targetId === 'personaSignature') {
           updateSignaturePreview();
         }
+        if (targetId === 'mailTo') {
+          mailToIsManual = Boolean(targetEl.value.trim());
+        }
       };
 
       recognition.onerror = (event) => {
-        if (event.error === 'not-allowed') {
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           showAlert('Mikrofonzugriff blockiert. Bitte erlaube das Mikrofon in den Browser-Einstellungen.', 'error');
         } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
           showAlert('Spracherkennung unterbrochen: ' + event.error, 'error');
@@ -1324,10 +1435,12 @@
       };
 
       recognition.onend = () => {
-        resetVoiceButton(btn);
         if (activeRecognition === recognition) {
           activeRecognition = null;
           activeVoiceBtn = null;
+          resetVoiceButton(btn);
+        } else if (activeVoiceBtn !== btn) {
+          resetVoiceButton(btn);
         }
       };
 
@@ -1456,6 +1569,22 @@
       autoConnectGmailOnStartup();
     }
 
+    function resetMailboxState() {
+      mailboxEpoch++;
+      abortDraftGeneration();
+      storageRemove(CORRESPONDENTS_CACHE_KEY);
+      allMessagesList = [];
+      inboxMessagesCache = {};
+      expandedMessageIds.clear();
+      replyContext = null;
+      updateReplyBannerUI();
+      updateFilterButtonsUI();
+      const listEl = document.getElementById('inboxList');
+      if (listEl) {
+        listEl.innerHTML = INBOX_PLACEHOLDER_HTML;
+      }
+    }
+
     function saveSettings() {
       const prevCfg = getConfig();
       const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
@@ -1463,24 +1592,23 @@
       const agentEmail = document.getElementById('cfgAgentEmail').value.trim().toLowerCase();
       const senderName = document.getElementById('cfgSenderName').value.trim();
 
-      storageSet(STORAGE_KEY, { geminiKey, clientId, agentEmail, senderName });
+      const saved = storageSet(STORAGE_KEY, { geminiKey, clientId, agentEmail, senderName });
+      if (!saved) {
+        showAlert('Die Einstellungen konnten nicht gespeichert werden (Browser-Speicher blockiert oder voll).', 'error');
+        return;
+      }
 
       if (prevCfg.clientId !== clientId || prevCfg.agentEmail !== agentEmail) {
         clearStoredToken();
         tokenClient = null;
         accessToken = null;
         updateGmailBadge(false);
-        storageRemove(CORRESPONDENTS_CACHE_KEY);
-        allMessagesList = [];
-        inboxMessagesCache = {};
-        expandedMessageIds.clear();
-        replyContext = null;
-        updateReplyBannerUI();
-        updateFilterButtonsUI();
+        resetMailboxState();
       }
 
       if (prevCfg.geminiKey !== geminiKey) {
         storageRemove(SELECTED_MODEL_KEY);
+        modelsWithoutZeroThinking.clear();
         discoverAvailableModels(geminiKey);
       }
 
@@ -1548,7 +1676,16 @@
       }
     }
 
+    function abortDraftGeneration() {
+      if (draftAbortController) {
+        const ctl = draftAbortController;
+        draftAbortController = null;
+        try { ctl.abort(); } catch (e) {}
+      }
+    }
+
     function cancelReplyMode() {
+      abortDraftGeneration();
       replyContext = null;
       updateReplyBannerUI();
       document.getElementById('mailTo').value = '';
@@ -1559,6 +1696,7 @@
     }
 
     function startNewEmail() {
+      abortDraftGeneration();
       hideSendConfirmation();
       hideAlert();
       replyContext = null;
@@ -1620,17 +1758,7 @@
       const tokenToRevoke = accessToken;
       accessToken = null;
       clearStoredToken();
-      storageRemove(CORRESPONDENTS_CACHE_KEY);
-      allMessagesList = [];
-      inboxMessagesCache = {};
-      expandedMessageIds.clear();
-      replyContext = null;
-      updateReplyBannerUI();
-      updateFilterButtonsUI();
-      const listEl = document.getElementById('inboxList');
-      if (listEl) {
-        listEl.innerHTML = '<p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene und gesendete Nachrichten zu laden.</p>';
-      }
+      resetMailboxState();
       updateGmailBadge(false);
       if (tokenToRevoke && window.google && google.accounts && google.accounts.oauth2) {
         try {
@@ -1708,6 +1836,13 @@
         loadInbox();
         return;
       }
+      // Ein noch gültiges, gespeichertes Token zuerst erneut prüfen (z. B. nach einem Netzwerkfehler beim Start).
+      const stored = getStoredToken();
+      if (stored && stored.accessToken) {
+        accessToken = stored.accessToken;
+        verifyConnectedAccount({ silent: false, expiresIn: Math.floor((stored.expiresAt - Date.now()) / 1000) + 120 });
+        return;
+      }
       requestGmailToken({ silent: false });
     }
 
@@ -1715,11 +1850,14 @@
       const silent = Boolean(options.silent);
       const expiresIn = options.expiresIn || 3599;
       const cfg = getConfig();
+      const tokenToVerify = accessToken;
 
       try {
         const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
-          headers: { Authorization: 'Bearer ' + accessToken }
+          headers: { Authorization: 'Bearer ' + tokenToVerify }
         });
+
+        if (accessToken !== tokenToVerify) return;
 
         if (res.status === 401) {
           accessToken = null;
@@ -1727,11 +1865,17 @@
           updateGmailBadge(false);
           if (silent && cfg.agentEmail) {
             requestGmailToken({ silent: true });
+          } else if (!silent) {
+            showAlert('Die Gmail-Sitzung ist abgelaufen. Bitte tippe erneut auf „Gmail verbinden“.', 'error');
           }
           return;
         }
 
-        if (!res.ok) throw new Error('Profil konnte nicht geprüft werden.');
+        if (!res.ok) {
+          const httpErr = new Error(`Profil konnte nicht geprüft werden (HTTP ${res.status}).`);
+          httpErr.clearToken = res.status === 403;
+          throw httpErr;
+        }
         const profile = await res.json();
         const connectedEmail = (profile.emailAddress || '').toLowerCase();
 
@@ -1743,16 +1887,22 @@
           return;
         }
 
-        saveStoredToken(accessToken, expiresIn, connectedEmail);
+        saveStoredToken(tokenToVerify, expiresIn, connectedEmail);
         updateGmailBadge(true, connectedEmail);
         if (!silent) {
           showAlert(`Erfolgreich mit ${connectedEmail} verbunden.`, 'success');
         }
         loadInbox();
       } catch (err) {
-        accessToken = null;
-        clearStoredToken();
-        updateGmailBadge(false);
+        // Ungeprüfte Tokens werden nie verwendet. Bei reinen Netzwerkfehlern bleibt ein
+        // gespeichertes Token aber erhalten, damit ein Funkloch nicht die Anmeldung löscht.
+        if (accessToken === tokenToVerify) {
+          accessToken = null;
+          updateGmailBadge(false);
+        }
+        if (err && err.clearToken) {
+          clearStoredToken();
+        }
         if (!silent) {
           showAlert('Fehler bei der Kontoprüfung: ' + err.message, 'error');
         }
@@ -1762,7 +1912,17 @@
     async function streamSingleModel(apiKey, modelName, parts, options, useZeroThinking, onChunk, onStatus) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:streamGenerateContent?alt=sse`;
       const timeoutMs = options.timeoutMs || EMAIL_TIMEOUT_MS;
-      const maxOutputTokens = options.maxOutputTokens || EMAIL_MAX_TOKENS;
+      const baseMaxTokens = options.maxOutputTokens || EMAIL_MAX_TOKENS;
+      // Mit aktivem "Thinking" zählen Denk-Tokens zum Ausgabelimit – dann braucht die Antwort mehr Spielraum.
+      const maxOutputTokens = useZeroThinking
+        ? baseMaxTokens
+        : Math.min(Math.max(baseMaxTokens * 3, 2048), 16384);
+      const externalSignal = options.signal || null;
+      const abortedResult = { ok: false, status: 0, aborted: true, timedOut: false, error: 'Vorgang abgebrochen.' };
+
+      if (externalSignal && externalSignal.aborted) {
+        return abortedResult;
+      }
 
       const payload = {
         contents: [{ parts }],
@@ -1788,6 +1948,14 @@
       }
 
       const controller = new AbortController();
+      let abortedByCaller = false;
+      const onExternalAbort = () => {
+        abortedByCaller = true;
+        controller.abort();
+      };
+      if (externalSignal) {
+        externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+      }
       let timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
@@ -1822,6 +1990,33 @@
         let lastFinishReason = '';
         let lastBlockReason = '';
 
+        const handleSseLine = (line) => {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) return;
+          const jsonStr = trimmed.slice(5).trim();
+          if (!jsonStr || jsonStr === '[DONE]') return;
+          let parsed;
+          try {
+            parsed = JSON.parse(jsonStr);
+          } catch (e) {
+            return;
+          }
+          const candidate = parsed.candidates?.[0];
+          if (parsed.promptFeedback?.blockReason) {
+            lastBlockReason = parsed.promptFeedback.blockReason;
+          }
+          if (candidate?.finishReason) {
+            lastFinishReason = candidate.finishReason;
+          }
+          const chunkParts = candidate?.content?.parts || [];
+          for (const p of chunkParts) {
+            if (p.text && !p.thought) {
+              fullText += p.text;
+              if (onChunk && !abortedByCaller) onChunk(fullText);
+            }
+          }
+        };
+
         while (true) {
           timer = setTimeout(() => controller.abort(), timeoutMs);
           const { done, value } = await reader.read();
@@ -1831,30 +2026,15 @@
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
+          lines.forEach(handleSseLine);
+        }
 
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('data:')) continue;
-            const jsonStr = trimmed.slice(5).trim();
-            if (!jsonStr || jsonStr === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const candidate = parsed.candidates?.[0];
-              if (parsed.promptFeedback?.blockReason) {
-                lastBlockReason = parsed.promptFeedback.blockReason;
-              }
-              if (candidate?.finishReason) {
-                lastFinishReason = candidate.finishReason;
-              }
-              const chunkParts = candidate?.content?.parts || [];
-              for (const p of chunkParts) {
-                if (p.text && !p.thought) {
-                  fullText += p.text;
-                  if (onChunk) onChunk(fullText);
-                }
-              }
-            } catch (e) {}
-          }
+        // Letzte Zeile verarbeiten, falls der Stream ohne abschließenden Zeilenumbruch endet.
+        buffer += decoder.decode();
+        if (buffer.trim()) handleSseLine(buffer);
+
+        if (abortedByCaller) {
+          return abortedResult;
         }
 
         if (!fullText.trim()) {
@@ -1863,7 +2043,9 @@
 
         return { ok: true, text: fullText, finishReason: lastFinishReason };
       } catch (err) {
-        clearTimeout(timer);
+        if (abortedByCaller) {
+          return abortedResult;
+        }
         if (err.name === 'AbortError') {
           const secLabel = Math.round(timeoutMs / 1000);
           return {
@@ -1879,6 +2061,11 @@
           timedOut: false,
           error: `Netzwerkfehler (${modelName}): ${err.message}`
         };
+      } finally {
+        clearTimeout(timer);
+        if (externalSignal) {
+          externalSignal.removeEventListener('abort', onExternalAbort);
+        }
       }
     }
 
@@ -1906,10 +2093,22 @@
       let lastError = 'Unbekannter API-Fehler.';
 
       for (const modelName of modelsToTry) {
-        let res = await streamSingleModel(apiKey, modelName, parts, options, true, onChunk, onStatus);
+        // Modelle, die "thinkingBudget: 0" ablehnen, werden gemerkt – das spart bei jeder weiteren Anfrage einen Fehlversuch.
+        const tryZeroThinking = !modelsWithoutZeroThinking.has(modelName);
+        let res = await streamSingleModel(apiKey, modelName, parts, options, tryZeroThinking, onChunk, onStatus);
 
-        if (!res.ok && res.status === 400) {
-          res = await streamSingleModel(apiKey, modelName, parts, options, false, onChunk, onStatus);
+        if (!res.ok && !res.aborted && res.status === 400 && tryZeroThinking) {
+          const retry = await streamSingleModel(apiKey, modelName, parts, options, false, onChunk, onStatus);
+          if (retry.ok) {
+            modelsWithoutZeroThinking.add(modelName);
+          }
+          res = retry;
+        }
+
+        if (res.aborted) {
+          const abortErr = new Error(res.error);
+          abortErr.aborted = true;
+          throw abortErr;
         }
 
         if (res.ok) {
@@ -1986,11 +2185,8 @@
     }
 
     function decodeJsonStringFragment(fragment) {
-      let safe = fragment;
-      if (safe.endsWith('\\')) {
-        safe = safe.slice(0, -1);
-      }
-      safe = safe.replace(/\\u[0-9a-fA-F]{0,3}$/, '');
+      // Der Aufrufer liefert nur vollständige Escape-Paare; lediglich ein angefangenes \uXXXX kann am Ende stehen.
+      const safe = fragment.replace(/\\u[0-9a-fA-F]{0,3}$/, '');
       try {
         return JSON.parse('"' + safe + '"');
       } catch (e) {
@@ -2003,28 +2199,29 @@
       }
     }
 
-    function applyPartialJsonDraft(partialRaw) {
+    function applyPartialJsonDraft(partialRaw, opts = {}) {
       const textFieldMatch = partialRaw.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)/);
       if (textFieldMatch) {
         document.getElementById('mailBody').value = decodeJsonStringFragment(textFieldMatch[1]);
       }
 
-      if (!replyContext) {
-        const subMatch = partialRaw.match(/"betreff"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (subMatch && subMatch[1].trim()) {
-          document.getElementById('mailSubject').value = decodeJsonStringFragment(subMatch[1]).trim();
-        }
-        const empMatch = partialRaw.match(/"empfaenger"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (empMatch) {
-          const cleanedTo = cleanExtractedEmail(decodeJsonStringFragment(empMatch[1]));
-          if (cleanedTo && cleanedTo.includes('@')) {
-            document.getElementById('mailTo').value = cleanedTo;
-          }
+      if (opts.isReply) return;
+
+      const subMatch = partialRaw.match(/"betreff"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      if (subMatch && subMatch[1].trim()) {
+        document.getElementById('mailSubject').value = decodeJsonStringFragment(subMatch[1]).trim();
+      }
+      if (opts.lockRecipient) return;
+      const empMatch = partialRaw.match(/"empfaenger"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      if (empMatch) {
+        const cleanedTo = cleanExtractedEmail(decodeJsonStringFragment(empMatch[1]));
+        if (cleanedTo && cleanedTo.includes('@')) {
+          document.getElementById('mailTo').value = cleanedTo;
         }
       }
     }
 
-    function applyFinalJsonDraft(rawResult) {
+    function applyFinalJsonDraft(rawResult, opts = {}) {
       let parsed = null;
       try {
         parsed = JSON.parse(rawResult);
@@ -2037,8 +2234,8 @@
         }
       }
 
-      if (parsed && typeof parsed === 'object') {
-        if (!replyContext && typeof parsed.empfaenger === 'string') {
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        if (!opts.isReply && !opts.lockRecipient && typeof parsed.empfaenger === 'string') {
           const cleanedTo = cleanExtractedEmail(parsed.empfaenger);
           if (cleanedTo && cleanedTo.includes('@')) {
             document.getElementById('mailTo').value = cleanedTo;
@@ -2047,40 +2244,55 @@
         if (typeof parsed.text === 'string' && parsed.text.trim()) {
           document.getElementById('mailBody').value = parsed.text.trim();
         }
-        if (!replyContext && typeof parsed.betreff === 'string' && parsed.betreff.trim()) {
+        if (!opts.isReply && typeof parsed.betreff === 'string' && parsed.betreff.trim()) {
           document.getElementById('mailSubject').value = parsed.betreff.trim();
         }
-        return true;
+        return Boolean(document.getElementById('mailBody').value.trim());
       }
 
-      applyPartialJsonDraft(rawResult);
+      applyPartialJsonDraft(rawResult, opts);
       return Boolean(document.getElementById('mailBody').value.trim());
     }
 
     async function generateEmailDraft() {
       const prompt = document.getElementById('mailPrompt').value.trim();
-      if (!prompt && !replyContext) {
+      // Antwort-Kontext einmalig festhalten: Er darf sich während der laufenden Generierung nicht mehr ändern.
+      const ctx = replyContext;
+      const isReply = Boolean(ctx);
+
+      if (!prompt && !isReply) {
         showAlert('Bitte gib zuerst eine Anweisung oder Stichpunkte ein.', 'error');
         return;
       }
 
-      if (isGeneratingDraft) {
+      if (isGeneratingDraft || isPreparingReply) {
         showAlert('Es läuft bereits eine Generierung. Bitte warte, bis sie abgeschlossen ist.', 'info');
         return;
       }
       isGeneratingDraft = true;
+      const abortCtl = new AbortController();
+      draftAbortController = abortCtl;
 
       hideSendConfirmation();
+      const toEl = document.getElementById('mailTo');
+      const subjectEl = document.getElementById('mailSubject');
+      const bodyEl = document.getElementById('mailBody');
       const prevDraft = {
-        to: document.getElementById('mailTo').value,
-        subject: document.getElementById('mailSubject').value,
-        body: document.getElementById('mailBody').value
+        to: toEl.value,
+        subject: subjectEl.value,
+        body: bodyEl.value
       };
-      if (!replyContext) {
-        if (!mailToIsManual) document.getElementById('mailTo').value = '';
-        document.getElementById('mailSubject').value = '';
+
+      // Ein von Hand eingetragener Empfänger hat Vorrang und wird von der KI nicht überschrieben.
+      const lockedTo = (!isReply && mailToIsManual) ? cleanExtractedEmail(toEl.value) : '';
+      const lockRecipient = Boolean(lockedTo && lockedTo.includes('@'));
+      const draftOpts = { isReply, lockRecipient };
+
+      if (!isReply) {
+        if (!lockRecipient) toEl.value = '';
+        subjectEl.value = '';
       }
-      document.getElementById('mailBody').value = '';
+      bodyEl.value = '';
       const btn = document.getElementById('btnGenerateMail');
       btn.disabled = true;
       let sec = 0;
@@ -2092,53 +2304,54 @@
         btn.textContent = `${statusLabel} (${sec}s)...`;
       }, 1000);
 
-      const directory = getKnownDirectory();
-      const directoryContext = directory.length > 0
-        ? directory.map(c => `${c.name ? c.name + ': ' : ''}${c.email} (${c.source})`).join(', ')
-        : 'Keine hinterlegten Kontakte vorhanden.';
-      const directoryBlock = `<kontaktliste>\n${directoryContext}\n</kontaktliste>`;
-
-      const preMatchedContact = !replyContext ? findBestContactMatch(prompt) : null;
-      if (preMatchedContact) {
-        document.getElementById('mailTo').value = preMatchedContact.email;
-      }
-
-      const systemInstruction = buildPersonaSystemInstruction();
-      const responseSchema = {
-        type: 'OBJECT',
-        properties: {
-          empfaenger: { type: 'STRING' },
-          betreff: { type: 'STRING' },
-          text: { type: 'STRING' }
-        },
-        required: ['empfaenger', 'betreff', 'text']
-      };
-
       try {
-        let userInstruction = '';
-        let attachmentParts = [];
+        const directory = getKnownDirectory();
+        const directoryContext = directory.length > 0
+          ? directory.map(c => `${c.name ? c.name + ': ' : ''}${c.email} (${c.source})`).join(', ')
+          : 'Keine hinterlegten Kontakte vorhanden.';
+        const directoryBlock = `<kontaktliste>\n${directoryContext}\n</kontaktliste>`;
 
-        if (replyContext) {
-          const safeIncomingBody = sanitizeDelimiterTags(replyContext.body);
-          const safeSenderRaw = sanitizePromptField(sanitizeDelimiterTags(replyContext.senderRaw), 100);
-          const safeSenderEmail = sanitizePromptField(replyContext.senderEmail, 100);
-          const safeOriginalSubject = sanitizePromptField(sanitizeDelimiterTags(replyContext.originalSubject), 150);
-          const safeReplySubject = sanitizePromptField(replyContext.replySubject, 160);
-          
+        const preMatchedContact = (!isReply && !lockRecipient) ? findBestContactMatch(prompt) : null;
+        if (preMatchedContact) {
+          toEl.value = preMatchedContact.email;
+        }
+
+        const systemInstruction = buildPersonaSystemInstruction();
+        const responseSchema = {
+          type: 'OBJECT',
+          properties: {
+            empfaenger: { type: 'STRING' },
+            betreff: { type: 'STRING' },
+            text: { type: 'STRING' }
+          },
+          required: ['empfaenger', 'betreff', 'text']
+        };
+
+        let userInstruction = '';
+        const attachmentParts = [];
+        let analysedAttachmentCount = 0;
+
+        if (isReply) {
+          const safeIncomingBody = sanitizeDelimiterTags(ctx.body);
+          const safeSenderRaw = sanitizePromptField(sanitizeDelimiterTags(ctx.senderRaw), 100);
+          const safeSenderEmail = sanitizePromptField(ctx.senderEmail, 100);
+          const safeOriginalSubject = sanitizePromptField(sanitizeDelimiterTags(ctx.originalSubject), 150);
+          const safeReplySubject = sanitizePromptField(ctx.replySubject, 160);
+
           let attachmentsBlock = '';
-          if (replyContext.incomingAttachments && replyContext.incomingAttachments.length > 0) {
-            for (const att of replyContext.incomingAttachments) {
-              if (att.data && att.mimeType) {
-                attachmentParts.push({
-                  inlineData: {
-                    mimeType: att.mimeType,
-                    data: att.data
-                  }
-                });
-                attachmentsBlock += `\n[Beigefügte Datei: ${att.filename} (${att.mimeType}) wurde als Dokument beigefügt und analysiert.]\n`;
-              } else {
-                attachmentsBlock += `\n[Beigefügte Datei im Original: ${att.filename}]\n`;
-              }
+          for (const att of (ctx.incomingAttachments || [])) {
+            const safeFilename = sanitizePromptField(sanitizeDelimiterTags(att.filename), 120);
+            if (att.data && att.mimeType) {
+              attachmentParts.push({
+                inlineData: {
+                  mimeType: att.mimeType,
+                  data: att.data
+                }
+              });
+              analysedAttachmentCount++;
+              attachmentsBlock += `\n[Beigefügte Datei: ${safeFilename} (${att.mimeType}) wurde als Dokument beigefügt und analysiert.]\n`;
+            } else {
+              attachmentsBlock += `\n[Beigefügte Datei im Original (Inhalt liegt dir nicht vor): ${safeFilename}]\n`;
             }
           }
 
@@ -2173,9 +2386,17 @@ Anforderungen für die JSON-Felder:
 - betreff: Exakt "${safeReplySubject}"
 - text: Vollständiger deutscher Antworttext im vorgegebenen Format inklusive Signatur. Gehe in der Antwort konkret auf Details des Textes oder des analysierten Datei-Anhangs ein. Übernimm Personennamen in exakter Schreibweise.`;
         } else {
-          const preMatchHint = preMatchedContact
-            ? `\n- WICHTIGER VORAB-TREFFER: Aus der Empfänger-Nennung wurde bereits der Kontakt "${preMatchedContact.name}" (${preMatchedContact.email}) erkannt. Verwende zwingend "${preMatchedContact.email}" im Feld empfaenger und schreibe den Namen dieser Person im gesamten E-Mail-Text exakt als "${preMatchedContact.name}".`
-            : '';
+          let recipientHint = '';
+          if (preMatchedContact) {
+            recipientHint = `\n- WICHTIGER VORAB-TREFFER: Aus der Empfänger-Nennung wurde bereits der Kontakt "${preMatchedContact.name}" (${preMatchedContact.email}) erkannt. Verwende zwingend "${preMatchedContact.email}" im Feld empfaenger und schreibe den Namen dieser Person im gesamten E-Mail-Text exakt als "${preMatchedContact.name}".`;
+          } else if (lockRecipient) {
+            const safeLockedTo = sanitizePromptField(lockedTo, 100);
+            const lockedEntry = directory.find(c => c.email === lockedTo);
+            recipientHint = `\n- Der Empfänger wurde bereits von Hand festgelegt. Verwende zwingend "${safeLockedTo}" im Feld empfaenger.`;
+            if (lockedEntry && lockedEntry.name) {
+              recipientHint += ` Schreibe den Namen dieser Person im gesamten E-Mail-Text exakt als "${lockedEntry.name}".`;
+            }
+          }
 
           userInstruction = `Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine deutsche E-Mail in einwandfreier Rechtschreibung und Zeichensetzung.
 
@@ -2183,7 +2404,7 @@ Bekannte Kontakte und Gesprächspartner aus bisherigen Nachrichten:
 ${directoryBlock}
 
 Anforderungen für das JSON-Feld "empfaenger":
-- Prüfe ausschließlich, an WEN die E-Mail gerichtet ist und gleichen den Namen phonetisch mit der obigen Liste ab.${preMatchHint}
+- Prüfe ausschließlich, an WEN die E-Mail gerichtet ist und gleiche den Namen phonetisch mit der obigen Liste ab.${recipientHint}
 - Wenn kein Empfänger erkennbar ist, gib einen leeren String "" zurück.
 
 Formatierungsanforderungen für den Text:
@@ -2200,40 +2421,56 @@ Anforderung: ${prompt}`;
             systemInstruction,
             responseSchema,
             timeoutMs: EMAIL_TIMEOUT_MS,
-            maxOutputTokens: EMAIL_MAX_TOKENS
+            maxOutputTokens: EMAIL_MAX_TOKENS,
+            signal: abortCtl.signal
           },
           (statusText) => {
             statusLabel = statusText.replace(/\.\.\.$/, '');
             btn.textContent = `${statusLabel} (${sec}s)...`;
           },
           (partialText) => {
-            applyPartialJsonDraft(partialText);
+            if (!abortCtl.signal.aborted) applyPartialJsonDraft(partialText, draftOpts);
           }
         );
 
-        const parsedOk = applyFinalJsonDraft(result.text);
+        if (abortCtl.signal.aborted) {
+          const abortErr = new Error('Vorgang abgebrochen.');
+          abortErr.aborted = true;
+          throw abortErr;
+        }
+
+        const parsedOk = applyFinalJsonDraft(result.text, draftOpts);
         if (!parsedOk) {
           throw new Error('Die KI-Antwort war unvollständig oder ungültig. Bitte versuche es erneut.');
         }
 
-        if (!replyContext && preMatchedContact) {
-          document.getElementById('mailTo').value = preMatchedContact.email;
+        if (preMatchedContact) {
+          toEl.value = preMatchedContact.email;
         }
 
         if (result.finishReason === 'MAX_TOKENS') {
           showAlert('ACHTUNG: Der Entwurf wurde wegen der Längenbegrenzung abgeschnitten. Bitte Textende und Signatur prüfen.', 'error');
-        } else if (replyContext) {
-          showAlert(`Antwort-Entwurf in ${sec}s erstellt (inkl. Analyse von Anhängen). Bitte prüfe den Text unten.`, 'success');
+        } else if (isReply) {
+          const attNote = analysedAttachmentCount > 0
+            ? ` (inkl. Analyse von ${analysedAttachmentCount} ${analysedAttachmentCount === 1 ? 'Anhang' : 'Anhängen'})`
+            : '';
+          showAlert(`Antwort-Entwurf in ${sec}s erstellt${attNote}. Bitte prüfe den Text unten.`, 'success');
           document.getElementById('mailReviewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
           showAlert(`E-Mail-Entwurf in ${sec}s erstellt.`, 'success');
         }
       } catch (err) {
-        document.getElementById('mailTo').value = prevDraft.to;
-        document.getElementById('mailSubject').value = prevDraft.subject;
-        document.getElementById('mailBody').value = prevDraft.body;
-        showAlert(err.message, 'error');
+        // Bei einem bewussten Abbruch (Abbrechen / Neue E-Mail) hat der Auslöser die Felder bereits zurückgesetzt.
+        if (!err || !err.aborted) {
+          toEl.value = prevDraft.to;
+          subjectEl.value = prevDraft.subject;
+          bodyEl.value = prevDraft.body;
+          showAlert(err && err.message ? err.message : 'Unbekannter Fehler bei der Generierung.', 'error');
+        }
       } finally {
+        if (draftAbortController === abortCtl) {
+          draftAbortController = null;
+        }
         isGeneratingDraft = false;
         clearInterval(tick);
         btn.disabled = false;
@@ -2251,8 +2488,61 @@ Anforderung: ${prompt}`;
       return btoa(binary);
     }
 
-    function encodeMimeHeaderWord(str) {
+    function encodeMimeWordSingle(str) {
       return '=?UTF-8?B?' + utf8ToBase64(str) + '?=';
+    }
+
+    // RFC 2047: Ein "encoded-word" darf höchstens 75 Zeichen lang sein. Lange Betreffzeilen
+    // werden deshalb an Zeichengrenzen in mehrere gefaltete Wörter zerlegt.
+    function encodeMimeHeaderWord(str) {
+      const encoder = new TextEncoder();
+      const chunks = [];
+      let current = '';
+      let currentBytes = 0;
+      for (const ch of String(str || '')) {
+        const chBytes = encoder.encode(ch).length;
+        if (current && currentBytes + chBytes > 45) {
+          chunks.push(current);
+          current = '';
+          currentBytes = 0;
+        }
+        current += ch;
+        currentBytes += chBytes;
+      }
+      if (current || chunks.length === 0) chunks.push(current);
+      return chunks.map(encodeMimeWordSingle).join('\r\n ');
+    }
+
+    function buildAttachmentHeaders(rawName, mimeType) {
+      let name = String(rawName || '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim() || 'anhang';
+      if (/^[\x20-\x7E]+$/.test(name)) {
+        const quoted = name.replace(/["\\]/g, '_');
+        return [
+          `Content-Type: ${mimeType}; name="${quoted}"`,
+          `Content-Disposition: attachment; filename="${quoted}"`
+        ];
+      }
+
+      let word = encodeMimeWordSingle(name);
+      if (word.length > 900) {
+        const extMatch = name.match(/\.[A-Za-z0-9]{1,8}$/);
+        name = 'anhang' + (extMatch ? extMatch[0] : '');
+        return [
+          `Content-Type: ${mimeType}; name="${name}"`,
+          `Content-Disposition: attachment; filename="${name}"`
+        ];
+      }
+
+      let extended = '';
+      try {
+        const pct = encodeURIComponent(name).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+        if (pct.length <= 900) extended = `;\r\n filename*=UTF-8''${pct}`;
+      } catch (e) {}
+
+      return [
+        `Content-Type: ${mimeType};\r\n name="${word}"`,
+        `Content-Disposition: attachment;\r\n filename="${word}"${extended}`
+      ];
     }
 
     function wrapBase64(b64) {
@@ -2263,20 +2553,71 @@ Anforderung: ${prompt}`;
       return btoa(asciiStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
-    function decodeBase64UrlUtf8(data) {
+    function base64UrlToBase64(data) {
+      let b64 = String(data || '').replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+      while (b64.length % 4) b64 += '=';
+      return b64;
+    }
+
+    function decodeBase64UrlUtf8(data, charsetHint = '') {
       if (!data) return '';
       try {
-        let b64 = data.replace(/-/g, '+').replace(/_/g, '/');
-        while (b64.length % 4) b64 += '=';
-        const binary = atob(b64);
+        const binary = atob(base64UrlToBase64(data));
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) {
           bytes[i] = binary.charCodeAt(i);
         }
-        return new TextDecoder('utf-8').decode(bytes);
+        try {
+          return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch (utfErr) {
+          // Kein gültiges UTF-8 (z. B. ältere ISO-8859-1-Mails): angegebenen Zeichensatz nutzen.
+          try {
+            return new TextDecoder(charsetHint || 'windows-1252').decode(bytes);
+          } catch (labelErr) {
+            return new TextDecoder('windows-1252').decode(bytes);
+          }
+        }
       } catch (e) {
         return '';
       }
+    }
+
+    function getPartCharset(part) {
+      const headers = (part && Array.isArray(part.headers)) ? part.headers : [];
+      const ct = headers.find(h => h && typeof h.name === 'string' && h.name.toLowerCase() === 'content-type');
+      const m = ct && ct.value ? String(ct.value).match(/charset\s*=\s*"?([^";\s]+)/i) : null;
+      return m ? m[1].trim() : '';
+    }
+
+    function htmlToPlainText(html) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      if (!doc.body) return '';
+      doc.querySelectorAll('style, script, noscript, template, title').forEach(el => el.remove());
+
+      // HTML-Quelltext-Umbrüche sind keine sichtbaren Umbrüche: Leerraum zuerst zusammenfassen ...
+      const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+      textNodes.forEach(node => {
+        if (node.parentElement && node.parentElement.closest('pre')) return;
+        node.nodeValue = node.nodeValue.replace(/\s+/g, ' ');
+      });
+
+      // ... und danach echte Zeilenumbrüche für <br> und Block-Elemente einsetzen.
+      doc.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
+      doc.querySelectorAll('td, th').forEach(el => el.append(' '));
+      doc.querySelectorAll('p, div, tr, li, h1, h2, h3, h4, h5, h6, blockquote, table, section, article, header, footer, ul, ol, pre').forEach(el => {
+        el.prepend('\n');
+        el.append('\n');
+      });
+      doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(el => el.append('\n'));
+
+      return (doc.body.textContent || '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/[ \t]*\n[ \t]*/g, '\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
     }
 
     function extractMessagePlainText(payload, snippetFallback = '') {
@@ -2284,8 +2625,10 @@ Anforderung: ${prompt}`;
 
       function findPartByMime(part, targetMime) {
         if (!part) return null;
-        if (part.mimeType === targetMime && part.body && part.body.data) {
-          return decodeBase64UrlUtf8(part.body.data);
+        // Teile mit Dateinamen sind Anhänge (z. B. eine angehängte .txt) und nicht der Nachrichtentext.
+        const isAttachment = Boolean(part.filename && part.filename.trim());
+        if (!isAttachment && part.mimeType === targetMime && part.body && part.body.data) {
+          return decodeBase64UrlUtf8(part.body.data, getPartCharset(part));
         }
         if (Array.isArray(part.parts)) {
           for (const child of part.parts) {
@@ -2303,9 +2646,7 @@ Anforderung: ${prompt}`;
 
       const html = findPartByMime(payload, 'text/html');
       if (html && html.trim()) {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        doc.querySelectorAll('style, script').forEach(el => el.remove());
-        const text = (doc.body?.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+        const text = htmlToPlainText(html);
         if (text) return text.slice(0, 30000);
       }
 
@@ -2329,13 +2670,13 @@ Anforderung: ${prompt}`;
 
     async function fetchAttachmentData(messageId, attachmentId) {
       try {
-        const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attachmentId}`, {
+        const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`, {
           headers: { Authorization: 'Bearer ' + accessToken }
         });
         if (!res.ok) return null;
         const data = await res.json();
         if (data && data.data) {
-          return data.data.replace(/-/g, '+').replace(/_/g, '/');
+          return base64UrlToBase64(data.data);
         }
       } catch (e) {}
       return null;
@@ -2344,26 +2685,31 @@ Anforderung: ${prompt}`;
     async function extractAttachmentsWithPayloads(detail) {
       const results = [];
       if (!detail || !detail.payload) return results;
+      let remainingBudget = MAX_REPLY_ATTACHMENT_BYTES;
 
       async function walk(part) {
         if (!part) return;
-        const filename = part.filename;
+        const filename = (part.filename || '').trim();
         const body = part.body;
-        if (filename && filename.trim() && body) {
-          const mimeType = part.mimeType || 'application/octet-stream';
+        if (filename && body && (body.attachmentId || body.data || body.size > 0)) {
+          // Nur Dateitypen, die Gemini verarbeiten kann, und nur bis zum Größenlimit mitsenden.
+          // Alles andere (z. B. .docx, .zip, .ics) wird der KI lediglich namentlich genannt.
+          const geminiMime = resolveGeminiMimeType(part.mimeType, filename);
+          const size = Number(body.size) || 0;
           let base64Data = null;
-          if (body.data) {
-            base64Data = body.data.replace(/-/g, '+').replace(/_/g, '/');
-          } else if (body.attachmentId && detail.id) {
-            base64Data = await fetchAttachmentData(detail.id, body.attachmentId);
+          if (geminiMime && size <= remainingBudget) {
+            if (body.data) {
+              base64Data = base64UrlToBase64(body.data);
+            } else if (body.attachmentId && detail.id) {
+              base64Data = await fetchAttachmentData(detail.id, body.attachmentId);
+            }
+            if (base64Data) remainingBudget -= size;
           }
-          if (base64Data) {
-            results.push({
-              filename: filename.trim(),
-              mimeType,
-              data: base64Data
-            });
-          }
+          results.push({
+            filename,
+            mimeType: geminiMime || sanitizeMimeType(part.mimeType),
+            data: base64Data
+          });
         }
         if (Array.isArray(part.parts)) {
           for (const p of part.parts) {
@@ -2380,6 +2726,11 @@ Anforderung: ${prompt}`;
       if (!accessToken) {
         showAlert('Bitte verbinde oben rechts zuerst dein Assistenten-Konto mit Gmail.', 'error');
         requestGmailToken({ silent: false });
+        return null;
+      }
+
+      if (pendingAttachmentReads > 0) {
+        showAlert('Die Anhänge werden noch geladen. Bitte warte einen Moment und sende dann erneut.', 'info');
         return null;
       }
 
@@ -2435,6 +2786,8 @@ Anforderung: ${prompt}`;
 
       const { to, subject, body } = draft;
       const cfg = getConfig();
+      // Antwort-Kontext festhalten, damit er sich während des Versands nicht ändern kann.
+      const ctx = replyContext;
       const btn = document.getElementById('btnSendMail');
       btn.disabled = true;
       btn.textContent = 'Sende E-Mail...';
@@ -2451,11 +2804,11 @@ Anforderung: ${prompt}`;
         mailHeaders.push(`To: ${to}`);
         mailHeaders.push(`Subject: ${encodedSubject}`);
 
-        if (replyContext && replyContext.messageIdHeader && /^[\x20-\x7E]+$/.test(replyContext.messageIdHeader)) {
-          mailHeaders.push(`In-Reply-To: ${replyContext.messageIdHeader}`);
-          const refs = replyContext.referencesHeader && /^[\x20-\x7E]+$/.test(replyContext.referencesHeader)
-            ? `${replyContext.referencesHeader} ${replyContext.messageIdHeader}`
-            : replyContext.messageIdHeader;
+        if (ctx && ctx.messageIdHeader && /^[\x20-\x7E]+$/.test(ctx.messageIdHeader)) {
+          mailHeaders.push(`In-Reply-To: ${ctx.messageIdHeader}`);
+          const refs = ctx.referencesHeader && /^[\x20-\x7E]+$/.test(ctx.referencesHeader)
+            ? `${ctx.referencesHeader} ${ctx.messageIdHeader}`
+            : ctx.messageIdHeader;
           mailHeaders.push(`References: ${refs}`);
         }
 
@@ -2481,11 +2834,10 @@ Anforderung: ${prompt}`;
           mailHeaders.push(wrapBase64(utf8ToBase64(body)));
 
           for (const att of mailAttachments) {
-            const encodedFileName = encodeMimeHeaderWord(att.name || 'anhang');
-            const mimeType = att.mimeType || 'application/octet-stream';
+            const attHeaders = buildAttachmentHeaders(att.name, sanitizeMimeType(att.mimeType));
             mailHeaders.push(`--${boundary}`);
-            mailHeaders.push(`Content-Type: ${mimeType}; name="${encodedFileName}"`);
-            mailHeaders.push(`Content-Disposition: attachment; filename="${encodedFileName}"`);
+            mailHeaders.push(attHeaders[0]);
+            mailHeaders.push(attHeaders[1]);
             mailHeaders.push('Content-Transfer-Encoding: base64');
             mailHeaders.push('');
             mailHeaders.push(wrapBase64(att.data));
@@ -2496,8 +2848,8 @@ Anforderung: ${prompt}`;
         }
 
         const sendPayload = { raw: asciiToBase64Url(rawMail) };
-        if (replyContext && replyContext.threadId) {
-          sendPayload.threadId = replyContext.threadId;
+        if (ctx && ctx.threadId) {
+          sendPayload.threadId = ctx.threadId;
         }
 
         const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
@@ -2514,7 +2866,7 @@ Anforderung: ${prompt}`;
           clearStoredToken();
           updateGmailBadge(false);
           requestGmailToken({ silent: false });
-          throw new Error('Die Sitzung ist abgelaufen. Bitte bestätige kurz die Anmeldung und sende erneut.');
+          throw new Error('Die Sitzung ist abgelaufen. Bitte bestätige kurz die Anmeldung und sende erneut. Dein Entwurf bleibt erhalten.');
         }
 
         if (!res.ok) {
@@ -2522,7 +2874,13 @@ Anforderung: ${prompt}`;
           throw new Error(errData.error?.message || 'Versand fehlgeschlagen.');
         }
 
-        rememberContactEmail(to);
+        // Neue Kontakte bei Antworten gleich mit dem Anzeigenamen des Absenders anlegen;
+        // bereits gespeicherte Namen bleiben unverändert.
+        const alreadyKnown = getContacts().some(c => c.email.toLowerCase() === to);
+        const replyName = (!alreadyKnown && ctx && ctx.senderEmail === to)
+          ? ((extractDisplayNameAndEmail(ctx.senderRaw) || {}).name || '')
+          : '';
+        rememberContactEmail(to, replyName);
 
         replyContext = null;
         mailAttachments = [];
@@ -2554,11 +2912,17 @@ Anforderung: ${prompt}`;
     async function startReplyToMessage(messageId) {
       const msg = inboxMessagesCache[messageId];
       if (!msg) return;
-      if (isGeneratingDraft) {
+      if (isGeneratingDraft || isPreparingReply) {
         showAlert('Es läuft bereits eine Generierung. Bitte warte, bis sie abgeschlossen ist.', 'info');
         return;
       }
+      if (!accessToken) {
+        requestGmailToken({ silent: false });
+        return;
+      }
 
+      isPreparingReply = true;
+      const epoch = mailboxEpoch;
       hideSendConfirmation();
       hideAlert();
 
@@ -2566,16 +2930,27 @@ Anforderung: ${prompt}`;
       btn.disabled = true;
       btn.textContent = 'Lade Nachricht & Anhänge...';
 
-      let incomingAttachmentsWithData = [];
+      // Fallback: Anhänge nur namentlich, falls die Detailabfrage scheitert.
+      let incomingAttachmentsWithData = (msg.attachments || []).map(name => ({ filename: name, mimeType: '', data: null }));
       try {
-        const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`, {
+        const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(messageId)}?format=full`, {
           headers: { Authorization: 'Bearer ' + accessToken }
         });
         if (detailRes.ok) {
           const detailJson = await detailRes.json();
           incomingAttachmentsWithData = await extractAttachmentsWithPayloads(detailJson);
         }
-      } catch (e) {}
+      } catch (e) {
+      } finally {
+        isPreparingReply = false;
+        btn.disabled = false;
+      }
+
+      // Konto wurde zwischenzeitlich getrennt oder gewechselt: nichts mehr übernehmen.
+      if (epoch !== mailboxEpoch) {
+        updateReplyBannerUI();
+        return;
+      }
 
       const replySubject = /^re:/i.test(msg.subject) ? msg.subject : `Re: ${msg.subject}`;
       replyContext = {
@@ -2591,12 +2966,12 @@ Anforderung: ${prompt}`;
       };
 
       document.getElementById('mailTo').value = msg.replyToEmail;
+      mailToIsManual = false;
       document.getElementById('mailSubject').value = replySubject;
       document.getElementById('mailPrompt').value = '';
       document.getElementById('mailBody').value = '';
       updateReplyBannerUI();
 
-      btn.disabled = false;
       document.getElementById('mailComposeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
       generateEmailDraft();
     }
@@ -2780,6 +3155,7 @@ Anforderung: ${prompt}`;
         return;
       }
       isLoadingInbox = true;
+      const epoch = mailboxEpoch;
 
       const listEl = document.getElementById('inboxList');
       listEl.innerHTML = '<p class="text-xs text-slate-400">Lade eingegangene und gesendete Nachrichten...</p>';
@@ -2831,13 +3207,16 @@ Anforderung: ${prompt}`;
 
         const details = await Promise.all(
           uniqueIds.map(async (id) => {
-            const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`, {
+            const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(id)}?format=full`, {
               headers: { Authorization: 'Bearer ' + accessToken }
             });
             if (!r.ok) return null;
             return r.json();
           })
         );
+
+        // Konto wurde während des Ladens getrennt oder gewechselt: Ergebnis verwerfen.
+        if (epoch !== mailboxEpoch) return;
 
         const activeAgent = (connectedAccountEmail || getConfig().agentEmail || '').toLowerCase();
         inboxMessagesCache = {};
@@ -2850,9 +3229,10 @@ Anforderung: ${prompt}`;
 
           const from = getHeader('From') || 'Unbekannt';
           const to = getHeader('To') || '';
-          const replyToRaw = getHeader('Reply-To') || from;
-          const replyToEmail = cleanExtractedEmail(replyToRaw);
           const fromEmail = cleanExtractedEmail(from);
+          // Reply-To kann mehrere Adressen enthalten – es wird die erste gültige verwendet.
+          const replyToCandidate = cleanExtractedEmail(splitAddressList(getHeader('Reply-To'))[0] || '');
+          const replyToEmail = replyToCandidate.includes('@') ? replyToCandidate : fromEmail;
           const subject = getHeader('Subject') || '(Kein Betreff)';
           const dateHeader = getHeader('Date');
           const messageIdHeader = getHeader('Message-ID');
@@ -2891,7 +3271,9 @@ Anforderung: ${prompt}`;
         updateFilterButtonsUI();
         renderMessageList();
       } catch (err) {
-        listEl.innerHTML = `<p class="text-xs text-rose-400">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
+        if (epoch === mailboxEpoch) {
+          listEl.innerHTML = `<p class="text-xs text-rose-400">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
+        }
       } finally {
         isLoadingInbox = false;
         if (reloadInboxQueued) {
@@ -2906,33 +3288,40 @@ Anforderung: ${prompt}`;
       const actionsBox = document.getElementById('docFileActions');
       const label = document.getElementById('selectedFileName');
       const resultAttachBtn = document.getElementById('btnAttachDocFromResult');
+      const readToken = ++docFileReadToken;
 
-      if (!file) {
+      const clearSelection = () => {
         uploadedFilePayload = null;
         actionsBox.classList.add('hidden');
         resultAttachBtn.classList.add('hidden');
+      };
+
+      if (!file) {
+        clearSelection();
         return;
       }
 
       if (file.size > MAX_DOC_UPLOAD_BYTES) {
         event.target.value = '';
-        uploadedFilePayload = null;
-        actionsBox.classList.add('hidden');
-        resultAttachBtn.classList.add('hidden');
+        clearSelection();
         showAlert(`Die Datei ${file.name} (${formatFileSize(file.size)}) überschreitet das Limit von 10 MB für die Dokumentanalyse.`, 'error');
         return;
       }
 
-      const detectedMime = inferMimeType(file, 'text/plain');
+      // Bis die neue Datei fertig gelesen ist, darf nicht versehentlich die vorherige analysiert werden.
+      clearSelection();
+
+      // Die Dateiendung ist verlässlicher als der vom Gerät gemeldete Typ (z. B. bei .csv / .md auf Android).
+      const detectedMime = inferMimeType({ name: file.name, type: '' }, '') || sanitizeMimeType(file.type || 'text/plain');
       const reader = new FileReader();
       reader.onerror = () => {
-        uploadedFilePayload = null;
-        actionsBox.classList.add('hidden');
-        resultAttachBtn.classList.add('hidden');
+        if (readToken !== docFileReadToken) return;
+        clearSelection();
         showAlert(`Die Datei ${file.name} konnte nicht gelesen werden.`, 'error');
       };
       reader.onload = () => {
-        const base64Data = reader.result.split(',')[1];
+        if (readToken !== docFileReadToken) return;
+        const base64Data = String(reader.result || '').split(',')[1] || '';
         uploadedFilePayload = {
           name: file.name,
           size: file.size,
@@ -2948,7 +3337,7 @@ Anforderung: ${prompt}`;
 
     async function processDocument() {
       const rawText = document.getElementById('docRawText').value.trim();
-      const instruction = document.getElementById('docInstruction').value.trim();
+      const instruction = document.getElementById('docInstruction').value.trim() || DEFAULT_DOC_INSTRUCTION;
 
       if (!uploadedFilePayload && !rawText) {
         showAlert('Bitte wähle eine Datei aus oder füge einen Text ein.', 'error');
@@ -2985,6 +3374,7 @@ Anforderung: ${prompt}`;
           });
         }
 
+        document.getElementById('docResultOutput').textContent = '';
         document.getElementById('docResultCard').classList.remove('hidden');
         const result = await callGemini(
           parts,
@@ -3000,6 +3390,9 @@ Anforderung: ${prompt}`;
           showAlert('Dokument erfolgreich ausgewertet.', 'success');
         }
       } catch (err) {
+        if (!document.getElementById('docResultOutput').textContent.trim()) {
+          document.getElementById('docResultCard').classList.add('hidden');
+        }
         showAlert(err.message, 'error');
       } finally {
         btn.disabled = false;
@@ -3026,6 +3419,15 @@ Anforderung: ${prompt}`;
       const modal = document.getElementById('sendConfirmModal');
       if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
         closeSendConfirmModal();
+      }
+    });
+
+    // Timer laufen auf dem Smartphone im Hintergrund nicht zuverlässig weiter:
+    // beim Zurückkehren in die App prüfen, ob die Gmail-Sitzung inzwischen abgelaufen ist.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !accessToken || !tokenExpiresAt) return;
+      if (Date.now() >= tokenExpiresAt + 60000) {
+        handleTokenExpiry();
       }
     });
 
