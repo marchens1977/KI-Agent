@@ -414,7 +414,7 @@
       }
     }
 
-    async function callGemini(parts, maxRetries = 4) {
+    async function callGemini(parts, maxRetries = 3) {
       const cfg = getConfig();
       if (!cfg.geminiKey) {
         switchTab('setup');
@@ -424,14 +424,17 @@
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sek. Timeout gegen Hänger
+
         try {
           const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts }]
-            })
+            body: JSON.stringify({ contents: [{ parts }] }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
 
           const data = await response.json();
           if (response.ok) {
@@ -449,6 +452,10 @@
 
           throw new Error(errMsg);
         } catch (netErr) {
+          clearTimeout(timeoutId);
+          if (netErr.name === 'AbortError') {
+            throw new Error('Zeitüberschreitung: Die Anfrage hat zu lange gedauert. Bitte versuche es erneut.');
+          }
           if (attempt < maxRetries) {
             await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
             continue;
@@ -553,7 +560,6 @@ Anweisung / Diktat: ${prompt}`;
           throw new Error(errData.error?.message || 'Versand fehlgeschlagen.');
         }
 
-        // Erfolg: Formular komplett leeren und Bestätigung zeigen
         showAlert(`E-Mail erfolgreich an ${to} gesendet.`, 'success');
         document.getElementById('mailPrompt').value = '';
         document.getElementById('mailTo').value = '';
