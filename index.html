@@ -53,7 +53,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span class="text-xs text-slate-400">Gemini 2.5 Flash</span>
+          <span class="text-xs text-slate-400">Gemini 3.8 Flash</span>
         </div>
 
         <div>
@@ -421,32 +421,40 @@
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts }]
-          })
-        });
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts }]
+            })
+          });
 
-        const data = await response.json();
-        if (response.ok) {
-          return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const data = await response.json();
+          if (response.ok) {
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          }
+
+          const errMsg = data.error?.message || 'Gemini API-Fehler';
+          const isTemporary = response.status === 503 || response.status === 429 || /high demand|overloaded|try again later/i.test(errMsg);
+
+          if (isTemporary && attempt < maxRetries) {
+            showAlert(`Server kurz ausgelastet – automatischer Versuch ${attempt + 1} von ${maxRetries}...`, 'info');
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+            continue;
+          }
+
+          throw new Error(errMsg);
+        } catch (netErr) {
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+            continue;
+          }
+          throw netErr;
         }
-
-        const errMsg = data.error?.message || 'Gemini API-Fehler';
-        const isTemporary = response.status === 503 || response.status === 429 || /high demand|overloaded|try again later/i.test(errMsg);
-
-        if (isTemporary && attempt < maxRetries) {
-          showAlert(`Server kurz ausgelastet – automatischer Versuch ${attempt + 1} von ${maxRetries}...`, 'info');
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-          continue;
-        }
-
-        throw new Error(errMsg);
       }
     }
 
@@ -486,7 +494,7 @@ Anweisung / Diktat: ${prompt}`;
         document.getElementById('mailBody').value = (bodySplit[1] || result).trim();
         showAlert('E-Mail-Entwurf mit Empfänger, Betreff und Inhalt erstellt.', 'success');
       } catch (err) {
-        showAlert(err.message, 'error');
+        showAlert('Fehler bei der Generierung: ' + err.message, 'error');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Entwurf mit KI generieren';
@@ -545,8 +553,13 @@ Anweisung / Diktat: ${prompt}`;
           throw new Error(errData.error?.message || 'Versand fehlgeschlagen.');
         }
 
+        // Erfolg: Formular komplett leeren und Bestätigung zeigen
         showAlert(`E-Mail erfolgreich an ${to} gesendet.`, 'success');
         document.getElementById('mailPrompt').value = '';
+        document.getElementById('mailTo').value = '';
+        document.getElementById('mailSubject').value = '';
+        document.getElementById('mailBody').value = '';
+        loadInbox();
       } catch (err) {
         showAlert('Fehler beim Senden: ' + err.message, 'error');
       } finally {
