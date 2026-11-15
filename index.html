@@ -53,7 +53,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span class="text-xs text-slate-400">Gemini 3.8 Flash</span>
+          <span class="text-xs text-slate-400">Gemini 2.5 Flash</span>
         </div>
 
         <div>
@@ -64,7 +64,7 @@
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf 'Einsprechen' oder schreibe hier: z. B. Schreibe eine höfliche Anfrage an info@beispiel.de wegen eines Termins am kommenden Dienstag..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf 'Einsprechen' oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de über den Test..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
@@ -421,7 +421,7 @@
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const response = await fetch(url, {
@@ -441,7 +441,7 @@
         const isTemporary = response.status === 503 || response.status === 429 || /high demand|overloaded|try again later/i.test(errMsg);
 
         if (isTemporary && attempt < maxRetries) {
-          showAlert(`Google-Server kurz ausgelastet – automatischer Versuch ${attempt + 1} von ${maxRetries}...`, 'info');
+          showAlert(`Server kurz ausgelastet – automatischer Versuch ${attempt + 1} von ${maxRetries}...`, 'info');
           await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
           continue;
         }
@@ -462,7 +462,15 @@
       btn.textContent = 'Generiere Entwurf...';
 
       try {
-        const instruction = `Erstelle aus folgender Anweisung eine professionelle, natürliche E-Mail auf Deutsch. Falls die Anweisung per Spracheingabe diktiert wurde und Buchstabier-Hinweise zur E-Mail-Adresse enthält (z. B. "Mark mit C, Hens mit S"), setze diese zu einer korrekten, kleingeschriebenen E-Mail-Adresse ohne Leerzeichen zusammen. Antworte ausschließlich im folgenden Format ohne Markdown-Sterne oder zusätzliche Erklärungen:\nEMPFAENGER: [falls genannt, sonst leer]\nBETREFF: [passender Betreff]\nTEXT:\n[vollständiger E-Mail-Text]\n\nAnweisung: ${prompt}`;
+        const instruction = `Erstelle aus folgender Anweisung eine professionelle, natürliche E-Mail auf Deutsch. 
+WICHTIG: Trenne die Antwort strikt in folgende drei Abschnitte auf, damit sie automatisch in die Felder übernommen werden können:
+EMPFAENGER: [genannte E-Mail-Adresse, falls keine genannt wurde leer lassen]
+BETREFF: [ein passender, aussagekräftiger Betreff]
+TEXT:
+[der vollständige, professionelle Inhalt der E-Mail]
+
+Anweisung / Diktat: ${prompt}`;
+
         const result = await callGemini([{ text: instruction }]);
 
         const toMatch = result.match(/^EMPFAENGER:\s*(.*)$/m);
@@ -476,7 +484,7 @@
           document.getElementById('mailSubject').value = subMatch[1].trim();
         }
         document.getElementById('mailBody').value = (bodySplit[1] || result).trim();
-        showAlert('E-Mail-Entwurf wurde erstellt.', 'success');
+        showAlert('E-Mail-Entwurf mit Empfänger, Betreff und Inhalt erstellt.', 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
