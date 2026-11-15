@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:06</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:35</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -118,13 +118,13 @@
 
         <div>
           <div class="flex items-center justify-between gap-2 mb-1.5">
-            <label for="mailBody" class="block text-xs text-slate-400">Nachrichtentext (inkl. Signatur)</label>
+            <label for="mailBody" class="block text-xs text-slate-400">Nachrichtentext</label>
             <button type="button" onclick="toggleVoiceInput('mailBody', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
               <span>Diktieren</span>
             </button>
           </div>
-          <textarea id="mailBody" oninput="hideSendConfirmation()" rows="8" placeholder="Hier erscheint der generierte Text samt Signatur..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailBody" oninput="hideSendConfirmation()" rows="8" placeholder="Hier erscheint der generierte E-Mail-Text..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <div class="space-y-2">
@@ -278,7 +278,7 @@
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="personaStyleRules" rows="7" placeholder="Beschreibe hier genau, wie die KI formulieren soll (z. B. Satzbau, Tonalität, keine Floskeln, wie Zu- und Absagen klingen sollen)..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="personaStyleRules" rows="6" placeholder="Beschreibe hier genau, wie die KI formulieren soll (z. B. Satzbau, Tonalität, keine Floskeln, wie Zu- und Absagen klingen sollen)..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <div>
@@ -289,11 +289,63 @@
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="personaBackground" rows="4" placeholder="z. B. Wohnort Mainz, erreichbar bevorzugt per E-Mail, bei Terminvorschlägen immer konkrete Uhrzeiten nennen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="personaBackground" rows="3" placeholder="z. B. Wohnort Mainz, erreichbar bevorzugt per E-Mail, bei Terminvorschlägen immer konkrete Uhrzeiten nennen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+      </div>
+
+      <!-- EIGENER BEREICH FÜR DIE SIGNATUR -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+        <div>
+          <h2 class="text-sm font-semibold text-white">E-Mail-Signatur & Grußformel</h2>
+          <p class="text-xs text-slate-400 mt-1">Definiere hier deinen gewünschten E-Mail-Abschluss. Er wird flexibel als Anweisung an die KI übergeben und nicht mehr starr vom Programmcode erzwungen.</p>
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="block text-xs text-slate-400">Bausteine zum schnellen Einfügen</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="applySignatureTemplate('friendly')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+              Viele Grüße
+            </button>
+            <button type="button" onclick="applySignatureTemplate('formal')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+              Mit freundlichen Grüßen
+            </button>
+            <button type="button" onclick="applySignatureTemplate('short')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+              Beste Grüße
+            </button>
+            <button type="button" onclick="applySignatureTemplate('clear')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-rose-300 transition">
+              Leeren
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="personaSignature" class="block text-xs text-slate-400">Deine Signatur (mehrzeilig, inklusive Leerzeilen)</label>
+            <button type="button" onclick="toggleVoiceInput('personaSignature', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Einsprechen</span>
+            </button>
+          </div>
+          <textarea id="personaSignature" oninput="updateSignaturePreview()" rows="5" placeholder="Trage hier deine gewünschte Grußformel und Signatur ein, z. B.:&#10;Viele Grüße&#10;&#10;KI-Assistent von Marc Hens" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <label class="flex items-start gap-2.5 cursor-pointer select-none bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+          <input type="checkbox" id="personaExactSignature" checked class="mt-0.5 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500" />
+          <span class="text-xs text-slate-300 leading-relaxed">
+            Signatur exakt wie oben definiert verwenden (wenn deaktiviert, nutzt die KI sie nur als flexible Vorlage und passt die Grußformel bei Bedarf an den Ton der Nachricht an).
+          </span>
+        </label>
+
+        <div class="space-y-1.5">
+          <span class="block text-xs text-slate-400">Live-Vorschau des E-Mail-Abschlusses</span>
+          <div class="rounded-xl bg-slate-950 border border-slate-800 p-3.5 text-xs sm:text-sm space-y-2">
+            <p class="text-slate-500 italic">... hier endet der eigentliche Nachrichtentext.</p>
+            <div id="signatureLivePreview" class="text-slate-200 whitespace-pre-wrap pt-1 border-t border-slate-900"></div>
+          </div>
         </div>
 
         <button type="button" onclick="savePersonaSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
-          KI-Profil und Schreibstil speichern
+          KI-Profil und Signatur speichern
         </button>
       </div>
     </section>
@@ -352,20 +404,21 @@
   </main>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 09:06';
+    const BUILD_TIMESTAMP = '15.11.2026 · 09:35';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
-    const PERSONA_KEY = 'ki_agent_persona_v1';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v33';
+    const PERSONA_KEY = 'ki_agent_persona_v2';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v34';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
     const SENDER_DISPLAY_NAME = 'KI-Assistent von Marc Hens';
-    const EMAIL_SIGNATURE = 'Viele Grüße\n\nKI-Assistent von Marc Hens';
     const MAX_ATTACHMENT_TOTAL_BYTES = 15 * 1024 * 1024;
 
     const DEFAULT_PERSONA = {
       role: 'Du schreibst als persönlicher KI-Assistent im Auftrag von Marc Hens. Dein Auftreten ist verbindlich, klar, respektvoll und lösungsorientiert.',
       styleRules: 'Formuliere präzise, natürlich und direkt auf den Punkt. Verzichte auf künstliche Floskeln, übertriebene Höflichkeitsfloskeln und unnötige Ausschmückungen. Schreibe in zusammenhängenden, gut lesbaren Sätzen ohne Aufzählungszeichen oder Formatierungssymbole, außer der Inhalt erfordert es zwingend. Passe die Anrede (Du oder Sie) logisch an den Empfänger und den Kontext an.',
-      background: ''
+      background: '',
+      signature: '',
+      exactSignature: true
     };
 
     const PERSONA_PRESETS = {
@@ -411,11 +464,47 @@
         return {
           role: typeof parsed.role === 'string' ? parsed.role : DEFAULT_PERSONA.role,
           styleRules: typeof parsed.styleRules === 'string' ? parsed.styleRules : DEFAULT_PERSONA.styleRules,
-          background: typeof parsed.background === 'string' ? parsed.background : ''
+          background: typeof parsed.background === 'string' ? parsed.background : '',
+          signature: typeof parsed.signature === 'string' ? parsed.signature : '',
+          exactSignature: typeof parsed.exactSignature === 'boolean' ? parsed.exactSignature : true
         };
       } catch (e) {
         return { ...DEFAULT_PERSONA };
       }
+    }
+
+    function updateSignaturePreview() {
+      const sigInput = document.getElementById('personaSignature');
+      const previewEl = document.getElementById('signatureLivePreview');
+      if (!sigInput || !previewEl) return;
+
+      const val = sigInput.value.trim();
+      if (!val) {
+        previewEl.textContent = '(Keine feste Signatur hinterlegt – die KI wählt eine zum Ton der Nachricht passende Grußformel.)';
+        previewEl.classList.add('text-slate-500', 'italic');
+        previewEl.classList.remove('text-slate-200');
+      } else {
+        previewEl.textContent = sigInput.value.replace(/^\n+|\n+$/g, '');
+        previewEl.classList.remove('text-slate-500', 'italic');
+        previewEl.classList.add('text-slate-200');
+      }
+    }
+
+    function applySignatureTemplate(type) {
+      const sigEl = document.getElementById('personaSignature');
+      if (!sigEl) return;
+
+      if (type === 'clear') {
+        sigEl.value = '';
+      } else if (type === 'friendly') {
+        sigEl.value = 'Viele Grüße\n\nKI-Assistent von Marc Hens';
+      } else if (type === 'formal') {
+        sigEl.value = 'Mit freundlichen Grüßen\n\nKI-Assistent von Marc Hens';
+      } else if (type === 'short') {
+        sigEl.value = 'Beste Grüße\n\nMarc Hens';
+      }
+      updateSignaturePreview();
+      sigEl.focus();
     }
 
     function updatePersonaStatusChip() {
@@ -423,8 +512,16 @@
       if (!chip) return;
       const p = getPersonaConfig();
       const hasRules = Boolean((p.role || '').trim() || (p.styleRules || '').trim() || (p.background || '').trim());
-      if (hasRules) {
-        chip.textContent = 'KI-Profil aktiv';
+      const hasSig = Boolean((p.signature || '').trim());
+
+      if (hasRules && hasSig) {
+        chip.textContent = 'KI-Profil & Signatur aktiv';
+        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
+      } else if (hasRules) {
+        chip.textContent = 'KI-Profil aktiv (ohne Signatur)';
+        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
+      } else if (hasSig) {
+        chip.textContent = 'Signatur aktiv';
         chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
       } else {
         chip.textContent = 'KI-Profil leer';
@@ -437,9 +534,16 @@
       const roleEl = document.getElementById('personaRole');
       const styleEl = document.getElementById('personaStyleRules');
       const bgEl = document.getElementById('personaBackground');
+      const sigEl = document.getElementById('personaSignature');
+      const exactEl = document.getElementById('personaExactSignature');
+
       if (roleEl) roleEl.value = p.role;
       if (styleEl) styleEl.value = p.styleRules;
       if (bgEl) bgEl.value = p.background;
+      if (sigEl) sigEl.value = p.signature;
+      if (exactEl) exactEl.checked = p.exactSignature;
+
+      updateSignaturePreview();
       updatePersonaStatusChip();
     }
 
@@ -455,15 +559,25 @@
       const role = document.getElementById('personaRole').value.trim();
       const styleRules = document.getElementById('personaStyleRules').value.trim();
       const background = document.getElementById('personaBackground').value.trim();
+      const signature = document.getElementById('personaSignature').value.replace(/^\n+|\n+$/g, '');
+      const exactSignature = document.getElementById('personaExactSignature').checked;
 
-      localStorage.setItem(PERSONA_KEY, JSON.stringify({ role, styleRules, background }));
+      localStorage.setItem(PERSONA_KEY, JSON.stringify({
+        role,
+        styleRules,
+        background,
+        signature,
+        exactSignature
+      }));
+      updateSignaturePreview();
       updatePersonaStatusChip();
-      showAlert('KI-Profil und Formulierungsregeln gespeichert. Sie werden ab sofort bei jeder E-Mail berücksichtigt.', 'success');
+      showAlert('KI-Profil, Formulierungsregeln und Signatur gespeichert.', 'success');
     }
 
     function buildPersonaPromptBlock() {
       const p = getPersonaConfig();
       const blocks = [];
+
       if (p.role && p.role.trim()) {
         blocks.push(`Rolle und Grundhaltung:\n${p.role.trim()}`);
       }
@@ -473,8 +587,19 @@
       if (p.background && p.background.trim()) {
         blocks.push(`Dauerhafte Grundinformationen und Hintergrundkontext:\n${p.background.trim()}`);
       }
-      if (blocks.length === 0) return '';
-      return `=== PERSÖNLICHES KI-PROFIL VON MARC HENS (STRIKT BEACHTEN) ===\n${blocks.join('\n\n')}\n=== ENDE KI-PROFIL ===`;
+
+      const trimmedSig = (p.signature || '').trim();
+      if (trimmedSig) {
+        if (p.exactSignature) {
+          blocks.push(`Verbindlicher E-Mail-Abschluss und Signatur:\nBeende den E-Mail-Text nach einer Leerzeile exakt mit folgendem Abschluss (ohne zusätzliche oder doppelte Grußformel davor):\n${trimmedSig}`);
+        } else {
+          blocks.push(`Bevorzugte Signatur als Orientierung:\nNutze als Abschluss am Ende der E-Mail folgende Signatur oder passe die Grußformel bei Bedarf leicht an den Ton der Nachricht an:\n${trimmedSig}`);
+        }
+      } else {
+        blocks.push('E-Mail-Abschluss und Signatur:\nDa keine feste Signatur hinterlegt ist, wähle eine zum Ton und Empfänger der E-Mail passende, natürliche Grußformel (oder befolge eventuelle Vorgaben aus den Schreibstil-Regeln).');
+      }
+
+      return `=== PERSÖNLICHES KI-PROFIL UND ANWEISUNGEN (STRIKT BEACHTEN) ===\n${blocks.join('\n\n')}\n=== ENDE KI-PROFIL ===`;
     }
 
     function formatFileSize(bytes) {
@@ -744,6 +869,9 @@
           }
         }
         targetEl.value = baseText + separator + (finalChunk + interimChunk).trimStart();
+        if (targetId === 'personaSignature') {
+          updateSignaturePreview();
+        }
       };
 
       recognition.onerror = (event) => {
@@ -1258,19 +1386,7 @@
         .trim();
     }
 
-    function ensureSignature(bodyText) {
-      const cleaned = (bodyText || '').trim();
-      if (!cleaned) return EMAIL_SIGNATURE;
-      if (/Viele Grüße\s*\n\s*\n\s*KI-Assistent von Marc Hens\s*$/i.test(cleaned)) {
-        return cleaned;
-      }
-      const withoutOldSig = cleaned
-        .replace(/\n*(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Freundliche Grüße),?\s*(\n+(KI-)?Assistent von Marc Hen[sz])?\s*$/i, '')
-        .trim();
-      return `${withoutOldSig}\n\n${EMAIL_SIGNATURE}`;
-    }
-
-    function applyDraftToFields(rawResult, appendSignature = false) {
+    function applyDraftToFields(rawResult) {
       const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
       const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
       const textStartMatch = rawResult.match(/TEXT:\s*/i);
@@ -1285,7 +1401,7 @@
       if (textStartMatch) {
         const afterText = rawResult.slice(textStartMatch.index + textStartMatch[0].length);
         const extractedBody = afterText.split(/\n\s*BETREFF:/i)[0].trim();
-        document.getElementById('mailBody').value = appendSignature ? ensureSignature(extractedBody) : extractedBody;
+        document.getElementById('mailBody').value = extractedBody;
       }
 
       if (!replyContext && subMatch) {
@@ -1324,12 +1440,14 @@
 
         if (replyContext) {
           const userNoteBlock = prompt
-            ? `Zusätzliche Vorgabe von Marc Hens für diese konkrete Antwort: ${prompt}`
+            ? `Zusätzliche Vorgabe für diese konkrete Antwort: ${prompt}`
             : 'Es gibt keine spezielle Zusatzvorgabe; formuliere eine passende, zielführende Antwort auf den Inhalt der eingegangenen E-Mail im definierten Stil.';
 
-          instruction = `Du bist der persönliche KI-Assistent von Marc Hens. Formuliere eine deutsche Antwort auf die untenstehende eingegangene E-Mail.
+          instruction = `Formuliere eine deutsche Antwort auf die untenstehende eingegangene E-Mail.
 
-${personaBlock ? personaBlock + '\n\n' : ''}Absender der eingegangenen E-Mail: ${replyContext.senderRaw} (${replyContext.senderEmail})
+${personaBlock}
+
+Absender der eingegangenen E-Mail: ${replyContext.senderRaw} (${replyContext.senderEmail})
 Ursprünglicher Betreff: ${replyContext.originalSubject}
 
 Inhalt der eingegangenen E-Mail:
@@ -1340,34 +1458,28 @@ ${replyContext.body}
 ${userNoteBlock}
 
 Regeln für den Antworttext (TEXT):
-- Halte dich bei Rolle, Ton, Satzbau und Wortwahl strikt an das oben definierte persönliche KI-Profil von Marc Hens.
+- Halte dich bei Rolle, Ton, Satzbau, Wortwahl und Signatur strikt an das oben definierte persönliche KI-Profil.
 - Gehe konkret auf die Fragen, Informationen oder Wünsche in der eingegangenen E-Mail ein.
 - Schreibe in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
-- Beende den Text exakt mit dieser Signatur (ohne Komma hinter Viele Grüße und inklusive der Leerzeile dazwischen):
-Viele Grüße
-
-KI-Assistent von Marc Hens
 
 Gib deine Antwort exakt in diesem Format zurück:
 EMPFAENGER: ${replyContext.senderEmail}
 TEXT:
-[vollständiger Antworttext inklusive Signatur]
+[vollständiger Antworttext inklusive Abschluss/Signatur gemäß KI-Profil]
 BETREFF: ${replyContext.replySubject}`;
         } else {
-          instruction = `Du bist der persönliche KI-Assistent von Marc Hens. Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine deutsche E-Mail in einwandfreier Rechtschreibung und Zeichensetzung.
+          instruction = `Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine deutsche E-Mail in einwandfreier Rechtschreibung und Zeichensetzung.
 
-${personaBlock ? personaBlock + '\n\n' : ''}Regeln für den Empfänger (EMPFAENGER):
+${personaBlock}
+
+Regeln für den Empfänger (EMPFAENGER):
 - Prüfe zuerst die gespeicherten Kontakte: ${contactsContext}. Wenn ein genannter Name oder eine ähnlich klingende diktierte Adresse zu einem Kontakt passt (z. B. "Marc", "Mark Henz" oder "mark.tens@gmx.de" -> "marc.hens@gmx.de"), verwende diese hinterlegte E-Mail-Adresse.
 - Wenn eine neue E-Mail-Adresse diktiert wurde, bereinige alle typischen Spracherkennungsfehler (gesprochenes "at"/"ät", "punkt", Leerzeichen vor/nach Punkten, Buchstabier-Hinweise wie "mit C" oder "mit S").
 - Wenn gar kein Empfänger erkennbar ist, lasse EMPFAENGER leer.
 
 Regeln für den Text (TEXT):
-- Halte dich bei Rolle, Ton, Satzbau und Wortwahl strikt an das oben definierte persönliche KI-Profil von Marc Hens.
+- Halte dich bei Rolle, Ton, Satzbau, Wortwahl und Signatur strikt an das oben definierte persönliche KI-Profil.
 - Formuliere den Inhalt klar, natürlich und vollständig aus.
-- Beende den Text exakt mit dieser Signatur (ohne Komma hinter Viele Grüße und inklusive der Leerzeile dazwischen):
-Viele Grüße
-
-KI-Assistent von Marc Hens
 
 Regeln für den Betreff (BETREFF):
 - Leite den Betreff direkt und natürlich aus dem gerade formulierten E-Mail-Text ab.
@@ -1376,7 +1488,7 @@ Regeln für den Betreff (BETREFF):
 Gib deine Antwort exakt in dieser Reihenfolge zurück:
 EMPFAENGER: [E-Mail-Adresse oder leer]
 TEXT:
-[vollständiger E-Mail-Text inklusive Signatur]
+[vollständiger E-Mail-Text inklusive Abschluss/Signatur gemäß KI-Profil]
 BETREFF: [automatisch abgeleiteter Betreff in korrekter Schreibweise]
 
 Anweisung: ${prompt}`;
@@ -1389,13 +1501,13 @@ Anweisung: ${prompt}`;
             btn.textContent = `${statusLabel} (${sec}s)...`;
           },
           (partialText) => {
-            applyDraftToFields(partialText, false);
+            applyDraftToFields(partialText);
           }
         );
 
-        applyDraftToFields(rawResult, true);
+        applyDraftToFields(rawResult);
         if (!rawResult.match(/TEXT:\s*/i)) {
-          document.getElementById('mailBody').value = ensureSignature(rawResult);
+          document.getElementById('mailBody').value = rawResult.trim();
         }
 
         if (replyContext) {
@@ -1508,14 +1620,13 @@ Anweisung: ${prompt}`;
       const cfg = getConfig();
       const to = cleanExtractedEmail(document.getElementById('mailTo').value);
       const subject = document.getElementById('mailSubject').value.trim();
-      const rawBody = document.getElementById('mailBody').value.trim();
+      const body = document.getElementById('mailBody').value.trim();
 
-      if (!to || !to.includes('@') || !subject || !rawBody) {
+      if (!to || !to.includes('@') || !subject || !body) {
         showAlert('Bitte fülle Empfänger, Betreff und Nachrichtentext vollständig aus.', 'error');
         return;
       }
 
-      const body = ensureSignature(rawBody);
       const btn = document.getElementById('btnSendMail');
       btn.disabled = true;
       btn.textContent = 'Sende E-Mail...';
@@ -1977,7 +2088,9 @@ Anweisung: ${prompt}`;
       const text = document.getElementById('docResultOutput').textContent.trim();
       if (!text) return;
       hideSendConfirmation();
-      document.getElementById('mailBody').value = ensureSignature(text);
+      const p = getPersonaConfig();
+      const sig = (p.signature || '').trim();
+      document.getElementById('mailBody').value = sig ? `${text}\n\n${sig}` : text;
       switchTab('mail');
       showAlert('Ergebnis in den E-Mail-Entwurf übernommen.', 'success');
     }
