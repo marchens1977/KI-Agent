@@ -48,7 +48,7 @@
   <main class="max-w-3xl mx-auto p-4 pb-20 space-y-4">
     <div id="globalAlert" class="hidden rounded-xl p-3.5 text-sm border flex items-start justify-between gap-3">
       <span id="globalAlertText" class="break-words leading-relaxed"></span>
-      <button type="button" onclick="hideAlert()" class="text-xs opacity-75 hover:opacity-100 px-1.5 py-0.5 rounded">Schließen</button>
+      <button type="button" onclick="hideAlert()" class="text-xs opacity-75 hover:opacity-100 px-1.5 py-0.5 rounded shrink-0">Schließen</button>
     </div>
 
     <!-- TAB 1: E-MAIL-AGENT -->
@@ -56,7 +56,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span id="activeModelBadge" class="text-xs text-slate-400">Automatische Modellwahl</span>
+          <span id="activeModelBadge" class="text-xs text-slate-400">gemini-3.8-flash</span>
         </div>
 
         <div>
@@ -67,7 +67,7 @@
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf Einsprechen oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de wegen der Terminbestätigung..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf Einsprechen oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de mit dem Betreff Test..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
@@ -203,6 +203,7 @@
 
     let cachedModelName = null;
     let cachedModelForKey = null;
+    const rejectedModels = new Set();
 
     let activeRecognition = null;
     let activeVoiceBtn = null;
@@ -318,7 +319,8 @@
       tokenClient = null;
       cachedModelName = null;
       cachedModelForKey = null;
-      document.getElementById('activeModelBadge').textContent = 'Automatische Modellwahl';
+      rejectedModels.clear();
+      document.getElementById('activeModelBadge').textContent = 'gemini-3.8-flash';
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
 
@@ -440,59 +442,82 @@
       }
     }
 
-    async function resolveWorkingModel(apiKey) {
-      if (cachedModelName && cachedModelForKey === apiKey) {
-        return cachedModelName;
+    async function getCandidateModels(apiKey) {
+      if (cachedModelName && cachedModelForKey === apiKey && !rejectedModels.has(cachedModelName)) {
+        return [cachedModelName];
       }
 
-      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const candidates = ['gemini-3.8-flash'];
 
-      let response;
       try {
-        response = await fetch(listUrl, { method: 'GET', signal: controller.signal });
-      } catch (netErr) {
+        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const response = await fetch(listUrl, { method: 'GET', signal: controller.signal });
         clearTimeout(timeoutId);
-        if (netErr.name === 'AbortError') {
-          throw new Error('Netzwerk-Timeout (12s): Dein Browser oder ein Werbeblocker blockiert die Verbindung zu generativelanguage.googleapis.com.');
+
+        if (response.ok) {
+          const data = await response.json().catch(() => ({}));
+          const apiModels = (data.models || [])
+            .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+            .map(m => m.name.replace(/^models\//, ''))
+            .filter(name => name.startsWith('gemini-') && !/embedding|imagen|veo|aqa|tts|audio/i.test(name));
+
+          const priority = [
+            'gemini-3.8-flash',
+            'gemini-3.8-flash-lite',
+            'gemini-3.5-flash',
+            'gemini-3.0-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash'
+          ];
+
+          for (const p of priority) {
+            if (apiModels.includes(p) && !candidates.includes(p)) {
+              candidates.push(p);
+            }
+          }
+          for (const m of apiModels) {
+            if (!candidates.includes(m)) {
+              candidates.push(m);
+            }
+          }
         }
-        throw new Error('Netzwerkfehler beim Verbinden mit Google: ' + netErr.message);
-      }
-      clearTimeout(timeoutId);
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const detail = data.error?.message || `HTTP-Status ${response.status}`;
-        throw new Error(`API-Schlüssel abgelehnt (${response.status}): ${detail}`);
+      } catch (e) {
+        // Fallback auf feste Kandidatenliste, falls Modell-Abfrage blockiert wird
       }
 
-      const validModels = (data.models || [])
-        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-        .map(m => m.name.replace(/^models\//, ''))
-        .filter(name => name.startsWith('gemini-') && !/embedding|imagen|veo|aqa|tts|audio/i.test(name));
+      return candidates.filter(m => !rejectedModels.has(m));
+    }
 
-      if (validModels.length === 0) {
-        throw new Error('Für diesen API-Schlüssel ist kein Text-Modell freigeschaltet. Prüfe im Google AI Studio oder in der Google Cloud Console die Generative Language API.');
+    async function sendModelRequest(apiKey, modelName, parts, useJsonMime) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const payload = { contents: [{ parts }] };
+      if (useJsonMime) {
+        payload.generationConfig = { responseMimeType: 'application/json' };
       }
 
-      const preferredOrder = [
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
-        'gemini-2.5-pro'
-      ];
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-      let chosen = preferredOrder.find(p => validModels.includes(p));
-      if (!chosen) {
-        chosen = validModels.find(n => n.includes('flash')) || validModels[0];
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const data = await response.json().catch(() => ({}));
+        return { ok: response.ok, status: response.status, data };
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Zeitüberschreitung (25s): Keine Antwort von der Google-API erhalten. Prüfe deine Internetverbindung oder deaktiviere Werbeblocker für diese Seite.');
+        }
+        throw new Error('Netzwerkfehler beim Verbinden mit Google: ' + err.message);
       }
-
-      cachedModelName = chosen;
-      cachedModelForKey = apiKey;
-      document.getElementById('activeModelBadge').textContent = chosen;
-      return chosen;
     }
 
     async function callGemini(parts, expectJson = false) {
@@ -502,51 +527,44 @@
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const modelName = await resolveWorkingModel(cfg.geminiKey);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
+      const candidates = await getCandidateModels(cfg.geminiKey);
+      let lastError = 'Kein verfügbares Gemini-Modell gefunden.';
 
-      const payload = {
-        contents: [{ parts }]
-      };
-      if (expectJson) {
-        payload.generationConfig = {
-          responseMimeType: 'application/json'
-        };
-      }
+      for (const modelName of candidates) {
+        document.getElementById('activeModelBadge').textContent = modelName;
+        let res = await sendModelRequest(cfg.geminiKey, modelName, parts, expectJson);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-      let response;
-      try {
-        response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
-      } catch (err) {
-        clearTimeout(timeoutId);
-        if (err.name === 'AbortError') {
-          throw new Error('Zeitüberschreitung (20s): Keine Antwort vom Modell erhalten. Prüfe deine Internetverbindung oder deaktiviere Werbeblocker für diese Seite.');
+        // Falls ein Modell kein responseMimeType: application/json unterstützt, ohne JSON-MIME wiederholen
+        if (!res.ok && res.status === 400 && expectJson) {
+          res = await sendModelRequest(cfg.geminiKey, modelName, parts, false);
         }
-        throw new Error('Verbindungsfehler: ' + err.message);
-      }
-      clearTimeout(timeoutId);
 
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        cachedModelName = null;
-        const msg = data.error?.message || `HTTP-Status ${response.status}`;
-        throw new Error(`Google API Fehler (${response.status} bei ${modelName}): ${msg}`);
+        if (res.ok) {
+          const text = res.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (!text) {
+            const blockReason = res.data.candidates?.[0]?.finishReason || res.data.promptFeedback?.blockReason || 'Leere Antwort';
+            throw new Error(`Keine Textausgabe erhalten (Grund: ${blockReason}).`);
+          }
+          cachedModelName = modelName;
+          cachedModelForKey = cfg.geminiKey;
+          document.getElementById('activeModelBadge').textContent = modelName;
+          return text;
+        }
+
+        const errMsg = res.data.error?.message || `HTTP-Status ${res.status}`;
+        lastError = `Google API Fehler (${res.status} bei ${modelName}): ${errMsg}`;
+
+        // Bei 404 (Modell abgekündigt / nicht verfügbar) automatisch nächstes Modell probieren
+        if (res.status === 404) {
+          rejectedModels.add(modelName);
+          cachedModelName = null;
+          continue;
+        }
+
+        throw new Error(lastError);
       }
 
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text) {
-        const blockReason = data.candidates?.[0]?.finishReason || data.promptFeedback?.blockReason || 'Leere Antwort';
-        throw new Error(`Keine Textausgabe erhalten (Grund: ${blockReason}).`);
-      }
-      return text;
+      throw new Error(lastError);
     }
 
     async function testGeminiConnection() {
@@ -565,6 +583,16 @@
       }
     }
 
+    function cleanExtractedEmail(rawEmail) {
+      if (!rawEmail) return '';
+      return rawEmail
+        .replace(/\s+/g, '')
+        .replace(/\[at\]|\(at\)/gi, '@')
+        .replace(/\[dot\]|\(dot\)/gi, '.')
+        .toLowerCase()
+        .trim();
+    }
+
     async function generateEmailDraft() {
       const prompt = document.getElementById('mailPrompt').value.trim();
       if (!prompt) {
@@ -577,9 +605,10 @@
       btn.textContent = 'Generiere Entwurf...';
 
       try {
-        const instruction = `Analysiere die folgende gesprochene oder geschriebene Anweisung und erstelle daraus eine professionelle E-Mail auf Deutsch.
+        const instruction = `Analysiere die folgende eingesprochene oder geschriebene Anweisung und erstelle daraus eine professionelle E-Mail auf Deutsch.
+Korrigiere dabei typische Diktierfehler in E-Mail-Adressen (z. B. Leerzeichen nach Punkten wie "Marc. hands@gmx.de" zu "marc.hands@gmx.de" oder gesprochenes "Punkt"/"at").
 Gib das Ergebnis ausschließlich als JSON-Objekt mit genau diesen drei Schlüsseln zurück:
-- "empfaenger": Die genannte E-Mail-Adresse (leer lassen "", falls keine genannt wurde)
+- "empfaenger": Die bereinigte E-Mail-Adresse (leer lassen "", falls keine genannt wurde)
 - "betreff": Ein passender, klarer Betreff
 - "text": Der vollständige, höfliche E-Mail-Inhalt mit Anrede und Grußformel
 
@@ -602,8 +631,9 @@ Anweisung: ${prompt}`;
           };
         }
 
-        if (parsed.empfaenger && parsed.empfaenger.includes('@')) {
-          document.getElementById('mailTo').value = parsed.empfaenger.trim();
+        const cleanedTo = cleanExtractedEmail(parsed.empfaenger);
+        if (cleanedTo && cleanedTo.includes('@')) {
+          document.getElementById('mailTo').value = cleanedTo;
         }
         if (parsed.betreff) {
           document.getElementById('mailSubject').value = parsed.betreff.trim();
