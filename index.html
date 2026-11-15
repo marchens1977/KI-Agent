@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:35</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:39</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -404,11 +404,12 @@
   </main>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 09:35';
+    const BUILD_TIMESTAMP = '15.11.2026 · 09:39';
     const STORAGE_KEY = 'ki_agent_config_v1';
+    const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
     const PERSONA_KEY = 'ki_agent_persona_v2';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v34';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v35';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
     const SENDER_DISPLAY_NAME = 'KI-Assistent von Marc Hens';
     const MAX_ATTACHMENT_TOTAL_BYTES = 15 * 1024 * 1024;
@@ -439,6 +440,8 @@
     let accessToken = null;
     let connectedAccountEmail = '';
     let tokenClient = null;
+    let tokenRefreshTimer = null;
+    let isSilentAuthAttempt = false;
     let uploadedFilePayload = null;
     let mailAttachments = [];
     let availableModels = [];
@@ -452,6 +455,95 @@
     let activeVoiceBtn = null;
     let activeVoiceDefaultLabel = '';
     let alertTimer = null;
+
+    function getStoredToken() {
+      try {
+        const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.accessToken || !parsed.expiresAt) return null;
+        if (Date.now() >= Number(parsed.expiresAt)) return null;
+        const cfg = getConfig();
+        if (cfg.agentEmail && parsed.email && parsed.email.toLowerCase() !== cfg.agentEmail) {
+          return null;
+        }
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveStoredToken(token, expiresInSeconds, email) {
+      try {
+        const safeSeconds = Math.max((Number(expiresInSeconds) || 3599) - 120, 60);
+        const expiresAt = Date.now() + safeSeconds * 1000;
+        localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
+          accessToken: token,
+          expiresAt,
+          email: (email || '').toLowerCase()
+        }));
+        scheduleTokenRefresh(expiresAt);
+      } catch (e) {}
+    }
+
+    function clearStoredToken() {
+      try {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+      } catch (e) {}
+      if (tokenRefreshTimer) {
+        clearTimeout(tokenRefreshTimer);
+        tokenRefreshTimer = null;
+      }
+    }
+
+    function scheduleTokenRefresh(expiresAt) {
+      if (tokenRefreshTimer) {
+        clearTimeout(tokenRefreshTimer);
+        tokenRefreshTimer = null;
+      }
+      const delayMs = Math.max(Number(expiresAt) - Date.now() - 30000, 15000);
+      tokenRefreshTimer = setTimeout(() => {
+        requestGmailToken({ silent: true });
+      }, delayMs);
+    }
+
+    function waitForGoogleGsi(timeoutMs = 5000) {
+      return new Promise((resolve) => {
+        if (window.google && google.accounts && google.accounts.oauth2) {
+          resolve(true);
+          return;
+        }
+        const start = Date.now();
+        const interval = setInterval(() => {
+          if (window.google && google.accounts && google.accounts.oauth2) {
+            clearInterval(interval);
+            resolve(true);
+          } else if (Date.now() - start >= timeoutMs) {
+            clearInterval(interval);
+            resolve(false);
+          }
+        }, 200);
+      });
+    }
+
+    async function autoConnectGmailOnStartup() {
+      const cfg = getConfig();
+      if (!cfg.clientId) return;
+
+      const stored = getStoredToken();
+      if (stored && stored.accessToken) {
+        accessToken = stored.accessToken;
+        scheduleTokenRefresh(stored.expiresAt);
+        await verifyConnectedAccount({ silent: true, expiresIn: Math.floor((stored.expiresAt - Date.now()) / 1000) + 120 });
+        return;
+      }
+
+      if (!cfg.agentEmail) return;
+      const gsiReady = await waitForGoogleGsi(5000);
+      if (gsiReady && !accessToken) {
+        requestGmailToken({ silent: true });
+      }
+    }
 
     function getPersonaConfig() {
       try {
@@ -1012,6 +1104,7 @@
       renderContactsUI();
       renderMailAttachments();
       loadPersonaToUI();
+      autoConnectGmailOnStartup();
     }
 
     function saveSettings() {
@@ -1021,6 +1114,7 @@
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
       localStorage.removeItem(SELECTED_MODEL_KEY);
+      clearStoredToken();
       tokenClient = null;
       discoverAvailableModels(geminiKey);
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
@@ -1146,60 +1240,122 @@
       }
     }
 
-    function connectGmail() {
+    function requestGmailToken(options = {}) {
+      const silent = Boolean(options.silent);
       const cfg = getConfig();
+
       if (!cfg.clientId) {
-        switchTab('setup');
-        showAlert('Bitte trage zuerst deine Google Cloud OAuth Client-ID unter Einrichtung ein.', 'error');
+        if (!silent) {
+          switchTab('setup');
+          showAlert('Bitte trage zuerst deine Google Cloud OAuth Client-ID unter Einrichtung ein.', 'error');
+        }
         return;
       }
 
       if (!window.google || !google.accounts || !google.accounts.oauth2) {
-        showAlert('Google-Anmeldedienst wird noch geladen. Bitte versuche es in zwei Sekunden erneut.', 'error');
+        if (!silent) {
+          showAlert('Google-Anmeldedienst wird noch geladen. Bitte versuche es in zwei Sekunden erneut.', 'error');
+        }
         return;
       }
 
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: cfg.clientId,
-        scope: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send',
-        hint: cfg.agentEmail,
-        callback: async (resp) => {
-          if (resp.error) {
-            showAlert('Anmeldung abgebrochen oder fehlgeschlagen: ' + resp.error, 'error');
-            return;
-          }
-          accessToken = resp.access_token;
-          await verifyConnectedAccount();
-        }
-      });
+      isSilentAuthAttempt = silent;
 
-      tokenClient.requestAccessToken({ prompt: 'select_account' });
+      if (!tokenClient) {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: cfg.clientId,
+          scope: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send',
+          hint: cfg.agentEmail,
+          callback: async (resp) => {
+            const wasSilent = isSilentAuthAttempt;
+            isSilentAuthAttempt = false;
+            if (resp.error) {
+              if (!wasSilent) {
+                showAlert('Anmeldung abgebrochen oder fehlgeschlagen: ' + resp.error, 'error');
+              }
+              return;
+            }
+            accessToken = resp.access_token;
+            await verifyConnectedAccount({ silent: wasSilent, expiresIn: resp.expires_in });
+          },
+          error_callback: (err) => {
+            const wasSilent = isSilentAuthAttempt;
+            isSilentAuthAttempt = false;
+            if (!wasSilent && err && err.type !== 'popup_closed') {
+              showAlert('Anmeldefenster konnte nicht geöffnet werden. Bitte erlaube Pop-ups für diese Seite.', 'error');
+            }
+          }
+        });
+      }
+
+      const reqOpts = {};
+      if (cfg.agentEmail) {
+        reqOpts.hint = cfg.agentEmail;
+        reqOpts.prompt = '';
+      } else if (!silent) {
+        reqOpts.prompt = 'select_account';
+      }
+
+      try {
+        tokenClient.requestAccessToken(reqOpts);
+      } catch (e) {
+        isSilentAuthAttempt = false;
+      }
     }
 
-    async function verifyConnectedAccount() {
+    function connectGmail() {
+      if (accessToken && connectedAccountEmail) {
+        loadInbox();
+        return;
+      }
+      requestGmailToken({ silent: false });
+    }
+
+    async function verifyConnectedAccount(options = {}) {
+      const silent = Boolean(options.silent);
+      const expiresIn = options.expiresIn || 3599;
       const cfg = getConfig();
+
       try {
         const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
           headers: { Authorization: 'Bearer ' + accessToken }
         });
+
+        if (res.status === 401) {
+          accessToken = null;
+          clearStoredToken();
+          updateGmailBadge(false);
+          if (silent && cfg.agentEmail) {
+            requestGmailToken({ silent: true });
+          }
+          return;
+        }
+
         if (!res.ok) throw new Error('Profil konnte nicht geprüft werden.');
         const profile = await res.json();
         const connectedEmail = (profile.emailAddress || '').toLowerCase();
 
         if (cfg.agentEmail && connectedEmail !== cfg.agentEmail) {
           accessToken = null;
+          clearStoredToken();
           updateGmailBadge(false);
           showAlert(`Zugriff aus Sicherheitsgründen blockiert: Du hast ${connectedEmail} gewählt. Erlaubt ist ausschließlich ${cfg.agentEmail}.`, 'error');
           return;
         }
 
+        saveStoredToken(accessToken, expiresIn, connectedEmail);
         updateGmailBadge(true, connectedEmail);
-        showAlert(`Erfolgreich mit ${connectedEmail} verbunden.`, 'success');
+        if (!silent) {
+          showAlert(`Erfolgreich mit ${connectedEmail} verbunden.`, 'success');
+        }
         loadInbox();
       } catch (err) {
         accessToken = null;
+        clearStoredToken();
         updateGmailBadge(false);
-        showAlert('Fehler bei der Kontoprüfung: ' + err.message, 'error');
+        if (!silent) {
+          showAlert('Fehler bei der Kontoprüfung: ' + err.message, 'error');
+        }
       }
     }
 
@@ -1614,6 +1770,7 @@ Anweisung: ${prompt}`;
     async function sendGmailMessage() {
       if (!accessToken) {
         showAlert('Bitte verbinde oben rechts zuerst dein Assistenten-Konto mit Gmail.', 'error');
+        requestGmailToken({ silent: false });
         return;
       }
 
@@ -1699,6 +1856,14 @@ Anweisung: ${prompt}`;
           },
           body: JSON.stringify(sendPayload)
         });
+
+        if (res.status === 401) {
+          accessToken = null;
+          clearStoredToken();
+          updateGmailBadge(false);
+          requestGmailToken({ silent: false });
+          throw new Error('Die Sitzung ist abgelaufen. Bitte bestätige kurz die Anmeldung und sende erneut.');
+        }
 
         if (!res.ok) {
           const errData = await res.json();
@@ -1913,7 +2078,7 @@ Anweisung: ${prompt}`;
 
     async function loadInbox() {
       if (!accessToken) {
-        showAlert('Bitte verbinde zuerst Gmail.', 'error');
+        requestGmailToken({ silent: false });
         return;
       }
 
@@ -1929,6 +2094,15 @@ Anweisung: ${prompt}`;
             headers: { Authorization: 'Bearer ' + accessToken }
           })
         ]);
+
+        if (inboxRes.status === 401 || sentRes.status === 401) {
+          accessToken = null;
+          clearStoredToken();
+          updateGmailBadge(false);
+          requestGmailToken({ silent: true });
+          listEl.innerHTML = '<p class="text-xs text-slate-400">Sitzung abgelaufen – verbinde neu...</p>';
+          return;
+        }
 
         const inboxData = await inboxRes.json();
         const sentData = await sentRes.json();
