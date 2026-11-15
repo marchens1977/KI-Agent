@@ -53,7 +53,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span class="text-xs text-slate-400">Gemini 2.5 Flash</span>
+          <span class="text-xs text-slate-400">Gemini 3.8 Flash</span>
         </div>
 
         <div>
@@ -213,7 +213,6 @@
         return;
       }
 
-      // Falls bereits eine Aufnahme läuft: sauber stoppen
       if (activeRecognition) {
         const wasSameBtn = activeVoiceBtn === btn;
         try { activeRecognition.stop(); } catch (e) {}
@@ -423,7 +422,7 @@
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -451,7 +450,7 @@
       btn.textContent = 'Generiere Entwurf...';
 
       try {
-        const instruction = `Erstelle aus folgender Anweisung eine professionelle, natürliche E-Mail auf Deutsch. Antworte ausschließlich im folgenden Format ohne Markdown-Sterne oder zusätzliche Erklärungen:\nEMPFAENGER: [falls genannt, sonst leer]\nBETREFF: [passender Betreff]\nTEXT:\n[vollständiger E-Mail-Text]\n\nAnweisung: ${prompt}`;
+        const instruction = `Erstelle aus folgender Anweisung eine professionelle, natürliche E-Mail auf Deutsch. Falls die Anweisung per Spracheingabe diktiert wurde und Buchstabier-Hinweise zur E-Mail-Adresse enthält (z. B. "Mark mit C, Hens mit S"), setze diese zu einer korrekten, kleingeschriebenen E-Mail-Adresse ohne Leerzeichen zusammen. Antworte ausschließlich im folgenden Format ohne Markdown-Sterne oder zusätzliche Erklärungen:\nEMPFAENGER: [falls genannt, sonst leer]\nBETREFF: [passender Betreff]\nTEXT:\n[vollständiger E-Mail-Text]\n\nAnweisung: ${prompt}`;
         const result = await callGemini([{ text: instruction }]);
 
         const toMatch = result.match(/^EMPFAENGER:\s*(.*)$/m);
