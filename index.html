@@ -193,7 +193,6 @@
     let tokenClient = null;
     let uploadedFilePayload = null;
 
-    // Spracheingabe-Status
     let activeRecognition = null;
     let activeVoiceBtn = null;
     let activeVoiceDefaultLabel = '';
@@ -415,7 +414,7 @@
       }
     }
 
-    async function callGemini(parts) {
+    async function callGemini(parts, maxRetries = 4) {
       const cfg = getConfig();
       if (!cfg.geminiKey) {
         switchTab('setup');
@@ -423,19 +422,32 @@
       }
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts }]
-        })
-      });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Gemini API-Fehler');
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts }]
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+
+        const errMsg = data.error?.message || 'Gemini API-Fehler';
+        const isTemporary = response.status === 503 || response.status === 429 || /high demand|overloaded|try again later/i.test(errMsg);
+
+        if (isTemporary && attempt < maxRetries) {
+          showAlert(`Google-Server kurz ausgelastet – automatischer Versuch ${attempt + 1} von ${maxRetries}...`, 'info');
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+          continue;
+        }
+
+        throw new Error(errMsg);
       }
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
 
     async function generateEmailDraft() {
