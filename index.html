@@ -57,8 +57,14 @@
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Anweisung oder Stichpunkte für die E-Mail</label>
-          <textarea id="mailPrompt" rows="3" placeholder="z. B. Schreibe eine höfliche Anfrage an info@beispiel.de wegen eines Termins am kommenden Dienstag..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="mailPrompt" class="block text-xs text-slate-400">Anweisung oder Stichpunkte für die E-Mail</label>
+            <button type="button" onclick="toggleVoiceInput('mailPrompt', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Einsprechen</span>
+            </button>
+          </div>
+          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf 'Einsprechen' oder schreibe hier: z. B. Schreibe eine höfliche Anfrage an info@beispiel.de wegen eines Termins am kommenden Dienstag..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
@@ -80,7 +86,13 @@
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Nachrichtentext</label>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="mailBody" class="block text-xs text-slate-400">Nachrichtentext</label>
+            <button type="button" onclick="toggleVoiceInput('mailBody', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Diktieren</span>
+            </button>
+          </div>
           <textarea id="mailBody" rows="6" placeholder="Hier erscheint der generierte Text oder deine eigene Nachricht..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
@@ -119,7 +131,13 @@
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Arbeitsauftrag an die KI</label>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="docInstruction" class="block text-xs text-slate-400">Arbeitsauftrag an die KI</label>
+            <button type="button" onclick="toggleVoiceInput('docInstruction', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Einsprechen</span>
+            </button>
+          </div>
           <input type="text" id="docInstruction" value="Fasse die wichtigsten Punkte, Fristen und erforderlichen Schritte klar zusammen." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500" />
         </div>
 
@@ -174,6 +192,92 @@
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
+
+    // Spracheingabe-Status
+    let activeRecognition = null;
+    let activeVoiceBtn = null;
+    let activeVoiceDefaultLabel = '';
+
+    function resetVoiceButton(btn, defaultLabel) {
+      if (!btn) return;
+      btn.classList.remove('bg-rose-600', 'hover:bg-rose-500', 'border-rose-500', 'text-white', 'animate-pulse');
+      btn.classList.add('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700', 'text-slate-200');
+      const span = btn.querySelector('span');
+      if (span) span.textContent = defaultLabel || 'Einsprechen';
+    }
+
+    function toggleVoiceInput(targetId, btn) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showAlert('Dein Browser unterstützt keine direkte Spracheingabe. Nutze alternativ das Mikrofon auf deiner Smartphone-Tastatur.', 'error');
+        return;
+      }
+
+      // Falls bereits eine Aufnahme läuft: sauber stoppen
+      if (activeRecognition) {
+        const wasSameBtn = activeVoiceBtn === btn;
+        try { activeRecognition.stop(); } catch (e) {}
+        if (wasSameBtn) return;
+      }
+
+      const targetEl = document.getElementById(targetId);
+      if (!targetEl) return;
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'de-DE';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      const baseText = targetEl.value;
+      const separator = baseText && !/\s$/.test(baseText) ? ' ' : '';
+      let finalChunk = '';
+
+      activeRecognition = recognition;
+      activeVoiceBtn = btn;
+      activeVoiceDefaultLabel = btn.querySelector('span')?.textContent || 'Einsprechen';
+
+      btn.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700', 'text-slate-200');
+      btn.classList.add('bg-rose-600', 'hover:bg-rose-500', 'border-rose-500', 'text-white', 'animate-pulse');
+      const span = btn.querySelector('span');
+      if (span) span.textContent = 'Höre zu... (Stopp)';
+
+      recognition.onresult = (event) => {
+        let interimChunk = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalChunk += transcript;
+          } else {
+            interimChunk += transcript;
+          }
+        }
+        targetEl.value = baseText + separator + (finalChunk + interimChunk).trimStart();
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error === 'not-allowed') {
+          showAlert('Mikrofonzugriff blockiert. Bitte erlaube das Mikrofon in den Browser-Einstellungen.', 'error');
+        } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          showAlert('Spracherkennung unterbrochen: ' + event.error, 'error');
+        }
+      };
+
+      recognition.onend = () => {
+        resetVoiceButton(btn, activeVoiceDefaultLabel);
+        if (activeRecognition === recognition) {
+          activeRecognition = null;
+          activeVoiceBtn = null;
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {
+        resetVoiceButton(btn, activeVoiceDefaultLabel);
+        activeRecognition = null;
+        activeVoiceBtn = null;
+      }
+    }
 
     function getConfig() {
       try {
