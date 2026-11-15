@@ -1,438 +1,556 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KI-Agent Marc Hens</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>KI-Agent</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0f172a; color: #f8fafc; }
-    .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
-    .input-field { background-color: #0f172a; border: 1px solid #475569; color: #f8fafc; border-radius: 0.75rem; padding: 0.75rem; width: 100%; }
-    .input-field:focus { outline: none; border-color: #38bdf8; }
-    .btn-primary { background-color: #0284c7; color: white; font-weight: 600; padding: 0.85rem 1.25rem; border-radius: 0.75rem; width: 100%; transition: background-color 0.2s; }
-    .btn-primary:active { background-color: #0369a1; }
-    .btn-success { background-color: #16a34a; color: white; font-weight: 600; padding: 0.85rem 1.25rem; border-radius: 0.75rem; width: 100%; }
-    .btn-secondary { background-color: #334155; color: #e2e8f0; font-weight: 600; padding: 0.75rem 1rem; border-radius: 0.75rem; }
-  </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-<body class="pb-24">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500 selection:text-white">
 
-  <header class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-    <div>
-      <h1 class="text-lg font-bold text-sky-400">KI-Agent Office</h1>
-      <p class="text-xs text-slate-400">Im Auftrag von Marc Hens</p>
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3">
+    <div class="max-w-3xl mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm">
+          KI
+        </div>
+        <div>
+          <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
+          <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[160px] sm:max-w-xs">Nicht verbunden</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="gmailStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+          <span id="gmailStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="gmailStatusText">Getrennt</span>
+        </span>
+        <button id="connectGmailBtn" onclick="connectGmail()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs font-medium text-white transition shadow-sm">
+          Gmail verbinden
+        </button>
+      </div>
     </div>
-    <button id="authBtn" onclick="handleAuth()" class="btn-secondary text-xs">
-      Outlook verbinden
-    </button>
+
+    <nav class="max-w-3xl mx-auto mt-3 grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+      <button onclick="switchTab('mail')" id="tab-mail" class="tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition">
+        E-Mail-Agent
+      </button>
+      <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition">
+        Dokumente
+      </button>
+      <button onclick="switchTab('setup')" id="tab-setup" class="tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition">
+        Einrichtung
+      </button>
+    </nav>
   </header>
 
-  <nav class="grid grid-cols-3 gap-1 p-2 bg-slate-900 border-b border-slate-800 text-sm">
-    <button onclick="switchTab('compose')" id="tab-compose" class="py-2 rounded-lg font-semibold bg-sky-600 text-white">Neuer Auftrag</button>
-    <button onclick="switchTab('inbox')" id="tab-inbox" class="py-2 rounded-lg font-semibold text-slate-400">Posteingang</button>
-    <button onclick="switchTab('settings')" id="tab-settings" class="py-2 rounded-lg font-semibold text-slate-400">Einrichtung</button>
-  </nav>
+  <main class="max-w-3xl mx-auto p-4 pb-20 space-y-4">
+    <div id="globalAlert" class="hidden rounded-xl p-3.5 text-sm border"></div>
 
-  <main class="max-w-xl mx-auto p-4 space-y-4">
-
-    <div id="statusBanner" class="hidden p-3 rounded-xl text-sm font-medium"></div>
-
-    <!-- TAB 1: NEUER AUFTRAG -->
-    <section id="view-compose" class="space-y-4">
-      <div class="card p-4 space-y-4">
-        <h2 class="text-base font-semibold text-slate-200">1. Dokument & Anweisung</h2>
-        
-        <div>
-          <label class="block text-xs text-slate-400 mb-1">Schreiben abfotografieren oder PDF wählen</label>
-          <input type="file" id="docInput" accept="image/*,application/pdf" capture="environment" onchange="handleFileSelect(event)" class="block w-full text-sm text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-sky-600 file:text-white">
-          <p id="fileNameDisplay" class="text-xs text-sky-400 mt-1 hidden"></p>
+    <!-- TAB 1: E-MAIL-AGENT -->
+    <section id="view-mail" class="space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
+          <span class="text-xs text-slate-400">Gemini 2.5 Flash</span>
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Was soll der KI-Agent erledigen?</label>
-          <textarea id="instructionInput" rows="3" class="input-field text-sm" placeholder="Beispiel: Antworte der Versicherung, dass mir die Beitragserhöhung zu teuer ist, und bitte um Alternativangebote für günstigere Pakete."></textarea>
+          <label class="block text-xs text-slate-400 mb-1">Anweisung oder Stichpunkte für die E-Mail</label>
+          <textarea id="mailPrompt" rows="3" placeholder="z. B. Schreibe eine höfliche Anfrage an info@beispiel.de wegen eines Termins am kommenden Dienstag..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
-        <button onclick="generateDraft()" id="generateBtn" class="btn-primary">
-          Entwurf von KI erstellen lassen
+        <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
+          Entwurf mit KI generieren
         </button>
       </div>
 
-      <!-- ENTWURF ZUM GEGENLESEN -->
-      <div id="draftCard" class="card p-4 space-y-3 hidden">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base font-semibold text-emerald-400">2. Entwurf gegenlesen & freigeben</h2>
-          <label class="flex items-center gap-2 text-xs text-slate-300">
-            <input type="checkbox" id="attachOriginal" checked class="rounded">
-            Scan anhängen
-          </label>
-        </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+        <h2 class="text-sm font-semibold text-white">Nachricht prüfen und senden</h2>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Empfänger E-Mail-Adresse</label>
-          <input type="email" id="draftTo" class="input-field text-sm" placeholder="service@versicherung.de">
+          <label class="block text-xs text-slate-400 mb-1">Empfänger (E-Mail-Adresse)</label>
+          <input type="email" id="mailTo" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
           <label class="block text-xs text-slate-400 mb-1">Betreff</label>
-          <input type="text" id="draftSubject" class="input-field text-sm">
+          <input type="text" id="mailSubject" placeholder="Betreff der E-Mail" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Nachrichtentext (frei bearbeitbar)</label>
-          <textarea id="draftBody" rows="11" class="input-field text-sm leading-relaxed"></textarea>
+          <label class="block text-xs text-slate-400 mb-1">Nachrichtentext</label>
+          <textarea id="mailBody" rows="6" placeholder="Hier erscheint der generierte Text oder deine eigene Nachricht..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
-        <button onclick="sendEmail()" id="sendBtn" class="btn-success">
-          Freigeben & über Outlook senden
+        <button onclick="sendGmailMessage()" id="btnSendMail" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-sm font-medium text-white transition">
+          Über Assistenten-Konto senden
         </button>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Posteingang (Assistenten-Konto)</h2>
+          <button onclick="loadInbox()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+            Aktualisieren
+          </button>
+        </div>
+        <div id="inboxList" class="space-y-2 text-sm text-slate-400">
+          <p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene Nachrichten zu laden.</p>
+        </div>
       </div>
     </section>
 
-    <!-- TAB 2: POSTEINGANG -->
-    <section id="view-inbox" class="space-y-4 hidden">
-      <div class="flex items-center justify-between">
-        <h2 class="text-base font-semibold text-slate-200">Letzte Antworten im Postfach</h2>
-        <button onclick="loadInbox()" class="btn-secondary text-xs">Aktualisieren</button>
+    <!-- TAB 2: DOKUMENTENVERARBEITUNG -->
+    <section id="view-docs" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+        <h2 class="text-sm font-semibold text-white">Dokument hochladen oder Text einfügen</h2>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Datei auswählen (PDF, Bild, TXT, CSV)</label>
+          <input type="file" id="docFileInput" accept=".pdf,.txt,.csv,.md,image/*" onchange="handleFileSelect(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700" />
+          <p id="selectedFileName" class="text-xs text-blue-400 mt-1 hidden"></p>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Alternativ oder ergänzend: Rohtext einfügen</label>
+          <textarea id="docRawText" rows="4" placeholder="Füge hier einen Vertragstext, ein Schreiben oder Notizen ein..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Arbeitsauftrag an die KI</label>
+          <input type="text" id="docInstruction" value="Fasse die wichtigsten Punkte, Fristen und erforderlichen Schritte klar zusammen." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <button onclick="processDocument()" id="btnProcessDoc" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+          Dokument analysieren
+        </button>
       </div>
-      <div id="inboxList" class="space-y-3">
-        <p class="text-sm text-slate-400">Verbinde dich oben rechts mit Outlook und tippe auf Aktualisieren.</p>
+
+      <div id="docResultCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Analyse-Ergebnis</h2>
+          <button onclick="transferDocToMail()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
+            In E-Mail übernehmen
+          </button>
+        </div>
+        <div id="docResultOutput" class="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-950 p-3.5 rounded-xl border border-slate-800"></div>
       </div>
     </section>
 
     <!-- TAB 3: EINRICHTUNG -->
-    <section id="view-settings" class="space-y-4 hidden">
-      <div class="card p-4 space-y-4">
-        <h2 class="text-base font-semibold text-slate-200">Zugangsdaten (bleiben lokal auf dem Handy)</h2>
-        
+    <section id="view-setup" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+        <div>
+          <h2 class="text-sm font-semibold text-white">Zugangsdaten und Kontotrennung</h2>
+          <p class="text-xs text-slate-400 mt-1">Alle Daten werden ausschließlich lokal im Speicher deines Browsers gesichert.</p>
+        </div>
+
         <div>
           <label class="block text-xs text-slate-400 mb-1">Google Gemini API-Schlüssel</label>
-          <input type="password" id="geminiKeyInput" class="input-field text-sm" placeholder="AIzaSy...">
+          <input type="password" id="cfgGeminiKey" placeholder="AIzaSy..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Microsoft Entra Anwendungs-ID (Client-ID)</label>
-          <input type="text" id="msClientIdInput" class="input-field text-sm" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+          <label class="block text-xs text-slate-400 mb-1">Google Cloud OAuth Client-ID</label>
+          <input type="text" id="cfgClientId" placeholder="123456789-abc...apps.googleusercontent.com" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Deine persönliche E-Mail für CC (optional)</label>
-          <input type="email" id="ccEmailInput" class="input-field text-sm" placeholder="deine-adresse@gmx.de">
+          <label class="block text-xs text-slate-400 mb-1">Agenten-E-Mail-Adresse (Striktes Arbeitskonto)</label>
+          <input type="email" id="cfgAgentEmail" value="marc.hens.assistent@gmail.com" placeholder="marc.hens.assistent@gmail.com" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
-        <button onclick="saveSettings()" class="btn-primary">Einstellungen speichern</button>
-      </div>
-
-      <div class="card p-4 text-xs text-slate-400 space-y-2">
-        <p class="font-semibold text-slate-200">Deine aktuelle Redirect-URI für Microsoft Entra:</p>
-        <code id="redirectUriDisplay" class="block p-2 bg-slate-950 rounded text-sky-400 break-all"></code>
+        <button onclick="saveSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+          Einstellungen speichern
+        </button>
       </div>
     </section>
-
   </main>
 
   <script>
-    let msalInstance = null;
-    let currentAccount = null;
-    let uploadedFileBase64 = null;
-    let uploadedFileMime = null;
-    let uploadedFileName = null;
+    const STORAGE_KEY = 'ki_agent_config_v1';
+    let accessToken = null;
+    let tokenClient = null;
+    let uploadedFilePayload = null;
 
-    const GRAPH_SCOPES = ["User.Read", "Mail.Read", "Mail.Send"];
-
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("geminiKeyInput").value = localStorage.getItem("gemini_api_key") || "";
-      document.getElementById("msClientIdInput").value = localStorage.getItem("ms_client_id") || "";
-      document.getElementById("ccEmailInput").value = localStorage.getItem("cc_email") || "";
-      document.getElementById("redirectUriDisplay").textContent = window.location.origin + window.location.pathname;
-      initMsal();
-    });
-
-    function showBanner(msg, isError = false) {
-      const banner = document.getElementById("statusBanner");
-      banner.textContent = msg;
-      banner.className = `p-3 rounded-xl text-sm font-medium ${isError ? "bg-red-950 text-red-200 border border-red-800" : "bg-emerald-950 text-emerald-200 border border-emerald-800"}`;
-      banner.classList.remove("hidden");
-      setTimeout(() => banner.classList.add("hidden"), 7000);
+    function getConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        return {
+          geminiKey: saved.geminiKey || '',
+          clientId: saved.clientId || '',
+          agentEmail: saved.agentEmail || 'marc.hens.assistent@gmail.com'
+        };
+      } catch (e) {
+        return { geminiKey: '', clientId: '', agentEmail: 'marc.hens.assistent@gmail.com' };
+      }
     }
 
-    function switchTab(tab) {
-      ["compose", "inbox", "settings"].forEach(t => {
-        document.getElementById(`view-${t}`).classList.toggle("hidden", t !== tab);
-        const btn = document.getElementById(`tab-${t}`);
-        btn.className = t === tab
-          ? "py-2 rounded-lg font-semibold bg-sky-600 text-white"
-          : "py-2 rounded-lg font-semibold text-slate-400";
-      });
-      if (tab === "inbox" && currentAccount) loadInbox();
+    function loadSettingsToUI() {
+      const cfg = getConfig();
+      document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
+      document.getElementById('cfgClientId').value = cfg.clientId;
+      document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
     }
 
     function saveSettings() {
-      localStorage.setItem("gemini_api_key", document.getElementById("geminiKeyInput").value.trim());
-      localStorage.setItem("ms_client_id", document.getElementById("msClientIdInput").value.trim());
-      localStorage.setItem("cc_email", document.getElementById("ccEmailInput").value.trim());
-      initMsal();
-      showBanner("Einstellungen wurden sicher auf deinem Gerät gespeichert.");
+      const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
+      const clientId = document.getElementById('cfgClientId').value.trim();
+      const agentEmail = document.getElementById('cfgAgentEmail').value.trim().toLowerCase();
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
+      tokenClient = null;
+      showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
 
-    function initMsal() {
-      const clientId = localStorage.getItem("ms_client_id");
-      if (!clientId) return;
+    function showAlert(message, type = 'info') {
+      const el = document.getElementById('globalAlert');
+      el.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-800', 'text-emerald-200', 'bg-rose-950/80', 'border-rose-800', 'text-rose-200', 'bg-blue-950/80', 'border-blue-800', 'text-blue-200');
+      if (type === 'success') {
+        el.classList.add('bg-emerald-950/80', 'border-emerald-800', 'text-emerald-200');
+      } else if (type === 'error') {
+        el.classList.add('bg-rose-950/80', 'border-rose-800', 'text-rose-200');
+      } else {
+        el.classList.add('bg-blue-950/80', 'border-blue-800', 'text-blue-200');
+      }
+      el.textContent = message;
+      el.classList.remove('hidden');
+      setTimeout(() => { el.classList.add('hidden'); }, 6000);
+    }
 
-      msalInstance = new msal.PublicClientApplication({
-        auth: {
-          clientId: clientId,
-          authority: "https://login.microsoftonline.com/consumers",
-          redirectUri: window.location.origin + window.location.pathname
-        },
-        cache: {
-          cacheLocation: "localStorage",
-          storeAuthStateInCookie: false
+    function switchTab(tabName) {
+      ['mail', 'docs', 'setup'].forEach(t => {
+        document.getElementById('view-' + t).classList.toggle('hidden', t !== tabName);
+        const btn = document.getElementById('tab-' + t);
+        if (t === tabName) {
+          btn.classList.add('bg-blue-600', 'text-white');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('bg-blue-600', 'text-white');
+          btn.classList.add('text-slate-400');
+        }
+      });
+    }
+
+    function updateGmailBadge(connected, email = '') {
+      const dot = document.getElementById('gmailStatusDot');
+      const text = document.getElementById('gmailStatusText');
+      const label = document.getElementById('activeAccountLabel');
+      const btn = document.getElementById('connectGmailBtn');
+
+      if (connected) {
+        dot.classList.remove('bg-slate-500');
+        dot.classList.add('bg-emerald-400');
+        text.textContent = 'Gmail aktiv';
+        label.textContent = email;
+        btn.textContent = 'Aktualisieren';
+      } else {
+        dot.classList.remove('bg-emerald-400');
+        dot.classList.add('bg-slate-500');
+        text.textContent = 'Getrennt';
+        label.textContent = 'Nicht verbunden';
+        btn.textContent = 'Gmail verbinden';
+      }
+    }
+
+    function connectGmail() {
+      const cfg = getConfig();
+      if (!cfg.clientId) {
+        switchTab('setup');
+        showAlert('Bitte trage zuerst deine Google Cloud OAuth Client-ID unter Einrichtung ein.', 'error');
+        return;
+      }
+
+      if (!window.google || !google.accounts || !google.accounts.oauth2) {
+        showAlert('Google-Anmeldedienst wird noch geladen. Bitte versuche es in zwei Sekunden erneut.', 'error');
+        return;
+      }
+
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: cfg.clientId,
+        scope: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send',
+        hint: cfg.agentEmail,
+        callback: async (resp) => {
+          if (resp.error) {
+            showAlert('Anmeldung abgebrochen oder fehlgeschlagen: ' + resp.error, 'error');
+            return;
+          }
+          accessToken = resp.access_token;
+          await verifyConnectedAccount();
         }
       });
 
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length > 0) {
-        currentAccount = accounts[0];
-        updateAuthButton();
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+    }
+
+    async function verifyConnectedAccount() {
+      const cfg = getConfig();
+      try {
+        const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+          headers: { Authorization: 'Bearer ' + accessToken }
+        });
+        if (!res.ok) throw new Error('Profil konnte nicht geprüft werden.');
+        const profile = await res.json();
+        const connectedEmail = (profile.emailAddress || '').toLowerCase();
+
+        if (cfg.agentEmail && connectedEmail !== cfg.agentEmail) {
+          accessToken = null;
+          updateGmailBadge(false);
+          showAlert(`Zugriff aus Sicherheitsgründen blockiert: Du hast ${connectedEmail} gewählt. Erlaubt ist ausschließlich ${cfg.agentEmail}.`, 'error');
+          return;
+        }
+
+        updateGmailBadge(true, connectedEmail);
+        showAlert(`Erfolgreich mit ${connectedEmail} verbunden.`, 'success');
+        loadInbox();
+      } catch (err) {
+        accessToken = null;
+        updateGmailBadge(false);
+        showAlert('Fehler bei der Kontoprüfung: ' + err.message, 'error');
       }
     }
 
-    function updateAuthButton() {
-      const btn = document.getElementById("authBtn");
-      if (currentAccount) {
-        btn.textContent = currentAccount.username;
-        btn.className = "bg-emerald-900/60 border border-emerald-700 text-emerald-300 text-xs px-3 py-1.5 rounded-lg truncate max-w-[160px]";
-      } else {
-        btn.textContent = "Outlook verbinden";
-        btn.className = "btn-secondary text-xs";
+    async function callGemini(parts) {
+      const cfg = getConfig();
+      if (!cfg.geminiKey) {
+        switchTab('setup');
+        throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts }]
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Gemini API-Fehler');
+      }
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
 
-    async function handleAuth() {
-      if (!msalInstance) {
-        switchTab("settings");
-        showBanner("Bitte trage zuerst deine Microsoft Client-ID ein.", true);
+    async function generateEmailDraft() {
+      const prompt = document.getElementById('mailPrompt').value.trim();
+      if (!prompt) {
+        showAlert('Bitte gib zuerst eine Anweisung oder Stichpunkte ein.', 'error');
         return;
       }
+
+      const btn = document.getElementById('btnGenerateMail');
+      btn.disabled = true;
+      btn.textContent = 'Generiere Entwurf...';
+
       try {
-        const loginResponse = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
-        currentAccount = loginResponse.account;
-        updateAuthButton();
-        showBanner(`Verbunden als ${currentAccount.username}`);
+        const instruction = `Erstelle aus folgender Anweisung eine professionelle, natürliche E-Mail auf Deutsch. Antworte ausschließlich im folgenden Format ohne Markdown-Sterne oder zusätzliche Erklärungen:\nEMPFAENGER: [falls genannt, sonst leer]\nBETREFF: [passender Betreff]\nTEXT:\n[vollständiger E-Mail-Text]\n\nAnweisung: ${prompt}`;
+        const result = await callGemini([{ text: instruction }]);
+
+        const toMatch = result.match(/^EMPFAENGER:\s*(.*)$/m);
+        const subMatch = result.match(/^BETREFF:\s*(.*)$/m);
+        const bodySplit = result.split(/^TEXT:\s*/m);
+
+        if (toMatch && toMatch[1].trim() && !toMatch[1].includes('[')) {
+          document.getElementById('mailTo').value = toMatch[1].trim();
+        }
+        if (subMatch && subMatch[1].trim()) {
+          document.getElementById('mailSubject').value = subMatch[1].trim();
+        }
+        document.getElementById('mailBody').value = (bodySplit[1] || result).trim();
+        showAlert('E-Mail-Entwurf wurde erstellt.', 'success');
       } catch (err) {
-        showBanner("Anmeldung abgebrochen oder fehlgeschlagen: " + err.message, true);
+        showAlert(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entwurf mit KI generieren';
       }
     }
 
-    async function getAccessToken() {
-      if (!msalInstance || !currentAccount) {
-        await handleAuth();
+    function encodeBase64Url(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
       }
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    async function sendGmailMessage() {
+      if (!accessToken) {
+        showAlert('Bitte verbinde oben rechts zuerst dein Assistenten-Konto mit Gmail.', 'error');
+        return;
+      }
+
+      const to = document.getElementById('mailTo').value.trim();
+      const subject = document.getElementById('mailSubject').value.trim();
+      const body = document.getElementById('mailBody').value.trim();
+
+      if (!to || !subject || !body) {
+        showAlert('Bitte fülle Empfänger, Betreff und Nachrichtentext vollständig aus.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSendMail');
+      btn.disabled = true;
+      btn.textContent = 'Sende E-Mail...';
+
       try {
-        const response = await msalInstance.acquireTokenSilent({
-          scopes: GRAPH_SCOPES,
-          account: currentAccount
+        const encodedSubject = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(subject))) + '?=';
+        const rawMail = [
+          `To: ${to}`,
+          `Subject: ${encodedSubject}`,
+          'Content-Type: text/plain; charset="UTF-8"',
+          '',
+          body
+        ].join('\r\n');
+
+        const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + accessToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ raw: encodeBase64Url(rawMail) })
         });
-        return response.accessToken;
-      } catch (e) {
-        const response = await msalInstance.acquireTokenPopup({ scopes: GRAPH_SCOPES });
-        currentAccount = response.account;
-        updateAuthButton();
-        return response.accessToken;
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error?.message || 'Versand fehlgeschlagen.');
+        }
+
+        showAlert(`E-Mail erfolgreich an ${to} gesendet.`, 'success');
+        document.getElementById('mailPrompt').value = '';
+      } catch (err) {
+        showAlert('Fehler beim Senden: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Über Assistenten-Konto senden';
+      }
+    }
+
+    async function loadInbox() {
+      if (!accessToken) {
+        showAlert('Bitte verbinde zuerst Gmail.', 'error');
+        return;
+      }
+
+      const listEl = document.getElementById('inboxList');
+      listEl.innerHTML = '<p class="text-xs text-slate-400">Lade Nachrichten...</p>';
+
+      try {
+        const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=6', {
+          headers: { Authorization: 'Bearer ' + accessToken }
+        });
+        const data = await res.json();
+        const messages = data.messages || [];
+
+        if (messages.length === 0) {
+          listEl.innerHTML = '<p class="text-xs text-slate-400">Keine Nachrichten im Posteingang vorhanden.</p>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        for (const msg of messages) {
+          const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
+            headers: { Authorization: 'Bearer ' + accessToken }
+          });
+          const detail = await detailRes.json();
+          const headers = detail.payload?.headers || [];
+          const from = headers.find(h => h.name === 'From')?.value || 'Unbekannt';
+          const subject = headers.find(h => h.name === 'Subject')?.value || '(Kein Betreff)';
+
+          const item = document.createElement('div');
+          item.className = 'p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1';
+          item.innerHTML = `
+            <div class="text-xs font-medium text-slate-200 truncate">${escapeHtml(subject)}</div>
+            <div class="text-[11px] text-slate-400 truncate">${escapeHtml(from)}</div>
+            <div class="text-xs text-slate-500 line-clamp-2">${escapeHtml(detail.snippet || '')}</div>
+          `;
+          listEl.appendChild(item);
+        }
+      } catch (err) {
+        listEl.innerHTML = `<p class="text-xs text-rose-400">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
       }
     }
 
     function handleFileSelect(event) {
       const file = event.target.files[0];
-      if (!file) return;
-      uploadedFileName = file.name;
-      uploadedFileMime = file.type;
-      const display = document.getElementById("fileNameDisplay");
-      display.textContent = `Ausgewählt: ${file.name}`;
-      display.classList.remove("hidden");
+      const label = document.getElementById('selectedFileName');
+      if (!file) {
+        uploadedFilePayload = null;
+        label.classList.add('hidden');
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = () => {
-        uploadedFileBase64 = reader.result.split(",")[1];
+        const base64Data = reader.result.split(',')[1];
+        uploadedFilePayload = {
+          mimeType: file.type || 'text/plain',
+          data: base64Data
+        };
+        label.textContent = `Geladen: ${file.name}`;
+        label.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
     }
 
-    async function generateDraft() {
-      const apiKey = localStorage.getItem("gemini_api_key");
-      const instruction = document.getElementById("instructionInput").value.trim();
+    async function processDocument() {
+      const rawText = document.getElementById('docRawText').value.trim();
+      const instruction = document.getElementById('docInstruction').value.trim();
 
-      if (!apiKey) {
-        switchTab("settings");
-        showBanner("Bitte hinterlege zuerst deinen Gemini API-Schlüssel.", true);
-        return;
-      }
-      if (!instruction && !uploadedFileBase64) {
-        showBanner("Bitte lade ein Dokument hoch oder gib eine Anweisung ein.", true);
+      if (!uploadedFilePayload && !rawText) {
+        showAlert('Bitte wähle eine Datei aus oder füge einen Text ein.', 'error');
         return;
       }
 
-      const btn = document.getElementById("generateBtn");
+      const btn = document.getElementById('btnProcessDoc');
       btn.disabled = true;
-      btn.textContent = "KI analysiert Dokument & schreibt Entwurf...";
-
-      const systemPrompt = `Du bist der persönliche KI-Korrespondenz-Agent von Marc Hens.
-Analysiere das beigefügte Dokument (falls vorhanden) und die Anweisung des Nutzers.
-Extrahiere nach Möglichkeit die E-Mail-Adresse des Empfängers, Versicherungsschein- oder Kundennummern und das Datum des Schreibens.
-Formuliere eine höfliche, klare und professionelle E-Mail auf Deutsch.
-WICHTIG: Beende jede E-Mail mit folgendem transparenten Hinweis in der Signatur:
-"Mit freundlichen Grüßen
-KI-Agent im Auftrag von Marc Hens
-(Diese Nachricht wurde automatisiert durch einen digitalen Assistenten im ausdrücklichen Auftrag von Marc Hens erstellt und versendet.)"
-
-Antworte ausschließlich im folgenden JSON-Format ohne Markdown-Codeblöcke:
-{"to": "gefundene-email@beispiel.de oder leer lassen", "subject": "Passender Betreff inkl. Vertragsnummer", "body": "Vollständiger E-Mail-Text inkl. Signatur"}`;
-
-      const parts = [{ text: `${systemPrompt}\n\nAnweisung von Marc Hens: ${instruction}` }];
-      if (uploadedFileBase64) {
-        parts.push({
-          inline_data: {
-            mime_type: uploadedFileMime,
-            data: uploadedFileBase64
-          }
-        });
-      }
+      btn.textContent = 'Analysiere Dokument...';
 
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts }],
-            generationConfig: { responseMimeType: "application/json" }
-          })
-        });
+        const parts = [{ text: instruction }];
+        if (rawText) {
+          parts.push({ text: 'Dokumenttext:\n' + rawText });
+        }
+        if (uploadedFilePayload) {
+          parts.push({
+            inlineData: {
+              mimeType: uploadedFilePayload.mimeType,
+              data: uploadedFilePayload.data
+            }
+          });
+        }
 
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-
-        const rawText = data.candidates[0].content.parts[0].text;
-        const parsed = JSON.parse(rawText);
-
-        document.getElementById("draftTo").value = parsed.to || "";
-        document.getElementById("draftSubject").value = parsed.subject || "";
-        document.getElementById("draftBody").value = parsed.body || "";
-        document.getElementById("draftCard").classList.remove("hidden");
-        document.getElementById("draftCard").scrollIntoView({ behavior: "smooth" });
+        const output = await callGemini(parts);
+        document.getElementById('docResultOutput').textContent = output;
+        document.getElementById('docResultCard').classList.remove('hidden');
+        showAlert('Dokument erfolgreich ausgewertet.', 'success');
       } catch (err) {
-        showBanner("Fehler bei der KI-Erstellung: " + err.message, true);
+        showAlert(err.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = "Entwurf von KI erstellen lassen";
+        btn.textContent = 'Dokument analysieren';
       }
     }
 
-    async function sendEmail() {
-      const to = document.getElementById("draftTo").value.trim();
-      const subject = document.getElementById("draftSubject").value.trim();
-      const body = document.getElementById("draftBody").value.trim();
-      const ccEmail = localStorage.getItem("cc_email");
-      const attachOriginal = document.getElementById("attachOriginal").checked;
-
-      if (!to || !subject || !body) {
-        showBanner("Bitte Empfänger, Betreff und Nachrichtentext prüfen.", true);
-        return;
-      }
-
-      const btn = document.getElementById("sendBtn");
-      btn.disabled = true;
-      btn.textContent = "Wird über Outlook versendet...";
-
-      try {
-        const token = await getAccessToken();
-
-        const messagePayload = {
-          subject: subject,
-          body: {
-            contentType: "Text",
-            content: body
-          },
-          toRecipients: [{ emailAddress: { address: to } }]
-        };
-
-        if (ccEmail) {
-          messagePayload.ccRecipients = [{ emailAddress: { address: ccEmail } }];
-        }
-
-        if (attachOriginal && uploadedFileBase64) {
-          messagePayload.attachments = [{
-            "@odata.type": "#microsoft.graph.fileAttachment",
-            name: uploadedFileName || "Dokument.pdf",
-            contentType: uploadedFileMime,
-            contentBytes: uploadedFileBase64
-          }];
-        }
-
-        const res = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ message: messagePayload, saveToSentItems: true })
-        });
-
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error?.message || "Versand fehlgeschlagen");
-        }
-
-        showBanner(`E-Mail erfolgreich an ${to} versendet!`);
-        document.getElementById("draftCard").classList.add("hidden");
-        document.getElementById("instructionInput").value = "";
-        document.getElementById("docInput").value = "";
-        document.getElementById("fileNameDisplay").classList.add("hidden");
-        uploadedFileBase64 = null;
-      } catch (err) {
-        showBanner("Fehler beim Senden: " + err.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Freigeben & über Outlook senden";
-      }
+    function transferDocToMail() {
+      const text = document.getElementById('docResultOutput').textContent.trim();
+      if (!text) return;
+      document.getElementById('mailBody').value = text;
+      switchTab('mail');
+      showAlert('Ergebnis in den E-Mail-Entwurf übernommen.', 'success');
     }
 
-    async function loadInbox() {
-      const list = document.getElementById("inboxList");
-      list.innerHTML = `<p class="text-sm text-slate-400">Lade Nachrichten aus Outlook...</p>`;
-
-      try {
-        const token = await getAccessToken();
-        const res = await fetch("https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=10&$select=subject,from,receivedDateTime,bodyPreview", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (!data.value || data.value.length === 0) {
-          list.innerHTML = `<p class="text-sm text-slate-400">Keine Nachrichten im Posteingang vorhanden.</p>`;
-          return;
-        }
-
-        list.innerHTML = data.value.map(mail => {
-          const sender = mail.from?.emailAddress?.name || mail.from?.emailAddress?.address || "Unbekannt";
-          const date = new Date(mail.receivedDateTime).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
-          return `
-            <div class="card p-3 space-y-1">
-              <div class="flex justify-between text-xs text-slate-400">
-                <span class="font-semibold text-sky-400 truncate max-w-[65%]">${sender}</span>
-                <span>${date}</span>
-              </div>
-              <p class="text-sm font-semibold text-slate-100">${mail.subject || "(Kein Betreff)"}</p>
-              <p class="text-xs text-slate-300 line-clamp-3">${mail.bodyPreview || ""}</p>
-            </div>
-          `;
-        }).join("");
-      } catch (err) {
-        list.innerHTML = `<p class="text-sm text-red-400">Fehler beim Abrufen: ${err.message}</p>`;
-      }
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
+
+    loadSettingsToUI();
   </script>
 </body>
 </html>
