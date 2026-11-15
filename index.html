@@ -46,14 +46,17 @@
   </header>
 
   <main class="max-w-3xl mx-auto p-4 pb-20 space-y-4">
-    <div id="globalAlert" class="hidden rounded-xl p-3.5 text-sm border"></div>
+    <div id="globalAlert" class="hidden rounded-xl p-3.5 text-sm border flex items-start justify-between gap-3">
+      <span id="globalAlertText" class="break-words leading-relaxed"></span>
+      <button type="button" onclick="hideAlert()" class="text-xs opacity-75 hover:opacity-100 px-1.5 py-0.5 rounded">Schließen</button>
+    </div>
 
     <!-- TAB 1: E-MAIL-AGENT -->
     <section id="view-mail" class="space-y-4">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span class="text-xs text-slate-400">Gemini 3.8 Flash</span>
+          <span id="activeModelBadge" class="text-xs text-slate-400">Automatische Modellwahl</span>
         </div>
 
         <div>
@@ -64,7 +67,7 @@
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf 'Einsprechen' oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de über den Test..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf Einsprechen oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de wegen der Terminbestätigung..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
@@ -180,9 +183,14 @@
           <input type="email" id="cfgAgentEmail" value="marc.hens.assistent@gmail.com" placeholder="marc.hens.assistent@gmail.com" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
-        <button onclick="saveSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
-          Einstellungen speichern
-        </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <button onclick="saveSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+            Einstellungen speichern
+          </button>
+          <button onclick="testGeminiConnection()" id="btnTestGemini" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-200 border border-slate-700 transition">
+            Gemini-Verbindung prüfen
+          </button>
+        </div>
       </div>
     </section>
   </main>
@@ -193,9 +201,13 @@
     let tokenClient = null;
     let uploadedFilePayload = null;
 
+    let cachedModelName = null;
+    let cachedModelForKey = null;
+
     let activeRecognition = null;
     let activeVoiceBtn = null;
     let activeVoiceDefaultLabel = '';
+    let alertTimer = null;
 
     function resetVoiceButton(btn, defaultLabel) {
       if (!btn) return;
@@ -281,9 +293,9 @@
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
         return {
-          geminiKey: saved.geminiKey || '',
-          clientId: saved.clientId || '',
-          agentEmail: saved.agentEmail || 'marc.hens.assistent@gmail.com'
+          geminiKey: (saved.geminiKey || '').trim(),
+          clientId: (saved.clientId || '').trim(),
+          agentEmail: (saved.agentEmail || 'marc.hens.assistent@gmail.com').trim().toLowerCase()
         };
       } catch (e) {
         return { geminiKey: '', clientId: '', agentEmail: 'marc.hens.assistent@gmail.com' };
@@ -304,22 +316,36 @@
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
       tokenClient = null;
+      cachedModelName = null;
+      cachedModelForKey = null;
+      document.getElementById('activeModelBadge').textContent = 'Automatische Modellwahl';
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
+    }
+
+    function hideAlert() {
+      document.getElementById('globalAlert').classList.add('hidden');
+      if (alertTimer) clearTimeout(alertTimer);
     }
 
     function showAlert(message, type = 'info') {
       const el = document.getElementById('globalAlert');
-      el.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-800', 'text-emerald-200', 'bg-rose-950/80', 'border-rose-800', 'text-rose-200', 'bg-blue-950/80', 'border-blue-800', 'text-blue-200');
+      const textEl = document.getElementById('globalAlertText');
+      if (alertTimer) clearTimeout(alertTimer);
+
+      el.classList.remove('hidden', 'bg-emerald-950/90', 'border-emerald-800', 'text-emerald-200', 'bg-rose-950/90', 'border-rose-800', 'text-rose-200', 'bg-blue-950/90', 'border-blue-800', 'text-blue-200');
       if (type === 'success') {
-        el.classList.add('bg-emerald-950/80', 'border-emerald-800', 'text-emerald-200');
+        el.classList.add('bg-emerald-950/90', 'border-emerald-800', 'text-emerald-200');
       } else if (type === 'error') {
-        el.classList.add('bg-rose-950/80', 'border-rose-800', 'text-rose-200');
+        el.classList.add('bg-rose-950/90', 'border-rose-800', 'text-rose-200');
       } else {
-        el.classList.add('bg-blue-950/80', 'border-blue-800', 'text-blue-200');
+        el.classList.add('bg-blue-950/90', 'border-blue-800', 'text-blue-200');
       }
-      el.textContent = message;
+      textEl.textContent = message;
       el.classList.remove('hidden');
-      setTimeout(() => { el.classList.add('hidden'); }, 6000);
+
+      if (type !== 'error') {
+        alertTimer = setTimeout(() => { el.classList.add('hidden'); }, 7000);
+      }
     }
 
     function switchTab(tabName) {
@@ -414,54 +440,128 @@
       }
     }
 
-    async function callGemini(parts, maxRetries = 3) {
+    async function resolveWorkingModel(apiKey) {
+      if (cachedModelName && cachedModelForKey === apiKey) {
+        return cachedModelName;
+      }
+
+      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      let response;
+      try {
+        response = await fetch(listUrl, { method: 'GET', signal: controller.signal });
+      } catch (netErr) {
+        clearTimeout(timeoutId);
+        if (netErr.name === 'AbortError') {
+          throw new Error('Netzwerk-Timeout (12s): Dein Browser oder ein Werbeblocker blockiert die Verbindung zu generativelanguage.googleapis.com.');
+        }
+        throw new Error('Netzwerkfehler beim Verbinden mit Google: ' + netErr.message);
+      }
+      clearTimeout(timeoutId);
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = data.error?.message || `HTTP-Status ${response.status}`;
+        throw new Error(`API-Schlüssel abgelehnt (${response.status}): ${detail}`);
+      }
+
+      const validModels = (data.models || [])
+        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''))
+        .filter(name => name.startsWith('gemini-') && !/embedding|imagen|veo|aqa|tts|audio/i.test(name));
+
+      if (validModels.length === 0) {
+        throw new Error('Für diesen API-Schlüssel ist kein Text-Modell freigeschaltet. Prüfe im Google AI Studio oder in der Google Cloud Console die Generative Language API.');
+      }
+
+      const preferredOrder = [
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-2.5-pro'
+      ];
+
+      let chosen = preferredOrder.find(p => validModels.includes(p));
+      if (!chosen) {
+        chosen = validModels.find(n => n.includes('flash')) || validModels[0];
+      }
+
+      cachedModelName = chosen;
+      cachedModelForKey = apiKey;
+      document.getElementById('activeModelBadge').textContent = chosen;
+      return chosen;
+    }
+
+    async function callGemini(parts, expectJson = false) {
       const cfg = getConfig();
       if (!cfg.geminiKey) {
         switchTab('setup');
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
+      const modelName = await resolveWorkingModel(cfg.geminiKey);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`;
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sek. Timeout gegen Hänger
+      const payload = {
+        contents: [{ parts }]
+      };
+      if (expectJson) {
+        payload.generationConfig = {
+          responseMimeType: 'application/json'
+        };
+      }
 
-        try {
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts }] }),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-          const data = await response.json();
-          if (response.ok) {
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          }
-
-          const errMsg = data.error?.message || 'Gemini API-Fehler';
-          const isTemporary = response.status === 503 || response.status === 429 || /high demand|overloaded|try again later/i.test(errMsg);
-
-          if (isTemporary && attempt < maxRetries) {
-            showAlert(`Server kurz ausgelastet – automatischer Versuch ${attempt + 1} von ${maxRetries}...`, 'info');
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-            continue;
-          }
-
-          throw new Error(errMsg);
-        } catch (netErr) {
-          clearTimeout(timeoutId);
-          if (netErr.name === 'AbortError') {
-            throw new Error('Zeitüberschreitung: Die Anfrage hat zu lange gedauert. Bitte versuche es erneut.');
-          }
-          if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-            continue;
-          }
-          throw netErr;
+      let response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Zeitüberschreitung (20s): Keine Antwort vom Modell erhalten. Prüfe deine Internetverbindung oder deaktiviere Werbeblocker für diese Seite.');
         }
+        throw new Error('Verbindungsfehler: ' + err.message);
+      }
+      clearTimeout(timeoutId);
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        cachedModelName = null;
+        const msg = data.error?.message || `HTTP-Status ${response.status}`;
+        throw new Error(`Google API Fehler (${response.status} bei ${modelName}): ${msg}`);
+      }
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) {
+        const blockReason = data.candidates?.[0]?.finishReason || data.promptFeedback?.blockReason || 'Leere Antwort';
+        throw new Error(`Keine Textausgabe erhalten (Grund: ${blockReason}).`);
+      }
+      return text;
+    }
+
+    async function testGeminiConnection() {
+      const btn = document.getElementById('btnTestGemini');
+      btn.disabled = true;
+      btn.textContent = 'Prüfe Verbindung...';
+      try {
+        saveSettings();
+        const reply = await callGemini([{ text: 'Antworte nur mit: OK' }], false);
+        showAlert(`Verbindung erfolgreich! Aktives Modell: ${cachedModelName} (Antwort: ${reply.trim()})`, 'success');
+      } catch (err) {
+        showAlert(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gemini-Verbindung prüfen';
       }
     }
 
@@ -477,31 +577,41 @@
       btn.textContent = 'Generiere Entwurf...';
 
       try {
-        const instruction = `Erstelle aus folgender Anweisung eine professionelle, natürliche E-Mail auf Deutsch. 
-WICHTIG: Trenne die Antwort strikt in folgende drei Abschnitte auf, damit sie automatisch in die Felder übernommen werden können:
-EMPFAENGER: [genannte E-Mail-Adresse, falls keine genannt wurde leer lassen]
-BETREFF: [ein passender, aussagekräftiger Betreff]
-TEXT:
-[der vollständige, professionelle Inhalt der E-Mail]
+        const instruction = `Analysiere die folgende gesprochene oder geschriebene Anweisung und erstelle daraus eine professionelle E-Mail auf Deutsch.
+Gib das Ergebnis ausschließlich als JSON-Objekt mit genau diesen drei Schlüsseln zurück:
+- "empfaenger": Die genannte E-Mail-Adresse (leer lassen "", falls keine genannt wurde)
+- "betreff": Ein passender, klarer Betreff
+- "text": Der vollständige, höfliche E-Mail-Inhalt mit Anrede und Grußformel
 
-Anweisung / Diktat: ${prompt}`;
+Anweisung: ${prompt}`;
 
-        const result = await callGemini([{ text: instruction }]);
+        const rawResult = await callGemini([{ text: instruction }], true);
+        let parsed = null;
 
-        const toMatch = result.match(/^EMPFAENGER:\s*(.*)$/m);
-        const subMatch = result.match(/^BETREFF:\s*(.*)$/m);
-        const bodySplit = result.split(/^TEXT:\s*/m);
-
-        if (toMatch && toMatch[1].trim() && !toMatch[1].includes('[')) {
-          document.getElementById('mailTo').value = toMatch[1].trim();
+        try {
+          const cleaned = rawResult.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+          parsed = JSON.parse(cleaned);
+        } catch (e) {
+          const toMatch = rawResult.match(/\*?\*?EMPFAENGER\*?\*?:\s*(.*)/i);
+          const subMatch = rawResult.match(/\*?\*?BETREFF\*?\*?:\s*(.*)/i);
+          const bodySplit = rawResult.split(/\*?\*?TEXT\*?\*?:\s*/i);
+          parsed = {
+            empfaenger: toMatch ? toMatch[1].trim() : '',
+            betreff: subMatch ? subMatch[1].trim() : '',
+            text: (bodySplit[1] || rawResult).trim()
+          };
         }
-        if (subMatch && subMatch[1].trim()) {
-          document.getElementById('mailSubject').value = subMatch[1].trim();
+
+        if (parsed.empfaenger && parsed.empfaenger.includes('@')) {
+          document.getElementById('mailTo').value = parsed.empfaenger.trim();
         }
-        document.getElementById('mailBody').value = (bodySplit[1] || result).trim();
-        showAlert('E-Mail-Entwurf mit Empfänger, Betreff und Inhalt erstellt.', 'success');
+        if (parsed.betreff) {
+          document.getElementById('mailSubject').value = parsed.betreff.trim();
+        }
+        document.getElementById('mailBody').value = (parsed.text || '').trim();
+        showAlert('E-Mail-Entwurf erfolgreich erstellt und in Empfänger, Betreff und Inhalt aufgeteilt.', 'success');
       } catch (err) {
-        showAlert('Fehler bei der Generierung: ' + err.message, 'error');
+        showAlert(err.message, 'error');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Entwurf mit KI generieren';
@@ -668,7 +778,7 @@ Anweisung / Diktat: ${prompt}`;
           });
         }
 
-        const output = await callGemini(parts);
+        const output = await callGemini(parts, false);
         document.getElementById('docResultOutput').textContent = output;
         document.getElementById('docResultCard').classList.remove('hidden');
         showAlert('Dokument erfolgreich ausgewertet.', 'success');
