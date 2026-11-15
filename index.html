@@ -11,17 +11,20 @@
 
   <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3">
     <div class="max-w-3xl mx-auto flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
           KI
         </div>
-        <div>
-          <h1 class="text-base font-semibold leading-tight text-white">KI-Agent <span class="text-[11px] font-normal text-slate-400">v2.6</span></h1>
-          <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[160px] sm:max-w-xs">Nicht verbunden</p>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 08:43</span>
+          </div>
+          <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0">
         <span id="gmailStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
           <span id="gmailStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
           <span id="gmailStatusText">Getrennt</span>
@@ -66,13 +69,13 @@
 
         <div>
           <div class="flex items-center justify-between gap-2 mb-1.5">
-            <label for="mailPrompt" class="block text-xs text-slate-400">Anweisung oder Stichpunkte für die E-Mail</label>
+            <label for="mailPrompt" class="block text-xs text-slate-400">Empfänger und Inhalt einsprechen (Betreff entsteht automatisch)</label>
             <button type="button" onclick="toggleVoiceInput('mailPrompt', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="mailPrompt" oninput="hideSendConfirmation()" rows="3" placeholder="Tippe auf Einsprechen oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de mit dem Betreff Test..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailPrompt" oninput="hideSendConfirmation()" rows="3" placeholder="Einfach einsprechen: z. B. Schreibe an Marc, dass wir uns morgen um 14 Uhr treffen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
@@ -83,14 +86,15 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <h2 class="text-sm font-semibold text-white">Nachricht prüfen und senden</h2>
 
-        <div>
-          <label class="block text-xs text-slate-400 mb-1">Empfänger (E-Mail-Adresse)</label>
+        <div class="space-y-1.5">
+          <label class="block text-xs text-slate-400">Empfänger (E-Mail-Adresse)</label>
           <input type="email" id="mailTo" oninput="hideSendConfirmation()" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <div id="quickContactChips" class="flex flex-wrap gap-1.5 pt-0.5"></div>
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Betreff</label>
-          <input type="text" id="mailSubject" oninput="hideSendConfirmation()" placeholder="Betreff der E-Mail" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <label class="block text-xs text-slate-400 mb-1">Betreff (automatisch aus Inhalt erstellt)</label>
+          <input type="text" id="mailSubject" oninput="hideSendConfirmation()" placeholder="Wird automatisch aus dem Text erstellt" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
@@ -210,12 +214,32 @@
           </button>
         </div>
       </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+        <div>
+          <h2 class="text-sm font-semibold text-white">Gespeicherte Kontakte für Spracherkennung</h2>
+          <p class="text-xs text-slate-400 mt-1">Neue Empfänger werden beim Senden automatisch ergänzt. Gesprochene Namen ordnet die KI diesen Adressen direkt zu.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input type="text" id="newContactName" placeholder="Name (z. B. Marc Hens)" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <input type="email" id="newContactEmail" placeholder="E-Mail (z. B. marc.hens@gmx.de)" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <button type="button" onclick="addContactFromForm()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+          Kontakt hinzufügen
+        </button>
+
+        <div id="savedContactsList" class="space-y-1.5 pt-1"></div>
+      </div>
     </section>
   </main>
 
   <script>
+    const BUILD_TIMESTAMP = '15.11.2026 · 08:43';
     const STORAGE_KEY = 'ki_agent_config_v1';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v26';
+    const CONTACTS_KEY = 'ki_agent_contacts_v1';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v27';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
     const EMAIL_SIGNATURE = 'Viele Grüße,\nAssistent von Marc Hens';
 
@@ -228,6 +252,111 @@
     let activeVoiceBtn = null;
     let activeVoiceDefaultLabel = '';
     let alertTimer = null;
+
+    function getContacts() {
+      const defaults = [{ name: 'Marc Hens', email: 'marc.hens@gmx.de' }];
+      try {
+        const raw = localStorage.getItem(CONTACTS_KEY);
+        if (!raw) {
+          localStorage.setItem(CONTACTS_KEY, JSON.stringify(defaults));
+          return defaults;
+        }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          return defaults;
+        }
+        return parsed;
+      } catch (e) {
+        return defaults;
+      }
+    }
+
+    function saveContacts(list) {
+      try {
+        localStorage.setItem(CONTACTS_KEY, JSON.stringify(list));
+      } catch (e) {}
+      renderContactsUI();
+    }
+
+    function rememberContactEmail(email, optionalName = '') {
+      const clean = cleanExtractedEmail(email);
+      if (!clean || !clean.includes('@')) return;
+      const list = getContacts();
+      const existing = list.find(c => c.email.toLowerCase() === clean);
+      if (existing) {
+        if (optionalName && optionalName.trim()) {
+          existing.name = optionalName.trim();
+          saveContacts(list);
+        }
+        return;
+      }
+      const derivedName = (optionalName || '').trim() || clean.split('@')[0]
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+      list.push({ name: derivedName || clean, email: clean });
+      saveContacts(list);
+    }
+
+    function addContactFromForm() {
+      const nameEl = document.getElementById('newContactName');
+      const emailEl = document.getElementById('newContactEmail');
+      const name = nameEl.value.trim();
+      const email = cleanExtractedEmail(emailEl.value);
+      if (!email || !email.includes('@')) {
+        showAlert('Bitte gib eine gültige E-Mail-Adresse für den Kontakt ein.', 'error');
+        return;
+      }
+      rememberContactEmail(email, name);
+      nameEl.value = '';
+      emailEl.value = '';
+      showAlert(`Kontakt ${name || email} gespeichert.`, 'success');
+    }
+
+    function removeContact(email) {
+      const list = getContacts().filter(c => c.email.toLowerCase() !== email.toLowerCase());
+      saveContacts(list);
+    }
+
+    function selectQuickContact(email) {
+      hideSendConfirmation();
+      document.getElementById('mailTo').value = email;
+    }
+
+    function renderContactsUI() {
+      const contacts = getContacts();
+      const chipsEl = document.getElementById('quickContactChips');
+      const setupListEl = document.getElementById('savedContactsList');
+
+      if (chipsEl) {
+        chipsEl.innerHTML = '';
+        contacts.slice(0, 6).forEach(c => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => selectQuickContact(c.email);
+          btn.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 transition';
+          btn.textContent = `${c.name} (${c.email})`;
+          chipsEl.appendChild(btn);
+        });
+      }
+
+      if (setupListEl) {
+        setupListEl.innerHTML = '';
+        contacts.forEach(c => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs';
+          row.innerHTML = `
+            <div class="truncate">
+              <span class="font-medium text-slate-200">${escapeHtml(c.name)}</span>
+              <span class="text-slate-400 ml-1.5">${escapeHtml(c.email)}</span>
+            </div>
+            <button type="button" onclick="removeContact('${escapeHtml(c.email)}')" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 shrink-0">Entfernen</button>
+          `;
+          setupListEl.appendChild(row);
+        });
+      }
+    }
 
     function resetVoiceButton(btn, defaultLabel) {
       if (!btn) return;
@@ -415,11 +544,13 @@
     }
 
     function loadSettingsToUI() {
+      document.getElementById('buildVersionBadge').textContent = BUILD_TIMESTAMP;
       const cfg = getConfig();
       document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
       document.getElementById('cfgClientId').value = cfg.clientId;
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
       discoverAvailableModels(cfg.geminiKey);
+      renderContactsUI();
     }
 
     function saveSettings() {
@@ -736,9 +867,19 @@
     function cleanExtractedEmail(rawEmail) {
       if (!rawEmail) return '';
       return rawEmail
+        .replace(/<|>/g, '')
+        .replace(/\s+(at|ät)\s+/gi, '@')
+        .replace(/\[at\]|\(at\)|\[ät\]|\(ät\)/gi, '@')
+        .replace(/\s+(punkt|dot)\s+/gi, '.')
+        .replace(/\[dot\]|\(dot\)|\[punkt\]|\(punkt\)/gi, '.')
+        .replace(/\s+(bindestrich|minus)\s+/gi, '-')
+        .replace(/\s+(unterstrich|underscore)\s+/gi, '_')
+        .replace(/ä/gi, 'ae')
+        .replace(/ö/gi, 'oe')
+        .replace(/ü/gi, 'ue')
+        .replace(/ß/gi, 'ss')
         .replace(/\s+/g, '')
-        .replace(/\[at\]|\(at\)/gi, '@')
-        .replace(/\[dot\]|\(dot\)/gi, '.')
+        .replace(/[,;:!?]+$/g, '')
         .toLowerCase()
         .trim();
     }
@@ -758,7 +899,7 @@
     function applyDraftToFields(rawResult, appendSignature = false) {
       const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
       const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
-      const bodySplit = rawResult.split(/TEXT:\s*/i);
+      const textStartMatch = rawResult.match(/TEXT:\s*/i);
 
       if (toMatch) {
         const cleanedTo = cleanExtractedEmail(toMatch[1].replace(/\[|\]/g, '').trim());
@@ -766,15 +907,18 @@
           document.getElementById('mailTo').value = cleanedTo;
         }
       }
+
+      if (textStartMatch) {
+        const afterText = rawResult.slice(textStartMatch.index + textStartMatch[0].length);
+        const extractedBody = afterText.split(/\n\s*BETREFF:/i)[0].trim();
+        document.getElementById('mailBody').value = appendSignature ? ensureSignature(extractedBody) : extractedBody;
+      }
+
       if (subMatch) {
         const rawSub = subMatch[1].replace(/\[|\]/g, '').trim();
         if (rawSub) {
           document.getElementById('mailSubject').value = rawSub;
         }
-      }
-      if (bodySplit.length > 1) {
-        const extractedBody = bodySplit[1].trim();
-        document.getElementById('mailBody').value = appendSignature ? ensureSignature(extractedBody) : extractedBody;
       }
     }
 
@@ -797,17 +941,32 @@
         btn.textContent = `${statusLabel} (${sec}s)...`;
       }, 1000);
 
+      const contacts = getContacts();
+      const contactsContext = contacts.map(c => `${c.name}: ${c.email}`).join(', ');
+
       try {
-        const instruction = `Erstelle aus der Anweisung eine natürliche deutsche E-Mail. Wende gesprochene Buchstabier-Korrekturen auf die E-Mail-Adresse an (z. B. "Mark mark.tens@gmx.de dabei schreibt sich Mark mit C und Henz mit S" ergibt "marc.hens@gmx.de") und entferne Leerzeichen in der Adresse.
-Beende den E-Mail-Text exakt mit dieser Signatur:
+        const instruction = `Du bist ein deutscher E-Mail-Assistent. Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine natürliche, höfliche E-Mail in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
+
+Regeln für den Empfänger (EMPFAENGER):
+- Prüfe zuerst die gespeicherten Kontakte: ${contactsContext}. Wenn ein genannter Name oder eine ähnlich klingende diktierte Adresse zu einem Kontakt passt (z. B. "Marc", "Mark Henz" oder "mark.tens@gmx.de" -> "marc.hens@gmx.de"), verwende diese hinterlegte E-Mail-Adresse.
+- Wenn eine neue E-Mail-Adresse diktiert wurde, bereinige alle typischen Spracherkennungsfehler (gesprochenes "at"/"ät", "punkt", Leerzeichen vor/nach Punkten, Buchstabier-Hinweise wie "mit C" oder "mit S").
+- Wenn gar kein Empfänger erkennbar ist, lasse EMPFAENGER leer.
+
+Regeln für den Text (TEXT):
+- Formuliere den Inhalt klar, natürlich und vollständig aus.
+- Beende den Text exakt mit dieser Signatur:
 Viele Grüße,
 Assistent von Marc Hens
 
-Antworte exakt in diesem Format:
+Regeln für den Betreff (BETREFF):
+- Leite den Betreff direkt und natürlich aus dem gerade formulierten E-Mail-Text ab.
+- Achte auf korrekte deutsche Groß- und Kleinschreibung, treffende Wortwahl und halte den Betreff kurz und prägnant (ohne Anführungszeichen und ohne das Wort "Betreff").
+
+Gib deine Antwort exakt in dieser Reihenfolge zurück:
 EMPFAENGER: [E-Mail-Adresse oder leer]
-BETREFF: [Betreff]
 TEXT:
-[E-Mail-Text inklusive der Signatur]
+[vollständiger E-Mail-Text inklusive Signatur]
+BETREFF: [automatisch abgeleiteter Betreff in korrekter Schreibweise]
 
 Anweisung: ${prompt}`;
 
@@ -851,11 +1010,11 @@ Anweisung: ${prompt}`;
         return;
       }
 
-      const to = document.getElementById('mailTo').value.trim();
+      const to = cleanExtractedEmail(document.getElementById('mailTo').value);
       const subject = document.getElementById('mailSubject').value.trim();
       const rawBody = document.getElementById('mailBody').value.trim();
 
-      if (!to || !subject || !rawBody) {
+      if (!to || !to.includes('@') || !subject || !rawBody) {
         showAlert('Bitte fülle Empfänger, Betreff und Nachrichtentext vollständig aus.', 'error');
         return;
       }
@@ -888,6 +1047,8 @@ Anweisung: ${prompt}`;
           const errData = await res.json();
           throw new Error(errData.error?.message || 'Versand fehlgeschlagen.');
         }
+
+        rememberContactEmail(to);
 
         document.getElementById('mailPrompt').value = '';
         document.getElementById('mailTo').value = '';
