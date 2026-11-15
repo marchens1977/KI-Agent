@@ -16,7 +16,7 @@
           KI
         </div>
         <div>
-          <h1 class="text-base font-semibold leading-tight text-white">KI-Agent <span class="text-[11px] font-normal text-slate-400">v2.5</span></h1>
+          <h1 class="text-base font-semibold leading-tight text-white">KI-Agent <span class="text-[11px] font-normal text-slate-400">v2.6</span></h1>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[160px] sm:max-w-xs">Nicht verbunden</p>
         </div>
       </div>
@@ -53,10 +53,12 @@
 
     <!-- TAB 1: E-MAIL-AGENT -->
     <section id="view-mail" class="space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div id="mailComposeCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between gap-2">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <select id="modelSelect" onchange="onModelChange()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 max-w-[185px]">
+          <select id="modelSelect" onchange="onModelChange()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 max-w-[195px]">
+            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+            <option value="gemini-3.5-flash">gemini-3.5-flash</option>
             <option value="gemini-2.5-flash">gemini-2.5-flash</option>
             <option value="gemini-flash-latest">gemini-flash-latest</option>
           </select>
@@ -70,7 +72,7 @@
               <span>Einsprechen</span>
             </button>
           </div>
-          <textarea id="mailPrompt" rows="3" placeholder="Tippe auf Einsprechen oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de mit dem Betreff Test..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailPrompt" oninput="hideSendConfirmation()" rows="3" placeholder="Tippe auf Einsprechen oder schreibe hier: z. B. Schreibe an marc.hens@gmx.de mit dem Betreff Test..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
@@ -83,28 +85,41 @@
 
         <div>
           <label class="block text-xs text-slate-400 mb-1">Empfänger (E-Mail-Adresse)</label>
-          <input type="email" id="mailTo" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <input type="email" id="mailTo" oninput="hideSendConfirmation()" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
           <label class="block text-xs text-slate-400 mb-1">Betreff</label>
-          <input type="text" id="mailSubject" placeholder="Betreff der E-Mail" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <input type="text" id="mailSubject" oninput="hideSendConfirmation()" placeholder="Betreff der E-Mail" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
           <div class="flex items-center justify-between gap-2 mb-1.5">
-            <label for="mailBody" class="block text-xs text-slate-400">Nachrichtentext</label>
+            <label for="mailBody" class="block text-xs text-slate-400">Nachrichtentext (inkl. Signatur)</label>
             <button type="button" onclick="toggleVoiceInput('mailBody', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
               <span>Diktieren</span>
             </button>
           </div>
-          <textarea id="mailBody" rows="6" placeholder="Hier erscheint der generierte Text oder deine eigene Nachricht..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+          <textarea id="mailBody" oninput="hideSendConfirmation()" rows="7" placeholder="Hier erscheint der generierte Text samt Signatur..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
         <button onclick="sendGmailMessage()" id="btnSendMail" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-sm font-medium text-white transition">
           Über Assistenten-Konto senden
         </button>
+
+        <div id="sendConfirmationBox" class="hidden rounded-xl bg-emerald-950/90 border border-emerald-700 p-3.5 space-y-2.5">
+          <div class="flex items-start gap-2.5 text-emerald-200 text-sm">
+            <svg class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="font-semibold text-emerald-100">E-Mail erfolgreich versandt</p>
+              <p id="sendConfirmationDetail" class="text-xs text-emerald-300 mt-0.5"></p>
+            </div>
+          </div>
+          <button type="button" onclick="startNewEmail()" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-xs font-semibold text-white transition">
+            Neue E-Mail verfassen
+          </button>
+        </div>
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
@@ -200,7 +215,10 @@
 
   <script>
     const STORAGE_KEY = 'ki_agent_config_v1';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v25';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v26';
+    const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
+    const EMAIL_SIGNATURE = 'Viele Grüße,\nAssistent von Marc Hens';
+
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
@@ -234,6 +252,8 @@
 
       const targetEl = document.getElementById(targetId);
       if (!targetEl) return;
+
+      hideSendConfirmation();
 
       const recognition = new SpeechRecognition();
       recognition.lang = 'de-DE';
@@ -326,6 +346,9 @@
 
       if (savedChoice && models.includes(savedChoice)) {
         select.value = savedChoice;
+      } else if (models.includes(DEFAULT_PRIMARY_MODEL)) {
+        select.value = DEFAULT_PRIMARY_MODEL;
+        localStorage.setItem(SELECTED_MODEL_KEY, DEFAULT_PRIMARY_MODEL);
       } else if (models.length > 0) {
         select.value = models[0];
         localStorage.setItem(SELECTED_MODEL_KEY, models[0]);
@@ -340,7 +363,12 @@
     }
 
     async function discoverAvailableModels(apiKey) {
-      if (!apiKey) return ['gemini-2.5-flash', 'gemini-flash-latest'];
+      const fallback = [DEFAULT_PRIMARY_MODEL, 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
+      if (!apiKey) {
+        availableModels = fallback;
+        populateModelDropdown(fallback);
+        return fallback;
+      }
 
       const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
       const controller = new AbortController();
@@ -358,30 +386,29 @@
           .filter(name => name.startsWith('gemini-') && !isExcludedModel(name));
 
         const priority = [
+          DEFAULT_PRIMARY_MODEL,
+          'gemini-3.5-flash',
           'gemini-2.5-flash',
           'gemini-3-flash-preview',
           'gemini-flash-latest',
           'gemini-2.0-flash'
         ];
 
-        const sorted = [];
+        const sorted = [DEFAULT_PRIMARY_MODEL];
         for (const p of priority) {
-          if (raw.includes(p)) sorted.push(p);
+          if (raw.includes(p) && !sorted.includes(p)) sorted.push(p);
         }
         for (const m of raw) {
           if (!sorted.includes(m)) sorted.push(m);
         }
 
-        if (sorted.length > 0) {
-          availableModels = sorted;
-          populateModelDropdown(sorted);
-          return sorted;
-        }
+        availableModels = sorted;
+        populateModelDropdown(sorted);
+        return sorted;
       } catch (e) {
         clearTimeout(timer);
       }
 
-      const fallback = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
       availableModels = fallback;
       populateModelDropdown(fallback);
       return fallback;
@@ -392,9 +419,7 @@
       document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
       document.getElementById('cfgClientId').value = cfg.clientId;
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
-      if (cfg.geminiKey) {
-        discoverAvailableModels(cfg.geminiKey);
-      }
+      discoverAvailableModels(cfg.geminiKey);
     }
 
     function saveSettings() {
@@ -405,9 +430,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
       localStorage.removeItem(SELECTED_MODEL_KEY);
       tokenClient = null;
-      if (geminiKey) {
-        discoverAvailableModels(geminiKey);
-      }
+      discoverAvailableModels(geminiKey);
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
 
@@ -433,8 +456,28 @@
       el.classList.remove('hidden');
 
       if (type !== 'error') {
-        alertTimer = setTimeout(() => { el.classList.add('hidden'); }, 6000);
+        alertTimer = setTimeout(() => { el.classList.add('hidden'); }, 8000);
       }
+    }
+
+    function hideSendConfirmation() {
+      const box = document.getElementById('sendConfirmationBox');
+      if (box && !box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+      }
+    }
+
+    function startNewEmail() {
+      hideSendConfirmation();
+      hideAlert();
+      document.getElementById('mailPrompt').value = '';
+      document.getElementById('mailTo').value = '';
+      document.getElementById('mailSubject').value = '';
+      document.getElementById('mailBody').value = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        document.getElementById('mailPrompt').focus();
+      }, 250);
     }
 
     function switchTab(tabName) {
@@ -613,7 +656,7 @@
             ok: false,
             status: 408,
             timedOut: true,
-            error: `Keine Antwort von Google nach 12 Sekunden (${modelName}). Falls du im WLAN bist, schalte WLAN kurz aus und teste über Mobilfunk (manche Router oder DNS-Filter blockieren POST-Anfragen an googleapis.com).`
+            error: `Keine Antwort von Google nach 12 Sekunden (${modelName}).`
           };
         }
         return {
@@ -636,8 +679,8 @@
         await discoverAvailableModels(cfg.geminiKey);
       }
 
-      const selected = document.getElementById('modelSelect').value || availableModels[0] || 'gemini-2.5-flash';
-      const fallback = availableModels.find(m => m !== selected);
+      const selected = document.getElementById('modelSelect').value || DEFAULT_PRIMARY_MODEL;
+      const fallback = availableModels.find(m => m !== selected && m !== 'gemini-flash-latest') || availableModels.find(m => m !== selected);
       const modelsToTry = fallback ? [selected, fallback] : [selected];
 
       let lastError = 'Unbekannter API-Fehler.';
@@ -700,7 +743,19 @@
         .trim();
     }
 
-    function applyDraftToFields(rawResult) {
+    function ensureSignature(bodyText) {
+      const cleaned = (bodyText || '').trim();
+      if (!cleaned) return EMAIL_SIGNATURE;
+      if (/Assistent von Marc Hens\s*$/i.test(cleaned)) {
+        return cleaned;
+      }
+      const withoutTrailingGreeting = cleaned
+        .replace(/\n*(Mit freundlichen Grüßen|Viele Grüße|Beste Grüße|Freundliche Grüße),?\s*$/i, '')
+        .trim();
+      return `${withoutTrailingGreeting}\n\n${EMAIL_SIGNATURE}`;
+    }
+
+    function applyDraftToFields(rawResult, appendSignature = false) {
       const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
       const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
       const bodySplit = rawResult.split(/TEXT:\s*/i);
@@ -718,7 +773,8 @@
         }
       }
       if (bodySplit.length > 1) {
-        document.getElementById('mailBody').value = bodySplit[1].trim();
+        const extractedBody = bodySplit[1].trim();
+        document.getElementById('mailBody').value = appendSignature ? ensureSignature(extractedBody) : extractedBody;
       }
     }
 
@@ -729,6 +785,7 @@
         return;
       }
 
+      hideSendConfirmation();
       const btn = document.getElementById('btnGenerateMail');
       btn.disabled = true;
       let sec = 0;
@@ -742,11 +799,15 @@
 
       try {
         const instruction = `Erstelle aus der Anweisung eine natürliche deutsche E-Mail. Wende gesprochene Buchstabier-Korrekturen auf die E-Mail-Adresse an (z. B. "Mark mark.tens@gmx.de dabei schreibt sich Mark mit C und Henz mit S" ergibt "marc.hens@gmx.de") und entferne Leerzeichen in der Adresse.
+Beende den E-Mail-Text exakt mit dieser Signatur:
+Viele Grüße,
+Assistent von Marc Hens
+
 Antworte exakt in diesem Format:
 EMPFAENGER: [E-Mail-Adresse oder leer]
 BETREFF: [Betreff]
 TEXT:
-[E-Mail-Text]
+[E-Mail-Text inklusive der Signatur]
 
 Anweisung: ${prompt}`;
 
@@ -757,13 +818,13 @@ Anweisung: ${prompt}`;
             btn.textContent = `${statusLabel} (${sec}s)...`;
           },
           (partialText) => {
-            applyDraftToFields(partialText);
+            applyDraftToFields(partialText, false);
           }
         );
 
-        applyDraftToFields(rawResult);
+        applyDraftToFields(rawResult, true);
         if (!rawResult.match(/TEXT:\s*/i)) {
-          document.getElementById('mailBody').value = rawResult.trim();
+          document.getElementById('mailBody').value = ensureSignature(rawResult);
         }
         showAlert(`E-Mail-Entwurf in ${sec}s erstellt.`, 'success');
       } catch (err) {
@@ -792,13 +853,14 @@ Anweisung: ${prompt}`;
 
       const to = document.getElementById('mailTo').value.trim();
       const subject = document.getElementById('mailSubject').value.trim();
-      const body = document.getElementById('mailBody').value.trim();
+      const rawBody = document.getElementById('mailBody').value.trim();
 
-      if (!to || !subject || !body) {
+      if (!to || !subject || !rawBody) {
         showAlert('Bitte fülle Empfänger, Betreff und Nachrichtentext vollständig aus.', 'error');
         return;
       }
 
+      const body = ensureSignature(rawBody);
       const btn = document.getElementById('btnSendMail');
       btn.disabled = true;
       btn.textContent = 'Sende E-Mail...';
@@ -827,11 +889,17 @@ Anweisung: ${prompt}`;
           throw new Error(errData.error?.message || 'Versand fehlgeschlagen.');
         }
 
-        showAlert(`E-Mail erfolgreich an ${to} gesendet.`, 'success');
         document.getElementById('mailPrompt').value = '';
         document.getElementById('mailTo').value = '';
         document.getElementById('mailSubject').value = '';
         document.getElementById('mailBody').value = '';
+
+        const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('sendConfirmationDetail').textContent = `Gesendet an ${to} um ${now} Uhr (Betreff: ${subject}).`;
+        document.getElementById('sendConfirmationBox').classList.remove('hidden');
+
+        showAlert(`E-Mail erfolgreich an ${to} versandt.`, 'success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         loadInbox();
       } catch (err) {
         showAlert('Fehler beim Senden: ' + err.message, 'error');
@@ -954,7 +1022,8 @@ Anweisung: ${prompt}`;
     function transferDocToMail() {
       const text = document.getElementById('docResultOutput').textContent.trim();
       if (!text) return;
-      document.getElementById('mailBody').value = text;
+      hideSendConfirmation();
+      document.getElementById('mailBody').value = ensureSignature(text);
       switchTab('mail');
       showAlert('Ergebnis in den E-Mail-Entwurf übernommen.', 'success');
     }
