@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 08:58</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 09:06</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -35,14 +35,17 @@
       </div>
     </div>
 
-    <nav class="max-w-3xl mx-auto mt-3 grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
-      <button onclick="switchTab('mail')" id="tab-mail" class="tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-medium bg-blue-600 text-white transition">
+    <nav class="max-w-3xl mx-auto mt-3 grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+      <button onclick="switchTab('mail')" id="tab-mail" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium bg-blue-600 text-white transition truncate">
         E-Mail-Agent
       </button>
-      <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition">
+      <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium text-slate-400 hover:text-white transition truncate">
         Dokumente
       </button>
-      <button onclick="switchTab('setup')" id="tab-setup" class="tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition">
+      <button onclick="switchTab('persona')" id="tab-persona" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium text-slate-400 hover:text-white transition truncate">
+        KI-Profil
+      </button>
+      <button onclick="switchTab('setup')" id="tab-setup" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium text-slate-400 hover:text-white transition truncate">
         Einrichtung
       </button>
     </nav>
@@ -57,8 +60,13 @@
     <!-- TAB 1: E-MAIL-AGENT -->
     <section id="view-mail" class="space-y-4">
       <div id="mailComposeCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
-        <div class="flex items-center justify-between gap-2">
-          <h2 id="composeCardTitle" class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2 min-w-0">
+            <h2 id="composeCardTitle" class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
+            <button type="button" onclick="switchTab('persona')" id="personaStatusChip" class="text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate">
+              KI-Profil aktiv
+            </button>
+          </div>
           <select id="modelSelect" onchange="onModelChange()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 max-w-[195px]">
             <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
             <option value="gemini-3.5-flash">gemini-3.5-flash</option>
@@ -150,14 +158,27 @@
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-white">Posteingang (Assistenten-Konto)</h2>
-          <button onclick="loadInbox()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-sm font-semibold text-white">Nachrichtenverlauf (Assistenten-Konto)</h2>
+          <button onclick="loadInbox()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition shrink-0">
             Aktualisieren
           </button>
         </div>
+
+        <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button type="button" id="filter-all" onclick="setMailboxFilter('all')" class="mail-filter-btn py-1.5 px-2 rounded-lg text-xs font-medium bg-slate-800 text-white transition">
+            Alle
+          </button>
+          <button type="button" id="filter-received" onclick="setMailboxFilter('received')" class="mail-filter-btn py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+            Eingegangen
+          </button>
+          <button type="button" id="filter-sent" onclick="setMailboxFilter('sent')" class="mail-filter-btn py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+            Gesendet
+          </button>
+        </div>
+
         <div id="inboxList" class="space-y-2.5 text-sm text-slate-400">
-          <p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene Nachrichten zu laden.</p>
+          <p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene und gesendete Nachrichten zu laden.</p>
         </div>
       </div>
     </section>
@@ -215,7 +236,69 @@
       </div>
     </section>
 
-    <!-- TAB 3: EINRICHTUNG -->
+    <!-- TAB 3: KI-PROFIL & SCHREIBSTIL -->
+    <section id="view-persona" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+        <div>
+          <h2 class="text-sm font-semibold text-white">Rolle, Schreibstil und Grundinformationen</h2>
+          <p class="text-xs text-slate-400 mt-1">Diese Vorgaben gelten dauerhaft für jede E-Mail und jede KI-Antwort. Du kannst sie hier jederzeit wie einen System-Prompt formulieren und anpassen.</p>
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="block text-xs text-slate-400">Schnell-Vorlagen für den Schreibstil</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="applyPersonaPreset('direct')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+              Direkt & auf den Punkt
+            </button>
+            <button type="button" onclick="applyPersonaPreset('friendly')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+              Freundlich & persönlich
+            </button>
+            <button type="button" onclick="applyPersonaPreset('formal')" class="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition">
+              Formell & geschäftlich
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="personaRole" class="block text-xs text-slate-400">Deine Rolle und Grundhaltung</label>
+            <button type="button" onclick="toggleVoiceInput('personaRole', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Einsprechen</span>
+            </button>
+          </div>
+          <textarea id="personaRole" rows="2" placeholder="z. B. Du schreibst als persönlicher KI-Assistent von Marc Hens. Pragmatisch, lösungsorientiert und verbindlich." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="personaStyleRules" class="block text-xs text-slate-400">Art der Formulierung & Schreibstil-Regeln (Prompt-Anweisung)</label>
+            <button type="button" onclick="toggleVoiceInput('personaStyleRules', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Einsprechen</span>
+            </button>
+          </div>
+          <textarea id="personaStyleRules" rows="7" placeholder="Beschreibe hier genau, wie die KI formulieren soll (z. B. Satzbau, Tonalität, keine Floskeln, wie Zu- und Absagen klingen sollen)..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="personaBackground" class="block text-xs text-slate-400">Dauerhafte Grundinformationen & Kontext (optional)</label>
+            <button type="button" onclick="toggleVoiceInput('personaBackground', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+              <span>Einsprechen</span>
+            </button>
+          </div>
+          <textarea id="personaBackground" rows="4" placeholder="z. B. Wohnort Mainz, erreichbar bevorzugt per E-Mail, bei Terminvorschlägen immer konkrete Uhrzeiten nennen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <button type="button" onclick="savePersonaSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+          KI-Profil und Schreibstil speichern
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 4: EINRICHTUNG -->
     <section id="view-setup" class="hidden space-y-4">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
         <div>
@@ -269,21 +352,47 @@
   </main>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 08:58';
+    const BUILD_TIMESTAMP = '15.11.2026 · 09:06';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v31';
+    const PERSONA_KEY = 'ki_agent_persona_v1';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v33';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
     const SENDER_DISPLAY_NAME = 'KI-Assistent von Marc Hens';
     const EMAIL_SIGNATURE = 'Viele Grüße\n\nKI-Assistent von Marc Hens';
     const MAX_ATTACHMENT_TOTAL_BYTES = 15 * 1024 * 1024;
 
+    const DEFAULT_PERSONA = {
+      role: 'Du schreibst als persönlicher KI-Assistent im Auftrag von Marc Hens. Dein Auftreten ist verbindlich, klar, respektvoll und lösungsorientiert.',
+      styleRules: 'Formuliere präzise, natürlich und direkt auf den Punkt. Verzichte auf künstliche Floskeln, übertriebene Höflichkeitsfloskeln und unnötige Ausschmückungen. Schreibe in zusammenhängenden, gut lesbaren Sätzen ohne Aufzählungszeichen oder Formatierungssymbole, außer der Inhalt erfordert es zwingend. Passe die Anrede (Du oder Sie) logisch an den Empfänger und den Kontext an.',
+      background: ''
+    };
+
+    const PERSONA_PRESETS = {
+      direct: {
+        role: 'Du schreibst als persönlicher KI-Assistent im Auftrag von Marc Hens. Dein Auftreten ist verbindlich, klar, respektvoll und lösungsorientiert.',
+        styleRules: 'Formuliere präzise, natürlich und direkt auf den Punkt. Verzichte auf künstliche Floskeln, übertriebene Höflichkeitsfloskeln und unnötige Ausschmückungen. Schreibe in zusammenhängenden, gut lesbaren Sätzen ohne Aufzählungszeichen oder Formatierungssymbole, außer der Inhalt erfordert es zwingend. Passe die Anrede (Du oder Sie) logisch an den Empfänger und den Kontext an.'
+      },
+      friendly: {
+        role: 'Du schreibst als persönlicher KI-Assistent im Auftrag von Marc Hens in einem warmen, zugänglichen und unkomplizierten Ton.',
+        styleRules: 'Formuliere freundlich, locker und authentisch, aber dennoch klar und strukturiert. Vermeide steife Behördensprache und abgedroschene Standardfloskeln. Halte die Nachrichten angenehm kurz und komme zügig zum eigentlichen Anliegen.'
+      },
+      formal: {
+        role: 'Du schreibst als persönlicher KI-Assistent im Auftrag von Marc Hens in professioneller Geschäftskorrespondenz.',
+        styleRules: 'Verwende eine höfliche, seriöse und präzise Ausdrucksweise mit Sie-Anrede. Gliedere das Anliegen logisch in kurze Absätze, nenne Termine, Fristen und Fakten unmissverständlich und verzichte auf umgangssprachliche Wendungen.'
+      }
+    };
+
     let accessToken = null;
+    let connectedAccountEmail = '';
     let tokenClient = null;
     let uploadedFilePayload = null;
     let mailAttachments = [];
     let availableModels = [];
     let inboxMessagesCache = {};
+    let allMessagesList = [];
+    let currentMailboxFilter = 'all';
+    let expandedMessageIds = new Set();
     let replyContext = null;
 
     let activeRecognition = null;
@@ -291,10 +400,102 @@
     let activeVoiceDefaultLabel = '';
     let alertTimer = null;
 
+    function getPersonaConfig() {
+      try {
+        const raw = localStorage.getItem(PERSONA_KEY);
+        if (!raw) {
+          localStorage.setItem(PERSONA_KEY, JSON.stringify(DEFAULT_PERSONA));
+          return { ...DEFAULT_PERSONA };
+        }
+        const parsed = JSON.parse(raw);
+        return {
+          role: typeof parsed.role === 'string' ? parsed.role : DEFAULT_PERSONA.role,
+          styleRules: typeof parsed.styleRules === 'string' ? parsed.styleRules : DEFAULT_PERSONA.styleRules,
+          background: typeof parsed.background === 'string' ? parsed.background : ''
+        };
+      } catch (e) {
+        return { ...DEFAULT_PERSONA };
+      }
+    }
+
+    function updatePersonaStatusChip() {
+      const chip = document.getElementById('personaStatusChip');
+      if (!chip) return;
+      const p = getPersonaConfig();
+      const hasRules = Boolean((p.role || '').trim() || (p.styleRules || '').trim() || (p.background || '').trim());
+      if (hasRules) {
+        chip.textContent = 'KI-Profil aktiv';
+        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
+      } else {
+        chip.textContent = 'KI-Profil leer';
+        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition truncate';
+      }
+    }
+
+    function loadPersonaToUI() {
+      const p = getPersonaConfig();
+      const roleEl = document.getElementById('personaRole');
+      const styleEl = document.getElementById('personaStyleRules');
+      const bgEl = document.getElementById('personaBackground');
+      if (roleEl) roleEl.value = p.role;
+      if (styleEl) styleEl.value = p.styleRules;
+      if (bgEl) bgEl.value = p.background;
+      updatePersonaStatusChip();
+    }
+
+    function applyPersonaPreset(presetKey) {
+      const preset = PERSONA_PRESETS[presetKey];
+      if (!preset) return;
+      document.getElementById('personaRole').value = preset.role;
+      document.getElementById('personaStyleRules').value = preset.styleRules;
+      showAlert('Vorlage in die Felder übernommen. Tippe unten auf Speichern, um sie dauerhaft zu sichern.', 'info');
+    }
+
+    function savePersonaSettings() {
+      const role = document.getElementById('personaRole').value.trim();
+      const styleRules = document.getElementById('personaStyleRules').value.trim();
+      const background = document.getElementById('personaBackground').value.trim();
+
+      localStorage.setItem(PERSONA_KEY, JSON.stringify({ role, styleRules, background }));
+      updatePersonaStatusChip();
+      showAlert('KI-Profil und Formulierungsregeln gespeichert. Sie werden ab sofort bei jeder E-Mail berücksichtigt.', 'success');
+    }
+
+    function buildPersonaPromptBlock() {
+      const p = getPersonaConfig();
+      const blocks = [];
+      if (p.role && p.role.trim()) {
+        blocks.push(`Rolle und Grundhaltung:\n${p.role.trim()}`);
+      }
+      if (p.styleRules && p.styleRules.trim()) {
+        blocks.push(`Verbindliche Formulierungs- und Schreibstil-Regeln:\n${p.styleRules.trim()}`);
+      }
+      if (p.background && p.background.trim()) {
+        blocks.push(`Dauerhafte Grundinformationen und Hintergrundkontext:\n${p.background.trim()}`);
+      }
+      if (blocks.length === 0) return '';
+      return `=== PERSÖNLICHES KI-PROFIL VON MARC HENS (STRIKT BEACHTEN) ===\n${blocks.join('\n\n')}\n=== ENDE KI-PROFIL ===`;
+    }
+
     function formatFileSize(bytes) {
       if (!bytes || bytes < 1024) return `${bytes || 0} B`;
       if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
       return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function formatMessageDate(timestampMs, fallbackHeader = '') {
+      const num = Number(timestampMs);
+      if (num && !Number.isNaN(num)) {
+        const d = new Date(num);
+        return d.toLocaleString('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) + ' Uhr';
+      }
+      return fallbackHeader || '';
     }
 
     function renderMailAttachments() {
@@ -682,6 +883,7 @@
       discoverAvailableModels(cfg.geminiKey);
       renderContactsUI();
       renderMailAttachments();
+      loadPersonaToUI();
     }
 
     function saveSettings() {
@@ -780,7 +982,7 @@
     }
 
     function switchTab(tabName) {
-      ['mail', 'docs', 'setup'].forEach(t => {
+      ['mail', 'docs', 'persona', 'setup'].forEach(t => {
         document.getElementById('view-' + t).classList.toggle('hidden', t !== tabName);
         const btn = document.getElementById('tab-' + t);
         if (t === tabName) {
@@ -800,12 +1002,14 @@
       const btn = document.getElementById('connectGmailBtn');
 
       if (connected) {
+        connectedAccountEmail = email;
         dot.classList.remove('bg-slate-500');
         dot.classList.add('bg-emerald-400');
         text.textContent = 'Gmail aktiv';
         label.textContent = email;
         btn.textContent = 'Aktualisieren';
       } else {
+        connectedAccountEmail = '';
         dot.classList.remove('bg-emerald-400');
         dot.classList.add('bg-slate-500');
         text.textContent = 'Getrennt';
@@ -1113,18 +1317,19 @@
 
       const contacts = getContacts();
       const contactsContext = contacts.map(c => `${c.name}: ${c.email}`).join(', ');
+      const personaBlock = buildPersonaPromptBlock();
 
       try {
         let instruction = '';
 
         if (replyContext) {
           const userNoteBlock = prompt
-            ? `Zusätzliche Vorgabe von Marc Hens für die Antwort: ${prompt}`
-            : 'Es gibt keine spezielle Zusatzvorgabe; formuliere eine passende, höfliche und zielführende Antwort auf den Inhalt der eingegangenen E-Mail.';
+            ? `Zusätzliche Vorgabe von Marc Hens für diese konkrete Antwort: ${prompt}`
+            : 'Es gibt keine spezielle Zusatzvorgabe; formuliere eine passende, zielführende Antwort auf den Inhalt der eingegangenen E-Mail im definierten Stil.';
 
-          instruction = `Du bist der persönliche KI-Assistent von Marc Hens. Formuliere eine natürliche, höfliche deutsche Antwort auf die untenstehende eingegangene E-Mail.
+          instruction = `Du bist der persönliche KI-Assistent von Marc Hens. Formuliere eine deutsche Antwort auf die untenstehende eingegangene E-Mail.
 
-Absender der eingegangenen E-Mail: ${replyContext.senderRaw} (${replyContext.senderEmail})
+${personaBlock ? personaBlock + '\n\n' : ''}Absender der eingegangenen E-Mail: ${replyContext.senderRaw} (${replyContext.senderEmail})
 Ursprünglicher Betreff: ${replyContext.originalSubject}
 
 Inhalt der eingegangenen E-Mail:
@@ -1135,6 +1340,7 @@ ${replyContext.body}
 ${userNoteBlock}
 
 Regeln für den Antworttext (TEXT):
+- Halte dich bei Rolle, Ton, Satzbau und Wortwahl strikt an das oben definierte persönliche KI-Profil von Marc Hens.
 - Gehe konkret auf die Fragen, Informationen oder Wünsche in der eingegangenen E-Mail ein.
 - Schreibe in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
 - Beende den Text exakt mit dieser Signatur (ohne Komma hinter Viele Grüße und inklusive der Leerzeile dazwischen):
@@ -1148,14 +1354,15 @@ TEXT:
 [vollständiger Antworttext inklusive Signatur]
 BETREFF: ${replyContext.replySubject}`;
         } else {
-          instruction = `Du bist ein deutscher E-Mail-Assistent. Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine natürliche, höfliche E-Mail in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
+          instruction = `Du bist der persönliche KI-Assistent von Marc Hens. Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine deutsche E-Mail in einwandfreier Rechtschreibung und Zeichensetzung.
 
-Regeln für den Empfänger (EMPFAENGER):
+${personaBlock ? personaBlock + '\n\n' : ''}Regeln für den Empfänger (EMPFAENGER):
 - Prüfe zuerst die gespeicherten Kontakte: ${contactsContext}. Wenn ein genannter Name oder eine ähnlich klingende diktierte Adresse zu einem Kontakt passt (z. B. "Marc", "Mark Henz" oder "mark.tens@gmx.de" -> "marc.hens@gmx.de"), verwende diese hinterlegte E-Mail-Adresse.
 - Wenn eine neue E-Mail-Adresse diktiert wurde, bereinige alle typischen Spracherkennungsfehler (gesprochenes "at"/"ät", "punkt", Leerzeichen vor/nach Punkten, Buchstabier-Hinweise wie "mit C" oder "mit S").
 - Wenn gar kein Empfänger erkennbar ist, lasse EMPFAENGER leer.
 
 Regeln für den Text (TEXT):
+- Halte dich bei Rolle, Ton, Satzbau und Wortwahl strikt an das oben definierte persönliche KI-Profil von Marc Hens.
 - Formuliere den Inhalt klar, natürlich und vollständig aus.
 - Beende den Text exakt mit dieser Signatur (ohne Komma hinter Viele Grüße und inklusive der Leerzeile dazwischen):
 Viele Grüße
@@ -1263,17 +1470,33 @@ Anweisung: ${prompt}`;
 
       const plain = findPartByMime(payload, 'text/plain');
       if (plain && plain.trim()) {
-        return plain.trim().slice(0, 3000);
+        return plain.trim().slice(0, 30000);
       }
 
       const html = findPartByMime(payload, 'text/html');
       if (html && html.trim()) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('style, script').forEach(el => el.remove());
         const text = (doc.body?.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
-        if (text) return text.slice(0, 3000);
+        if (text) return text.slice(0, 30000);
       }
 
       return snippetFallback;
+    }
+
+    function extractAttachmentNames(payload) {
+      const names = [];
+      function walk(part) {
+        if (!part) return;
+        if (part.filename && part.filename.trim() && part.body && (part.body.attachmentId || part.body.size > 0)) {
+          names.push(part.filename.trim());
+        }
+        if (Array.isArray(part.parts)) {
+          part.parts.forEach(walk);
+        }
+      }
+      walk(payload);
+      return names;
     }
 
     async function sendGmailMessage() {
@@ -1428,6 +1651,155 @@ Anweisung: ${prompt}`;
       generateEmailDraft();
     }
 
+    function updateFilterButtonsUI() {
+      const totalCount = allMessagesList.length;
+      const receivedCount = allMessagesList.filter(m => !m.isSent).length;
+      const sentCount = allMessagesList.filter(m => m.isSent).length;
+
+      const labels = {
+        all: `Alle (${totalCount})`,
+        received: `Eingegangen (${receivedCount})`,
+        sent: `Gesendet (${sentCount})`
+      };
+
+      ['all', 'received', 'sent'].forEach(key => {
+        const btn = document.getElementById(`filter-${key}`);
+        if (!btn) return;
+        btn.textContent = labels[key];
+        if (currentMailboxFilter === key) {
+          btn.classList.add('bg-slate-800', 'text-white');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('bg-slate-800', 'text-white');
+          btn.classList.add('text-slate-400');
+        }
+      });
+    }
+
+    function setMailboxFilter(filterName) {
+      currentMailboxFilter = filterName;
+      updateFilterButtonsUI();
+      renderMessageList();
+    }
+
+    function toggleMessageExpand(messageId) {
+      if (expandedMessageIds.has(messageId)) {
+        expandedMessageIds.delete(messageId);
+      } else {
+        expandedMessageIds.add(messageId);
+      }
+      const msg = inboxMessagesCache[messageId];
+      const existingCard = document.getElementById(`msg-card-${messageId}`);
+      if (msg && existingCard) {
+        const updatedCard = buildMessageCardElement(msg);
+        existingCard.replaceWith(updatedCard);
+      } else {
+        renderMessageList();
+      }
+    }
+
+    function buildMessageCardElement(msg) {
+      const isExpanded = expandedMessageIds.has(msg.id);
+      const item = document.createElement('div');
+      item.id = `msg-card-${msg.id}`;
+      item.className = `p-3.5 rounded-xl bg-slate-950 border transition space-y-2.5 ${
+        isExpanded ? 'border-blue-600/70 shadow-md' : 'border-slate-800 hover:border-slate-700 cursor-pointer'
+      }`;
+
+      if (!isExpanded) {
+        item.onclick = () => toggleMessageExpand(msg.id);
+      }
+
+      const directionBadge = msg.isSent
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-950/90 text-amber-300 border border-amber-800/80 shrink-0">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/></svg>
+            <span>Gesendet</span>
+           </span>`
+        : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-950/90 text-emerald-300 border border-emerald-800/80 shrink-0">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25"/></svg>
+            <span>Eingegangen</span>
+           </span>`;
+
+      const counterpartLabel = msg.isSent
+        ? `An: ${msg.to || 'Unbekannt'}`
+        : `Von: ${msg.from || 'Unbekannt'}`;
+
+      const attachmentBadge = msg.attachments && msg.attachments.length > 0
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-slate-900 text-slate-300 border border-slate-800">
+            Anhang: ${escapeHtml(msg.attachments.join(', '))}
+           </span>`
+        : '';
+
+      const bodySection = isExpanded
+        ? `<div class="space-y-2.5 pt-1">
+            <div class="rounded-lg bg-slate-900/90 border border-slate-800 p-2.5 text-[11px] text-slate-300 space-y-1">
+              <div class="break-words"><span class="text-slate-500">Von:</span> ${escapeHtml(msg.from)}</div>
+              <div class="break-words"><span class="text-slate-500">An:</span> ${escapeHtml(msg.to || '-')}</div>
+              <div><span class="text-slate-500">Datum:</span> ${escapeHtml(msg.dateFormatted)}</div>
+              <div class="break-words"><span class="text-slate-500">Betreff:</span> ${escapeHtml(msg.subject)}</div>
+              ${attachmentBadge ? `<div class="pt-1">${attachmentBadge}</div>` : ''}
+            </div>
+            <div class="text-xs sm:text-sm text-slate-100 whitespace-pre-wrap break-words leading-relaxed bg-slate-900 border border-slate-700/80 rounded-xl p-3.5 max-h-[60vh] overflow-y-auto select-text">${escapeHtml(msg.body || msg.snippet || '(Kein Nachrichtentext vorhanden)')}</div>
+          </div>`
+        : `<div class="space-y-1">
+            <div class="text-xs text-slate-400 line-clamp-2 pt-0.5">${escapeHtml(msg.snippet || msg.body)}</div>
+            ${attachmentBadge ? `<div class="pt-0.5">${attachmentBadge}</div>` : ''}
+          </div>`;
+
+      const expandBtnLabel = isExpanded ? 'Einklappen' : 'Vollständig lesen';
+      const replyBtnHtml = !msg.isSent
+        ? `<button type="button" onclick="event.stopPropagation(); startReplyToMessage('${escapeHtml(msg.id)}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 active:bg-indigo-700 text-xs font-medium text-white transition">
+            Mit KI antworten
+           </button>`
+        : '';
+
+      item.innerHTML = `
+        <div class="space-y-1" ${isExpanded ? `onclick="toggleMessageExpand('${escapeHtml(msg.id)}')" style="cursor:pointer;"` : ''}>
+          <div class="flex items-center justify-between gap-2">
+            ${directionBadge}
+            <span class="text-[11px] text-slate-400 truncate">${escapeHtml(msg.dateFormatted)}</span>
+          </div>
+          <div class="text-xs sm:text-sm font-semibold text-slate-100 break-words pt-0.5">${escapeHtml(msg.subject)}</div>
+          <div class="text-[11px] text-slate-400 truncate">${escapeHtml(counterpartLabel)}</div>
+        </div>
+        ${bodySection}
+        <div class="flex items-center justify-between gap-2 pt-0.5">
+          <button type="button" onclick="event.stopPropagation(); toggleMessageExpand('${escapeHtml(msg.id)}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+            <span>${expandBtnLabel}</span>
+          </button>
+          ${replyBtnHtml}
+        </div>
+      `;
+
+      return item;
+    }
+
+    function renderMessageList() {
+      const listEl = document.getElementById('inboxList');
+      if (!listEl) return;
+
+      const filtered = allMessagesList.filter(msg => {
+        if (currentMailboxFilter === 'received') return !msg.isSent;
+        if (currentMailboxFilter === 'sent') return msg.isSent;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        const emptyText = currentMailboxFilter === 'received'
+          ? 'Keine eingegangenen Nachrichten gefunden.'
+          : currentMailboxFilter === 'sent'
+            ? 'Keine gesendeten Nachrichten gefunden.'
+            : 'Keine Nachrichten vorhanden.';
+        listEl.innerHTML = `<p class="text-xs text-slate-400">${emptyText}</p>`;
+        return;
+      }
+
+      listEl.innerHTML = '';
+      filtered.forEach(msg => {
+        listEl.appendChild(buildMessageCardElement(msg));
+      });
+    }
+
     async function loadInbox() {
       if (!accessToken) {
         showAlert('Bitte verbinde zuerst Gmail.', 'error');
@@ -1435,66 +1807,95 @@ Anweisung: ${prompt}`;
       }
 
       const listEl = document.getElementById('inboxList');
-      listEl.innerHTML = '<p class="text-xs text-slate-400">Lade Nachrichten...</p>';
+      listEl.innerHTML = '<p class="text-xs text-slate-400">Lade eingegangene und gesendete Nachrichten...</p>';
 
       try {
-        const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=6', {
-          headers: { Authorization: 'Bearer ' + accessToken }
-        });
-        const data = await res.json();
-        const messages = data.messages || [];
+        const [inboxRes, sentRes] = await Promise.all([
+          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=INBOX&maxResults=8', {
+            headers: { Authorization: 'Bearer ' + accessToken }
+          }),
+          fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SENT&maxResults=8', {
+            headers: { Authorization: 'Bearer ' + accessToken }
+          })
+        ]);
 
-        if (messages.length === 0) {
-          listEl.innerHTML = '<p class="text-xs text-slate-400">Keine Nachrichten im Posteingang vorhanden.</p>';
+        const inboxData = await inboxRes.json();
+        const sentData = await sentRes.json();
+
+        const uniqueIds = [];
+        const seen = new Set();
+        for (const item of [...(inboxData.messages || []), ...(sentData.messages || [])]) {
+          if (item && item.id && !seen.has(item.id)) {
+            seen.add(item.id);
+            uniqueIds.push(item.id);
+          }
+        }
+
+        if (uniqueIds.length === 0) {
+          allMessagesList = [];
+          inboxMessagesCache = {};
+          updateFilterButtonsUI();
+          listEl.innerHTML = '<p class="text-xs text-slate-400">Keine Nachrichten im Konto vorhanden.</p>';
           return;
         }
 
-        inboxMessagesCache = {};
-        listEl.innerHTML = '';
+        const details = await Promise.all(
+          uniqueIds.slice(0, 14).map(id =>
+            fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`, {
+              headers: { Authorization: 'Bearer ' + accessToken }
+            }).then(r => r.json())
+          )
+        );
 
-        for (const msg of messages) {
-          const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`, {
-            headers: { Authorization: 'Bearer ' + accessToken }
-          });
-          const detail = await detailRes.json();
+        const activeAgent = (connectedAccountEmail || getConfig().agentEmail || '').toLowerCase();
+        inboxMessagesCache = {};
+        allMessagesList = [];
+
+        for (const detail of details) {
+          if (!detail || !detail.id) continue;
           const headers = detail.payload?.headers || [];
           const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
 
           const from = getHeader('From') || 'Unbekannt';
+          const to = getHeader('To') || '';
           const replyToRaw = getHeader('Reply-To') || from;
           const replyToEmail = cleanExtractedEmail(replyToRaw);
+          const fromEmail = cleanExtractedEmail(from);
           const subject = getHeader('Subject') || '(Kein Betreff)';
+          const dateHeader = getHeader('Date');
           const messageIdHeader = getHeader('Message-ID');
           const referencesHeader = getHeader('References');
           const plainBody = extractMessagePlainText(detail.payload, detail.snippet || '');
+          const attachments = extractAttachmentNames(detail.payload);
+          const labelIds = detail.labelIds || [];
+          const timestampMs = Number(detail.internalDate) || Date.parse(dateHeader) || 0;
 
-          inboxMessagesCache[msg.id] = {
-            id: msg.id,
-            threadId: detail.threadId || msg.threadId || '',
+          const isSent = labelIds.includes('SENT') && (!labelIds.includes('INBOX') || (activeAgent && fromEmail === activeAgent));
+
+          const msgObj = {
+            id: detail.id,
+            threadId: detail.threadId || '',
             from,
+            to,
             replyToEmail,
             subject,
+            dateFormatted: formatMessageDate(timestampMs, dateHeader),
+            timestampMs,
             messageIdHeader,
             referencesHeader,
-            body: plainBody
+            snippet: detail.snippet || '',
+            body: plainBody,
+            attachments,
+            isSent
           };
 
-          const item = document.createElement('div');
-          item.className = 'p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2';
-          item.innerHTML = `
-            <div class="space-y-0.5">
-              <div class="text-xs font-medium text-slate-200 truncate">${escapeHtml(subject)}</div>
-              <div class="text-[11px] text-slate-400 truncate">${escapeHtml(from)}</div>
-              <div class="text-xs text-slate-500 line-clamp-2 pt-0.5">${escapeHtml(detail.snippet || plainBody)}</div>
-            </div>
-            <div class="flex justify-end pt-0.5">
-              <button type="button" onclick="startReplyToMessage('${escapeHtml(msg.id)}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 active:bg-indigo-700 text-xs font-medium text-white transition">
-                Mit KI antworten
-              </button>
-            </div>
-          `;
-          listEl.appendChild(item);
+          inboxMessagesCache[detail.id] = msgObj;
+          allMessagesList.push(msgObj);
         }
+
+        allMessagesList.sort((a, b) => b.timestampMs - a.timestampMs);
+        updateFilterButtonsUI();
+        renderMessageList();
       } catch (err) {
         listEl.innerHTML = `<p class="text-xs text-rose-400">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
       }
