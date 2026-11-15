@@ -2,59 +2,168 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#060b1a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="KI-Agent" />
   <title>KI-Agent</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='.55' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M28 44l-2.2-7.8a9 9 0 00-6-6L12 28l7.8-2.2a9 9 0 006-6L28 12l2.2 7.8a9 9 0 006 6L44 28l-7.8 2.2a9 9 0 00-6 6z' fill='white'/%3E%3Cpath d='M46 24l-.8-3a4 4 0 00-2.7-2.7L39 17.5l3-.8a4 4 0 002.7-2.7L46 11l.8 3a4 4 0 002.7 2.7l3 .8-3 .8a4 4 0 00-2.7 2.7z' fill='white' opacity='.85'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='.55' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M28 44l-2.2-7.8a9 9 0 00-6-6L12 28l7.8-2.2a9 9 0 006-6L28 12l2.2 7.8a9 9 0 006 6L44 28l-7.8 2.2a9 9 0 00-6 6z' fill='white'/%3E%3Cpath d='M46 24l-.8-3a4 4 0 00-2.7-2.7L39 17.5l3-.8a4 4 0 002.7-2.7L46 11l.8 3a4 4 0 002.7 2.7l3 .8-3 .8a4 4 0 00-2.7 2.7z' fill='white' opacity='.85'/%3E%3C/svg%3E" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root { color-scheme: dark; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      background:
+        radial-gradient(900px 420px at 15% -120px, rgba(59, 130, 246, 0.16), transparent 70%),
+        radial-gradient(700px 380px at 100% -60px, rgba(139, 92, 246, 0.12), transparent 65%),
+        #030712;
+      background-attachment: fixed;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Kopfbereich */
+    .app-header {
+      background: rgba(3, 7, 18, 0.78);
+      -webkit-backdrop-filter: saturate(160%) blur(16px);
+      backdrop-filter: saturate(160%) blur(16px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.09);
+      padding-top: max(0.75rem, env(safe-area-inset-top));
+    }
+    .app-logo {
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%);
+      box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+    .brand-title {
+      background: linear-gradient(90deg, #ffffff 0%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .header-btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      box-shadow: 0 6px 16px -8px rgba(99, 102, 241, 0.9);
+      color: #fff;
+      transition: filter 0.15s ease, transform 0.1s ease;
+    }
+    .header-btn-primary:hover { filter: brightness(1.1); }
+    .icon-btn {
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      color: #cbd5e1;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+    .icon-btn:hover { background: rgba(51, 65, 85, 0.75); color: #fff; }
+    .icon-btn.danger:hover { background: rgba(76, 5, 25, 0.6); border-color: rgba(244, 63, 94, 0.45); color: #fda4af; }
+    .header-btn-primary:active, .icon-btn:active { transform: scale(0.94); }
+
+    /* Status-Punkt */
+    .status-dot { background: #64748b; transition: background-color 0.3s ease; }
+    .status-dot.is-live { background: #34d399; animation: pulse-ring 2.4s ease-out infinite; }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
+      70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+    }
+
+    /* Navigation */
+    .tab-bar {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.09);
+    }
+    .tab-btn { color: #94a3b8; transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease; }
+    .tab-btn:hover { color: #e2e8f0; }
+    .tab-btn[aria-selected="true"] {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(99, 102, 241, 0.95));
+      box-shadow: 0 6px 16px -8px rgba(79, 70, 229, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    /* Karten */
+    .card {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.48) 0%, rgba(15, 23, 42, 0.72) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.11);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 40px -24px rgba(0, 0, 0, 0.8);
+    }
+    .card h2 { font-size: 0.9375rem; letter-spacing: -0.005em; }
+
+    /* Hauptbuttons */
+    .btn-primary, .btn-success, .btn-blue {
+      color: #fff;
+      transition: filter 0.15s ease, transform 0.1s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 10px 22px -12px rgba(139, 92, 246, 0.9); }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 22px -12px rgba(16, 185, 129, 0.9); }
+    .btn-blue { background: linear-gradient(135deg, #3b82f6, #6366f1); box-shadow: 0 10px 22px -12px rgba(59, 130, 246, 0.9); }
+    .btn-primary:hover, .btn-success:hover, .btn-blue:hover { filter: brightness(1.08); }
+    .btn-primary:active, .btn-success:active, .btn-blue:active { transform: scale(0.985); }
+    button:disabled { opacity: 0.65; cursor: progress; }
+    button:disabled:active { transform: none; }
+
+    /* Eingabefelder */
+    input:focus, textarea:focus, select:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22); }
+    textarea { resize: vertical; }
+
+    /* Sanftes Einblenden beim Tab-Wechsel */
+    main > section:not(.hidden) { animation: view-in 0.28s ease; }
+    @keyframes view-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500 selection:text-white">
 
-  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 space-y-3">
+  <header class="app-header sticky top-0 z-30 px-4 pb-3 space-y-3">
     <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
-          KI
+        <div class="app-logo w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0">
+          <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
         </div>
         <div class="min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 13:20</span>
+          <h1 class="brand-title text-[17px] font-bold tracking-tight leading-tight whitespace-nowrap">KI-Agent</h1>
+          <div id="gmailStatusBadge" class="flex items-center gap-1.5 mt-0.5 min-w-0">
+            <span id="gmailStatusDot" class="status-dot w-2 h-2 rounded-full shrink-0"></span>
+            <span id="gmailStatusText" class="sr-only">Getrennt</span>
+            <p id="activeAccountLabel" class="text-xs text-slate-400 truncate">Gmail nicht verbunden</p>
           </div>
-          <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[200px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
-        <span id="gmailStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
-          <span id="gmailStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-          <span id="gmailStatusText">Getrennt</span>
-        </span>
-        <button id="connectGmailBtn" type="button" onclick="connectGmail()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs font-medium text-white transition shadow-sm">
-          Gmail verbinden
+        <button id="connectGmailBtn" type="button" onclick="connectGmail()" aria-label="Gmail verbinden" class="header-btn-primary inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-semibold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span>Verbinden</span>
         </button>
-        <button id="disconnectGmailBtn" type="button" onclick="disconnectGmail()" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/80 text-xs font-medium text-slate-300 hover:text-rose-200 border border-slate-700 transition" title="Gmail-Sitzung trennen">
-          Trennen
+        <button id="disconnectGmailBtn" type="button" onclick="disconnectGmail()" aria-label="Gmail-Sitzung trennen" title="Gmail-Sitzung trennen" class="hidden icon-btn danger w-9 h-9 rounded-xl inline-flex items-center justify-center">
+          <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>
         </button>
       </div>
     </div>
 
-    <nav class="max-w-3xl mx-auto grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-      <button type="button" onclick="switchTab('mail')" id="tab-mail" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium bg-blue-600 text-white transition truncate">
-        E-Mail-Agent
+    <nav class="tab-bar max-w-3xl mx-auto grid grid-cols-4 gap-1 p-1 rounded-2xl" role="tablist" aria-label="Bereiche">
+      <button type="button" role="tab" aria-selected="true" onclick="switchTab('mail')" id="tab-mail" class="tab-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 rounded-xl text-[11px] sm:text-sm font-medium">
+        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span>E-Mail</span>
       </button>
-      <button type="button" onclick="switchTab('docs')" id="tab-docs" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium text-slate-400 hover:text-white transition truncate">
-        Dokumente
+      <button type="button" role="tab" aria-selected="false" onclick="switchTab('docs')" id="tab-docs" class="tab-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 rounded-xl text-[11px] sm:text-sm font-medium">
+        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg><span>Dokumente</span>
       </button>
-      <button type="button" onclick="switchTab('persona')" id="tab-persona" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium text-slate-400 hover:text-white transition truncate">
-        KI-Profil
+      <button type="button" role="tab" aria-selected="false" onclick="switchTab('persona')" id="tab-persona" class="tab-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 rounded-xl text-[11px] sm:text-sm font-medium">
+        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg><span>KI-Profil</span>
       </button>
-      <button type="button" onclick="switchTab('setup')" id="tab-setup" class="tab-btn py-2 px-1.5 sm:px-3 rounded-lg text-[11px] sm:text-sm font-medium text-slate-400 hover:text-white transition truncate">
-        Einrichtung
+      <button type="button" role="tab" aria-selected="false" onclick="switchTab('setup')" id="tab-setup" class="tab-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 rounded-xl text-[11px] sm:text-sm font-medium">
+        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg><span>Einrichtung</span>
       </button>
     </nav>
   </header>
 
-  <main class="max-w-3xl mx-auto p-4 pb-20 space-y-4">
+  <main class="max-w-3xl mx-auto p-4 space-y-4" style="padding-bottom: max(2rem, env(safe-area-inset-bottom))">
     <div id="globalAlert" role="alert" aria-live="polite" class="hidden rounded-xl p-3.5 text-sm border flex items-start justify-between gap-3">
       <span id="globalAlertText" class="break-words leading-relaxed"></span>
       <button type="button" onclick="hideAlert()" class="text-xs opacity-75 hover:opacity-100 px-1.5 py-0.5 rounded shrink-0">Schließen</button>
@@ -62,20 +171,22 @@
 
     <!-- TAB 1: E-MAIL-AGENT -->
     <section id="view-mail" class="space-y-4">
-      <div id="mailComposeCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <div class="flex items-center gap-2 min-w-0">
-            <h2 id="composeCardTitle" class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-            <button type="button" onclick="switchTab('persona')" id="personaStatusChip" class="text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate">
-              KI-Profil aktiv
-            </button>
-          </div>
+      <div id="mailComposeCard" class="card rounded-2xl p-4 space-y-3 shadow-sm">
+        <div class="flex items-center justify-between gap-2">
+          <h2 id="composeCardTitle" class="text-sm font-semibold text-white truncate">Neue E-Mail</h2>
+          <button type="button" onclick="switchTab('persona')" id="personaStatusChip" class="shrink-0 inline-flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/70 transition">
+            Profil aktiv
+          </button>
+        </div>
+
+        <div class="relative">
           <label for="modelSelect" class="sr-only">Gemini-Modell auswählen</label>
-          <select id="modelSelect" onchange="onModelChange()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 max-w-[195px]">
-            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
-            <option value="gemini-3.5-flash">gemini-3.5-flash</option>
-            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-            <option value="gemini-flash-latest">gemini-flash-latest</option>
+          <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z"/></svg></span>
+          <select id="modelSelect" onchange="onModelChange()" class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-7 pr-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-flash-latest">Gemini Flash Latest</option>
           </select>
         </div>
 
@@ -92,7 +203,7 @@
 
         <div>
           <div class="flex items-center justify-between gap-2 mb-1.5">
-            <label id="mailPromptLabel" for="mailPrompt" class="block text-xs text-slate-400">Empfänger und Inhalt einsprechen (Betreff entsteht automatisch)</label>
+            <label id="mailPromptLabel" for="mailPrompt" class="block text-xs text-slate-400">Empfänger und Inhalt einsprechen</label>
             <button type="button" data-default-label="Einsprechen" onclick="toggleVoiceInput('mailPrompt', this)" class="voice-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
               <span class="mic-icon-slot"></span>
               <span>Einsprechen</span>
@@ -101,12 +212,12 @@
           <textarea id="mailPrompt" oninput="hideSendConfirmation()" rows="3" placeholder="Einfach einsprechen: z. B. Schreibe an Marc, dass wir uns morgen um 14 Uhr treffen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
-        <button type="button" onclick="generateEmailDraft()" id="btnGenerateMail" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-sm font-medium text-white transition">
+        <button type="button" onclick="generateEmailDraft()" id="btnGenerateMail" class="btn-primary w-full py-3 px-4 rounded-xl text-sm font-semibold">
           Entwurf mit KI generieren
         </button>
       </div>
 
-      <div id="mailReviewCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div id="mailReviewCard" class="card rounded-2xl p-4 space-y-3 shadow-sm">
         <h2 class="text-sm font-semibold text-white">Nachricht prüfen und senden</h2>
 
         <div class="space-y-1.5">
@@ -143,7 +254,7 @@
           <div id="mailAttachmentList" class="hidden space-y-1.5"></div>
         </div>
 
-        <button type="button" onclick="openSendConfirmModal()" id="btnSendMail" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-sm font-medium text-white transition">
+        <button type="button" onclick="openSendConfirmModal()" id="btnSendMail" class="btn-success w-full py-3 px-4 rounded-xl text-sm font-semibold">
           Über Assistenten-Konto senden
         </button>
 
@@ -161,7 +272,7 @@
         </div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div class="card rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between gap-2">
           <h2 class="text-sm font-semibold text-white">Nachrichtenverlauf (Assistenten-Konto)</h2>
           <button type="button" onclick="loadInbox()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition shrink-0">
@@ -189,7 +300,7 @@
 
     <!-- TAB 2: DOKUMENTENVERARBEITUNG -->
     <section id="view-docs" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div class="card rounded-2xl p-4 space-y-3 shadow-sm">
         <h2 class="text-sm font-semibold text-white">Dokument hochladen oder Text einfügen</h2>
 
         <div>
@@ -219,12 +330,12 @@
           <input type="text" id="docInstruction" value="Fasse die wichtigsten Punkte, Fristen und erforderlichen Schritte klar zusammen." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500" />
         </div>
 
-        <button type="button" onclick="processDocument()" id="btnProcessDoc" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+        <button type="button" onclick="processDocument()" id="btnProcessDoc" class="w-full py-2.5 px-4 rounded-xl btn-blue text-sm font-semibold">
           Dokument analysieren
         </button>
       </div>
 
-      <div id="docResultCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div id="docResultCard" class="hidden card rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <h2 class="text-sm font-semibold text-white">Analyse-Ergebnis</h2>
           <div class="flex items-center gap-2">
@@ -242,7 +353,7 @@
 
     <!-- TAB 3: KI-PROFIL & SCHREIBSTIL -->
     <section id="view-persona" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+      <div class="card rounded-2xl p-4 space-y-4 shadow-sm">
         <div>
           <h2 class="text-sm font-semibold text-white">Rolle, Schreibstil und Grundinformationen</h2>
           <p class="text-xs text-slate-400 mt-1">Diese Vorgaben gelten dauerhaft für jede E-Mail und jede KI-Antwort. Du kannst sie hier jederzeit wie einen System-Prompt formulieren und anpassen.</p>
@@ -298,7 +409,7 @@
       </div>
 
       <!-- EIGENER BEREICH FÜR DIE SIGNATUR -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+      <div class="card rounded-2xl p-4 space-y-4 shadow-sm">
         <div>
           <h2 class="text-sm font-semibold text-white">E-Mail-Signatur & Grußformel</h2>
           <p class="text-xs text-slate-400 mt-1">Definiere hier deinen gewünschten E-Mail-Abschluss. Er wird flexibel als Anweisung an die KI übergeben.</p>
@@ -348,7 +459,7 @@
           </div>
         </div>
 
-        <button type="button" onclick="savePersonaSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+        <button type="button" onclick="savePersonaSettings()" class="w-full py-2.5 px-4 rounded-xl btn-blue text-sm font-semibold">
           KI-Profil und Signatur speichern
         </button>
       </div>
@@ -356,7 +467,7 @@
 
     <!-- TAB 4: EINRICHTUNG -->
     <section id="view-setup" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+      <div class="card rounded-2xl p-4 space-y-4 shadow-sm">
         <div>
           <h2 class="text-sm font-semibold text-white">Zugangsdaten und Kontotrennung</h2>
           <p class="text-xs text-slate-400 mt-1">Alle Daten werden ausschließlich lokal im Speicher deines Browsers gesichert.</p>
@@ -383,7 +494,7 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <button type="button" onclick="saveSettings()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-sm font-medium text-white transition">
+          <button type="button" onclick="saveSettings()" class="w-full py-2.5 px-4 rounded-xl btn-blue text-sm font-semibold">
             Einstellungen speichern
           </button>
           <button type="button" onclick="testGeminiConnection()" id="btnTestGemini" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-200 border border-slate-700 transition">
@@ -392,7 +503,7 @@
         </div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div class="card rounded-2xl p-4 space-y-3 shadow-sm">
         <div>
           <h2 class="text-sm font-semibold text-white">Gespeicherte Kontakte für Spracherkennung</h2>
           <p class="text-xs text-slate-400 mt-1">Neue Empfänger werden beim Senden automatisch ergänzt. Gesprochene Namen ordnet die KI diesen Adressen direkt zu.</p>
@@ -416,11 +527,16 @@
         <div id="savedContactsList" class="space-y-1.5 pt-1"></div>
       </div>
     </section>
+
+    <footer class="pt-4 pb-2 text-center space-y-1">
+      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">15.11.2026 · 13:50</span></p>
+      <p class="text-[11px] text-slate-600">Einstellungen und Kontakte bleiben lokal in deinem Browser.</p>
+    </footer>
   </main>
 
   <!-- BESTÄTIGUNGS-DIALOG VOR DEM VERSAND -->
   <div id="sendConfirmModal" role="dialog" aria-modal="true" aria-labelledby="sendConfirmTitle" onclick="if (event.target === this) closeSendConfirmModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-    <div class="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 p-5 space-y-4 shadow-2xl">
+    <div class="card w-full max-w-md rounded-2xl p-5 space-y-4" style="background:#0f172a">
       <div>
         <h3 id="sendConfirmTitle" class="text-base font-semibold text-white">E-Mail jetzt verbindlich senden?</h3>
         <p class="text-xs text-slate-400 mt-1">Bitte prüfe Empfänger, Betreff und Anfang des Nachrichtentextes vor dem endgültigen Versand.</p>
@@ -438,7 +554,7 @@
         <button type="button" id="confirmModalCancelBtn" onclick="closeSendConfirmModal()" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
           Abbrechen
         </button>
-        <button type="button" onclick="confirmAndSendGmailMessage()" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-xs font-semibold text-white transition">
+        <button type="button" onclick="confirmAndSendGmailMessage()" class="btn-success py-2.5 px-4 rounded-xl text-xs font-semibold">
           Jetzt absenden
         </button>
       </div>
@@ -446,7 +562,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 13:20';
+    const BUILD_TIMESTAMP = '15.11.2026 · 13:50';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -471,6 +587,12 @@
     ]);
     const DEFAULT_DOC_INSTRUCTION = 'Fasse die wichtigsten Punkte, Fristen und erforderlichen Schritte klar zusammen.';
     const INBOX_PLACEHOLDER_HTML = '<p class="text-xs">Verbinde oben rechts Gmail und tippe auf Aktualisieren, um eingegangene und gesendete Nachrichten zu laden.</p>';
+
+    const HEADER_CONNECT_HTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span>Verbinden</span>';
+    const HEADER_REFRESH_HTML = '<svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>';
+    const HEADER_CONNECT_CLASS = 'header-btn-primary inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-semibold';
+    const HEADER_REFRESH_CLASS = 'icon-btn w-9 h-9 rounded-xl inline-flex items-center justify-center';
+    const PERSONA_CHIP_ICON = '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>';
 
     const MIC_ICON_SVG = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>';
 
@@ -741,19 +863,27 @@
       const hasRules = Boolean((p.role || '').trim() || (p.styleRules || '').trim() || (p.background || '').trim());
       const hasSig = Boolean((p.signature || '').trim());
 
+      const activeClass = 'shrink-0 inline-flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/70 transition';
+      const emptyClass = 'shrink-0 inline-flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 border border-slate-700 transition';
+      let label = 'Profil leer';
+      let title = 'KI-Profil ist leer – tippe zum Einrichten';
       if (hasRules && hasSig) {
-        chip.textContent = 'KI-Profil & Signatur aktiv';
-        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
+        label = 'Profil + Signatur';
+        title = 'KI-Profil und Signatur sind aktiv';
       } else if (hasRules) {
-        chip.textContent = 'KI-Profil aktiv (ohne Signatur)';
-        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
+        label = 'Profil aktiv';
+        title = 'KI-Profil aktiv (ohne Signatur)';
       } else if (hasSig) {
-        chip.textContent = 'Signatur aktiv';
-        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 transition truncate';
-      } else {
-        chip.textContent = 'KI-Profil leer';
-        chip.className = 'text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition truncate';
+        label = 'Signatur aktiv';
+        title = 'Nur die Signatur ist aktiv';
       }
+      chip.className = (hasRules || hasSig) ? activeClass : emptyClass;
+      chip.innerHTML = PERSONA_CHIP_ICON;
+      const span = document.createElement('span');
+      span.textContent = label;
+      chip.appendChild(span);
+      chip.title = title;
+      chip.setAttribute('aria-label', title);
     }
 
     function loadPersonaToUI() {
@@ -1472,6 +1602,14 @@
       );
     }
 
+    function prettyModelName(name) {
+      return String(name || '')
+        .split('-')
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
     function populateModelDropdown(models) {
       const select = document.getElementById('modelSelect');
       const savedChoice = storageGet(SELECTED_MODEL_KEY, null);
@@ -1480,7 +1618,7 @@
       models.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m;
-        opt.textContent = m;
+        opt.textContent = prettyModelName(m);
         select.appendChild(opt);
       });
 
@@ -1663,14 +1801,14 @@
         }
         document.getElementById('replyContextMeta').textContent = metaText;
         document.getElementById('replyContextExcerpt').textContent = replyContext.body || '(Kein Nachrichtentext vorhanden)';
-        titleEl.textContent = 'Antwort per KI erstellen';
+        titleEl.textContent = 'Antwort verfassen';
         promptLabel.textContent = 'Zusätzliche Vorgaben einsprechen (optional – leer lassen für automatische Antwort)';
         promptInput.placeholder = 'Optional: z. B. Sag zu, aber erst ab 15 Uhr...';
         genBtn.textContent = 'Antwort-Entwurf mit KI generieren';
       } else {
         banner.classList.add('hidden');
-        titleEl.textContent = 'E-Mail per KI verfassen';
-        promptLabel.textContent = 'Empfänger und Inhalt einsprechen (Betreff entsteht automatisch)';
+        titleEl.textContent = 'Neue E-Mail';
+        promptLabel.textContent = 'Empfänger und Inhalt einsprechen';
         promptInput.placeholder = 'Einfach einsprechen: z. B. Schreibe an Marc, dass wir uns morgen um 14 Uhr treffen...';
         genBtn.textContent = 'Entwurf mit KI generieren';
       }
@@ -1715,17 +1853,16 @@
     }
 
     function switchTab(tabName) {
+      const prevView = document.querySelector('main > section:not(.hidden)');
+      const changed = !prevView || prevView.id !== 'view-' + tabName;
       ['mail', 'docs', 'persona', 'setup'].forEach(t => {
         document.getElementById('view-' + t).classList.toggle('hidden', t !== tabName);
         const btn = document.getElementById('tab-' + t);
-        if (t === tabName) {
-          btn.classList.add('bg-blue-600', 'text-white');
-          btn.classList.remove('text-slate-400');
-        } else {
-          btn.classList.remove('bg-blue-600', 'text-white');
-          btn.classList.add('text-slate-400');
-        }
+        btn.setAttribute('aria-selected', t === tabName ? 'true' : 'false');
       });
+      if (changed) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
     }
 
     function updateGmailBadge(connected, email = '') {
@@ -1737,21 +1874,37 @@
 
       if (connected) {
         connectedAccountEmail = email;
-        dot.classList.remove('bg-slate-500');
-        dot.classList.add('bg-emerald-400');
+        dot.classList.add('is-live');
         text.textContent = 'Gmail aktiv';
         label.textContent = email;
-        btn.textContent = 'Aktualisieren';
+        label.title = email;
+        label.classList.remove('text-slate-400');
+        label.classList.add('text-slate-300');
+        btn.className = HEADER_REFRESH_CLASS;
+        btn.innerHTML = HEADER_REFRESH_HTML;
+        btn.title = 'Postfach aktualisieren';
+        btn.setAttribute('aria-label', 'Postfach aktualisieren');
         if (disconnectBtn) disconnectBtn.classList.remove('hidden');
       } else {
         connectedAccountEmail = '';
-        dot.classList.remove('bg-emerald-400');
-        dot.classList.add('bg-slate-500');
+        dot.classList.remove('is-live');
         text.textContent = 'Getrennt';
-        label.textContent = 'Nicht verbunden';
-        btn.textContent = 'Gmail verbinden';
+        label.textContent = 'Gmail nicht verbunden';
+        label.title = '';
+        label.classList.remove('text-slate-300');
+        label.classList.add('text-slate-400');
+        btn.className = HEADER_CONNECT_CLASS;
+        btn.innerHTML = HEADER_CONNECT_HTML;
+        btn.title = 'Gmail verbinden';
+        btn.setAttribute('aria-label', 'Gmail verbinden');
         if (disconnectBtn) disconnectBtn.classList.add('hidden');
       }
+    }
+
+    function setInboxRefreshSpinning(on) {
+      const icon = document.querySelector('#connectGmailBtn svg');
+      if (!icon) return;
+      icon.classList.toggle('animate-spin', Boolean(on && connectedAccountEmail));
     }
 
     function disconnectGmail() {
@@ -3156,6 +3309,7 @@ Anforderung: ${prompt}`;
       }
       isLoadingInbox = true;
       const epoch = mailboxEpoch;
+      setInboxRefreshSpinning(true);
 
       const listEl = document.getElementById('inboxList');
       listEl.innerHTML = '<p class="text-xs text-slate-400">Lade eingegangene und gesendete Nachrichten...</p>';
@@ -3276,6 +3430,7 @@ Anforderung: ${prompt}`;
         }
       } finally {
         isLoadingInbox = false;
+        setInboxRefreshSpinning(false);
         if (reloadInboxQueued) {
           reloadInboxQueued = false;
           if (accessToken) loadInbox();
