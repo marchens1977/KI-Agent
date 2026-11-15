@@ -197,13 +197,11 @@
 
   <script>
     const STORAGE_KEY = 'ki_agent_config_v1';
+    const MODEL_CACHE_KEY = 'ki_agent_active_model_v2';
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
-
-    let cachedModelName = null;
-    let cachedModelForKey = null;
-    const rejectedModels = new Set();
+    const skippedModels = new Set();
 
     let activeRecognition = null;
     let activeVoiceBtn = null;
@@ -303,11 +301,46 @@
       }
     }
 
+    function isDeprecatedModel(name) {
+      return /^gemini-(1\.0|1\.5|2\.0|2\.5)/i.test(name);
+    }
+
+    function getSavedModel(apiKey) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(MODEL_CACHE_KEY) || '{}');
+        if (
+          cached.keyPrefix === apiKey.slice(0, 12) &&
+          cached.model &&
+          !isDeprecatedModel(cached.model) &&
+          !skippedModels.has(cached.model)
+        ) {
+          return cached.model;
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function setSavedModel(apiKey, model) {
+      try {
+        localStorage.setItem(MODEL_CACHE_KEY, JSON.stringify({
+          keyPrefix: apiKey.slice(0, 12),
+          model
+        }));
+      } catch (e) {}
+      document.getElementById('activeModelBadge').textContent = model;
+    }
+
     function loadSettingsToUI() {
       const cfg = getConfig();
       document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
       document.getElementById('cfgClientId').value = cfg.clientId;
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
+      if (cfg.geminiKey) {
+        const cached = getSavedModel(cfg.geminiKey);
+        if (cached) {
+          document.getElementById('activeModelBadge').textContent = cached;
+        }
+      }
     }
 
     function saveSettings() {
@@ -316,10 +349,10 @@
       const agentEmail = document.getElementById('cfgAgentEmail').value.trim().toLowerCase();
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
+      localStorage.removeItem(MODEL_CACHE_KEY);
+      localStorage.removeItem('ki_agent_fast_model_v1');
       tokenClient = null;
-      cachedModelName = null;
-      cachedModelForKey = null;
-      rejectedModels.clear();
+      skippedModels.clear();
       document.getElementById('activeModelBadge').textContent = 'gemini-3.8-flash';
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
@@ -346,7 +379,7 @@
       el.classList.remove('hidden');
 
       if (type !== 'error') {
-        alertTimer = setTimeout(() => { el.classList.add('hidden'); }, 7000);
+        alertTimer = setTimeout(() => { el.classList.add('hidden'); }, 6000);
       }
     }
 
@@ -442,64 +475,61 @@
       }
     }
 
-    async function getCandidateModels(apiKey) {
-      if (cachedModelName && cachedModelForKey === apiKey && !rejectedModels.has(cachedModelName)) {
-        return [cachedModelName];
-      }
+    async function getActiveModels(apiKey) {
+      const cached = getSavedModel(apiKey);
+      if (cached) return [cached];
 
-      const candidates = ['gemini-3.8-flash'];
+      const ordered = [];
+      if (!skippedModels.has('gemini-3.8-flash')) {
+        ordered.push('gemini-3.8-flash');
+      }
 
       try {
         const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
-        const response = await fetch(listUrl, { method: 'GET', signal: controller.signal });
-        clearTimeout(timeoutId);
+        const timer = setTimeout(() => controller.abort(), 8000);
+        const resp = await fetch(listUrl, { method: 'GET', signal: controller.signal });
+        clearTimeout(timer);
 
-        if (response.ok) {
-          const data = await response.json().catch(() => ({}));
+        if (resp.ok) {
+          const data = await resp.json().catch(() => ({}));
           const apiModels = (data.models || [])
             .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
             .map(m => m.name.replace(/^models\//, ''))
-            .filter(name => name.startsWith('gemini-') && !/embedding|imagen|veo|aqa|tts|audio/i.test(name));
+            .filter(name =>
+              name.startsWith('gemini-') &&
+              !isDeprecatedModel(name) &&
+              !/embedding|imagen|veo|aqa|tts|audio|robotics|computer/i.test(name)
+            );
 
-          const priority = [
-            'gemini-3.8-flash',
-            'gemini-3.8-flash-lite',
-            'gemini-3.5-flash',
-            'gemini-3.0-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.5-flash'
-          ];
+          const flashModels = apiModels.filter(m => m.includes('flash'));
+          const otherModels = apiModels.filter(m => !m.includes('flash'));
 
-          for (const p of priority) {
-            if (apiModels.includes(p) && !candidates.includes(p)) {
-              candidates.push(p);
-            }
-          }
-          for (const m of apiModels) {
-            if (!candidates.includes(m)) {
-              candidates.push(m);
+          for (const m of [...flashModels, ...otherModels]) {
+            if (!ordered.includes(m) && !skippedModels.has(m)) {
+              ordered.push(m);
             }
           }
         }
-      } catch (e) {
-        // Fallback auf feste Kandidatenliste, falls Modell-Abfrage blockiert wird
-      }
+      } catch (e) {}
 
-      return candidates.filter(m => !rejectedModels.has(m));
+      return ordered.length > 0 ? ordered : ['gemini-3.8-flash'];
     }
 
-    async function sendModelRequest(apiKey, modelName, parts, useJsonMime) {
+    async function postGenerateFast(apiKey, modelName, parts, thinkingMode, timeoutMs = 18000) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       const payload = { contents: [{ parts }] };
-      if (useJsonMime) {
-        payload.generationConfig = { responseMimeType: 'application/json' };
+
+      if (thinkingMode === 'zero') {
+        payload.generationConfig = { thinkingConfig: { thinkingBudget: 0 }, temperature: 0.3 };
+      } else if (thinkingMode === 'minimal') {
+        payload.generationConfig = { thinkingConfig: { thinkingLevel: 'minimal' }, temperature: 0.3 };
+      } else {
+        payload.generationConfig = { temperature: 0.3 };
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const response = await fetch(url, {
@@ -508,56 +538,63 @@
           body: JSON.stringify(payload),
           signal: controller.signal
         });
-        clearTimeout(timeoutId);
+        clearTimeout(timer);
         const data = await response.json().catch(() => ({}));
-        return { ok: response.ok, status: response.status, data };
+        return { ok: response.ok, status: response.status, data, timedOut: false };
       } catch (err) {
-        clearTimeout(timeoutId);
+        clearTimeout(timer);
         if (err.name === 'AbortError') {
-          throw new Error('Zeitüberschreitung (25s): Keine Antwort von der Google-API erhalten. Prüfe deine Internetverbindung oder deaktiviere Werbeblocker für diese Seite.');
+          return { ok: false, status: 408, data: {}, timedOut: true };
         }
-        throw new Error('Netzwerkfehler beim Verbinden mit Google: ' + err.message);
+        throw new Error('Netzwerkfehler zur Google-API: ' + err.message);
       }
     }
 
-    async function callGemini(parts, expectJson = false) {
+    async function callGemini(parts, onStatus) {
       const cfg = getConfig();
       if (!cfg.geminiKey) {
         switchTab('setup');
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const candidates = await getCandidateModels(cfg.geminiKey);
-      let lastError = 'Kein verfügbares Gemini-Modell gefunden.';
+      const models = await getActiveModels(cfg.geminiKey);
+      let lastError = 'Kein aktives Gemini-Modell verfügbar.';
 
-      for (const modelName of candidates) {
+      for (const modelName of models) {
         document.getElementById('activeModelBadge').textContent = modelName;
-        let res = await sendModelRequest(cfg.geminiKey, modelName, parts, expectJson);
+        if (onStatus) onStatus(`Verbinde mit ${modelName}...`);
 
-        // Falls ein Modell kein responseMimeType: application/json unterstützt, ohne JSON-MIME wiederholen
-        if (!res.ok && res.status === 400 && expectJson) {
-          res = await sendModelRequest(cfg.geminiKey, modelName, parts, false);
+        let res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'zero', 18000);
+
+        if (!res.ok && res.status === 400) {
+          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'minimal', 18000);
+        }
+        if (!res.ok && res.status === 400) {
+          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'none', 18000);
         }
 
         if (res.ok) {
           const text = res.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
           if (!text) {
-            const blockReason = res.data.candidates?.[0]?.finishReason || res.data.promptFeedback?.blockReason || 'Leere Antwort';
-            throw new Error(`Keine Textausgabe erhalten (Grund: ${blockReason}).`);
+            const reason = res.data.candidates?.[0]?.finishReason || 'Leere Antwort';
+            throw new Error(`Keine Textausgabe erhalten (${reason}).`);
           }
-          cachedModelName = modelName;
-          cachedModelForKey = cfg.geminiKey;
-          document.getElementById('activeModelBadge').textContent = modelName;
+          setSavedModel(cfg.geminiKey, modelName);
           return text;
         }
 
-        const errMsg = res.data.error?.message || `HTTP-Status ${res.status}`;
-        lastError = `Google API Fehler (${res.status} bei ${modelName}): ${errMsg}`;
+        skippedModels.add(modelName);
+        localStorage.removeItem(MODEL_CACHE_KEY);
 
-        // Bei 404 (Modell abgekündigt / nicht verfügbar) automatisch nächstes Modell probieren
-        if (res.status === 404) {
-          rejectedModels.add(modelName);
-          cachedModelName = null;
+        if (res.timedOut) {
+          lastError = `Zeitüberschreitung (18s) bei ${modelName}. Prüfe deine Internetverbindung oder deaktiviere aktive Werbeblocker für diese Seite.`;
+          continue;
+        }
+
+        const msg = res.data.error?.message || `HTTP ${res.status}`;
+        lastError = `Google API Fehler (${res.status} bei ${modelName}): ${msg}`;
+
+        if (res.status === 404 || res.status === 429 || res.status === 503) {
           continue;
         }
 
@@ -573,8 +610,11 @@
       btn.textContent = 'Prüfe Verbindung...';
       try {
         saveSettings();
-        const reply = await callGemini([{ text: 'Antworte nur mit: OK' }], false);
-        showAlert(`Verbindung erfolgreich! Aktives Modell: ${cachedModelName} (Antwort: ${reply.trim()})`, 'success');
+        const start = Date.now();
+        const reply = await callGemini([{ text: 'Antworte nur mit: OK' }], (s) => { btn.textContent = s; });
+        const sec = ((Date.now() - start) / 1000).toFixed(1);
+        const active = getSavedModel(getConfig().geminiKey) || 'gemini-3.8-flash';
+        showAlert(`Verbindung erfolgreich in ${sec}s! Aktives Modell: ${active} (Antwort: ${reply.trim()})`, 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
@@ -605,41 +645,37 @@
       btn.textContent = 'Generiere Entwurf...';
 
       try {
-        const instruction = `Analysiere die folgende eingesprochene oder geschriebene Anweisung und erstelle daraus eine professionelle E-Mail auf Deutsch.
-Korrigiere dabei typische Diktierfehler in E-Mail-Adressen (z. B. Leerzeichen nach Punkten wie "Marc. hands@gmx.de" zu "marc.hands@gmx.de" oder gesprochenes "Punkt"/"at").
-Gib das Ergebnis ausschließlich als JSON-Objekt mit genau diesen drei Schlüsseln zurück:
-- "empfaenger": Die bereinigte E-Mail-Adresse (leer lassen "", falls keine genannt wurde)
-- "betreff": Ein passender, klarer Betreff
-- "text": Der vollständige, höfliche E-Mail-Inhalt mit Anrede und Grußformel
+        const instruction = `Formuliere aus der folgenden Anweisung eine kurze, natürliche E-Mail auf Deutsch.
+Korrigiere dabei Diktierfehler in E-Mail-Adressen (z. B. Leerzeichen nach Punkten wie "Marc. hens@gmx.de" zu "marc.hens@gmx.de").
+Antworte direkt und ohne Umschweife exakt in diesen drei Zeilen:
+EMPFAENGER: [E-Mail-Adresse oder leer lassen]
+BETREFF: [kurzer passender Betreff]
+TEXT:
+[E-Mail-Text mit Anrede und Grußformel]
 
 Anweisung: ${prompt}`;
 
-        const rawResult = await callGemini([{ text: instruction }], true);
-        let parsed = null;
+        const rawResult = await callGemini([{ text: instruction }], (statusText) => {
+          btn.textContent = statusText;
+        });
 
-        try {
-          const cleaned = rawResult.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-          parsed = JSON.parse(cleaned);
-        } catch (e) {
-          const toMatch = rawResult.match(/\*?\*?EMPFAENGER\*?\*?:\s*(.*)/i);
-          const subMatch = rawResult.match(/\*?\*?BETREFF\*?\*?:\s*(.*)/i);
-          const bodySplit = rawResult.split(/\*?\*?TEXT\*?\*?:\s*/i);
-          parsed = {
-            empfaenger: toMatch ? toMatch[1].trim() : '',
-            betreff: subMatch ? subMatch[1].trim() : '',
-            text: (bodySplit[1] || rawResult).trim()
-          };
-        }
+        const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
+        const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
+        const bodySplit = rawResult.split(/TEXT:\s*/i);
 
-        const cleanedTo = cleanExtractedEmail(parsed.empfaenger);
+        const rawTo = toMatch ? toMatch[1].replace(/\[|\]/g, '').trim() : '';
+        const rawSub = subMatch ? subMatch[1].replace(/\[|\]/g, '').trim() : '';
+        const rawBody = bodySplit[1] ? bodySplit[1].trim() : rawResult.trim();
+
+        const cleanedTo = cleanExtractedEmail(rawTo);
         if (cleanedTo && cleanedTo.includes('@')) {
           document.getElementById('mailTo').value = cleanedTo;
         }
-        if (parsed.betreff) {
-          document.getElementById('mailSubject').value = parsed.betreff.trim();
+        if (rawSub) {
+          document.getElementById('mailSubject').value = rawSub;
         }
-        document.getElementById('mailBody').value = (parsed.text || '').trim();
-        showAlert('E-Mail-Entwurf erfolgreich erstellt und in Empfänger, Betreff und Inhalt aufgeteilt.', 'success');
+        document.getElementById('mailBody').value = rawBody;
+        showAlert('E-Mail-Entwurf erstellt und in Empfänger, Betreff und Inhalt aufgeteilt.', 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
@@ -808,7 +844,7 @@ Anweisung: ${prompt}`;
           });
         }
 
-        const output = await callGemini(parts, false);
+        const output = await callGemini(parts, (s) => { btn.textContent = s; });
         document.getElementById('docResultOutput').textContent = output;
         document.getElementById('docResultCard').classList.remove('hidden');
         showAlert('Dokument erfolgreich ausgewertet.', 'success');
