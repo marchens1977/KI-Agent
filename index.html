@@ -16,7 +16,7 @@
           KI
         </div>
         <div>
-          <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
+          <h1 class="text-base font-semibold leading-tight text-white">KI-Agent <span class="text-[11px] font-normal text-slate-400">v2.5</span></h1>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[160px] sm:max-w-xs">Nicht verbunden</p>
         </div>
       </div>
@@ -54,9 +54,12 @@
     <!-- TAB 1: E-MAIL-AGENT -->
     <section id="view-mail" class="space-y-4">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <h2 class="text-sm font-semibold text-white">E-Mail per KI verfassen</h2>
-          <span id="activeModelBadge" class="text-xs text-slate-400">v2.4 · gemini-3.8-flash</span>
+          <select id="modelSelect" onchange="onModelChange()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 max-w-[185px]">
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-flash-latest">gemini-flash-latest</option>
+          </select>
         </div>
 
         <div>
@@ -196,13 +199,12 @@
   </main>
 
   <script>
-    const APP_VERSION = 'v2.4';
     const STORAGE_KEY = 'ki_agent_config_v1';
-    const MODEL_CACHE_KEY = 'ki_agent_active_model_v24';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v25';
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
-    const skippedModels = new Set();
+    let availableModels = [];
 
     let activeRecognition = null;
     let activeVoiceBtn = null;
@@ -302,37 +304,87 @@
       }
     }
 
-    function isDeprecatedModel(name) {
-      return /^gemini-(1\.0|1\.5|2\.0|2\.5)/i.test(name);
+    function isExcludedModel(name) {
+      return (
+        /2\.5-flash-lite/i.test(name) ||
+        /^gemini-(1\.0|1\.5)/i.test(name) ||
+        /embedding|imagen|veo|aqa|tts|audio|robotics|computer|image|gemma|learnlm|deep-research/i.test(name)
+      );
     }
 
-    function updateModelBadge(modelName) {
-      document.getElementById('activeModelBadge').textContent = `${APP_VERSION} · ${modelName}`;
+    function populateModelDropdown(models) {
+      const select = document.getElementById('modelSelect');
+      const savedChoice = localStorage.getItem(SELECTED_MODEL_KEY);
+      select.innerHTML = '';
+
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        select.appendChild(opt);
+      });
+
+      if (savedChoice && models.includes(savedChoice)) {
+        select.value = savedChoice;
+      } else if (models.length > 0) {
+        select.value = models[0];
+        localStorage.setItem(SELECTED_MODEL_KEY, models[0]);
+      }
     }
 
-    function getSavedModel(apiKey) {
+    function onModelChange() {
+      const val = document.getElementById('modelSelect').value;
+      if (val) {
+        localStorage.setItem(SELECTED_MODEL_KEY, val);
+      }
+    }
+
+    async function discoverAvailableModels(apiKey) {
+      if (!apiKey) return ['gemini-2.5-flash', 'gemini-flash-latest'];
+
+      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+
       try {
-        const cached = JSON.parse(localStorage.getItem(MODEL_CACHE_KEY) || '{}');
-        if (
-          cached.keyPrefix === apiKey.slice(0, 12) &&
-          cached.model &&
-          !isDeprecatedModel(cached.model) &&
-          !skippedModels.has(cached.model)
-        ) {
-          return cached.model;
+        const resp = await fetch(listUrl, { method: 'GET', signal: controller.signal });
+        clearTimeout(timer);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const data = await resp.json();
+        const raw = (data.models || [])
+          .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => m.name.replace(/^models\//, ''))
+          .filter(name => name.startsWith('gemini-') && !isExcludedModel(name));
+
+        const priority = [
+          'gemini-2.5-flash',
+          'gemini-3-flash-preview',
+          'gemini-flash-latest',
+          'gemini-2.0-flash'
+        ];
+
+        const sorted = [];
+        for (const p of priority) {
+          if (raw.includes(p)) sorted.push(p);
         }
-      } catch (e) {}
-      return null;
-    }
+        for (const m of raw) {
+          if (!sorted.includes(m)) sorted.push(m);
+        }
 
-    function setSavedModel(apiKey, model) {
-      try {
-        localStorage.setItem(MODEL_CACHE_KEY, JSON.stringify({
-          keyPrefix: apiKey.slice(0, 12),
-          model
-        }));
-      } catch (e) {}
-      updateModelBadge(model);
+        if (sorted.length > 0) {
+          availableModels = sorted;
+          populateModelDropdown(sorted);
+          return sorted;
+        }
+      } catch (e) {
+        clearTimeout(timer);
+      }
+
+      const fallback = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
+      availableModels = fallback;
+      populateModelDropdown(fallback);
+      return fallback;
     }
 
     function loadSettingsToUI() {
@@ -340,8 +392,9 @@
       document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
       document.getElementById('cfgClientId').value = cfg.clientId;
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
-      const cached = cfg.geminiKey ? getSavedModel(cfg.geminiKey) : null;
-      updateModelBadge(cached || 'gemini-3.8-flash');
+      if (cfg.geminiKey) {
+        discoverAvailableModels(cfg.geminiKey);
+      }
     }
 
     function saveSettings() {
@@ -350,10 +403,11 @@
       const agentEmail = document.getElementById('cfgAgentEmail').value.trim().toLowerCase();
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ geminiKey, clientId, agentEmail }));
-      localStorage.removeItem(MODEL_CACHE_KEY);
+      localStorage.removeItem(SELECTED_MODEL_KEY);
       tokenClient = null;
-      skippedModels.clear();
-      updateModelBadge('gemini-3.8-flash');
+      if (geminiKey) {
+        discoverAvailableModels(geminiKey);
+      }
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
 
@@ -475,141 +529,137 @@
       }
     }
 
-    async function getActiveModels(apiKey) {
-      const cached = getSavedModel(apiKey);
-      if (cached) return [cached];
-
-      const ordered = [];
-      if (!skippedModels.has('gemini-3.8-flash')) {
-        ordered.push('gemini-3.8-flash');
-      }
-
-      try {
-        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 8000);
-        const resp = await fetch(listUrl, { method: 'GET', signal: controller.signal });
-        clearTimeout(timer);
-
-        if (resp.ok) {
-          const data = await resp.json().catch(() => ({}));
-          const apiModels = (data.models || [])
-            .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-            .map(m => m.name.replace(/^models\//, ''))
-            .filter(name =>
-              name.startsWith('gemini-') &&
-              !isDeprecatedModel(name) &&
-              !/embedding|imagen|veo|aqa|tts|audio|robotics|computer/i.test(name)
-            );
-
-          const flashModels = apiModels.filter(m => m.includes('flash'));
-          const otherModels = apiModels.filter(m => !m.includes('flash'));
-
-          for (const m of [...flashModels, ...otherModels]) {
-            if (!ordered.includes(m) && !skippedModels.has(m)) {
-              ordered.push(m);
-            }
-          }
+    async function streamSingleModel(apiKey, modelName, parts, useZeroThinking, onChunk, onStatus) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
+      const payload = {
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 650
         }
-      } catch (e) {}
+      };
 
-      return ordered.length > 0 ? ordered : ['gemini-3.8-flash'];
-    }
-
-    async function postGenerateFast(apiKey, modelName, parts, thinkingMode, timeoutMs = 35000) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      const payload = { contents: [{ parts }] };
-
-      if (thinkingMode === 'minimal') {
-        payload.generationConfig = {
-          thinkingConfig: { thinkingLevel: 'minimal' },
-          temperature: 0.3,
-          maxOutputTokens: 700
-        };
-      } else if (thinkingMode === 'zero') {
-        payload.generationConfig = {
-          thinkingConfig: { thinkingBudget: 0 },
-          temperature: 0.3,
-          maxOutputTokens: 700
-        };
-      } else {
-        payload.generationConfig = {
-          temperature: 0.3,
-          maxOutputTokens: 700
-        };
+      if (useZeroThinking) {
+        payload.generationConfig.thinkingConfig = { thinkingBudget: 0 };
       }
 
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      let timer = setTimeout(() => controller.abort(), 12000);
 
       try {
+        if (onStatus) onStatus(`Sende an ${modelName}...`);
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
           signal: controller.signal
         });
+
         clearTimeout(timer);
-        const data = await response.json().catch(() => ({}));
-        return { ok: response.ok, status: response.status, data, timedOut: false };
+
+        if (!response.ok) {
+          const errJson = await response.json().catch(() => ({}));
+          const errMsg = errJson.error?.message || `HTTP ${response.status}`;
+          return { ok: false, status: response.status, error: errMsg, timedOut: false };
+        }
+
+        if (!response.body) {
+          throw new Error('Browser unterstützt kein Streaming.');
+        }
+
+        if (onStatus) onStatus(`Empfange Antwort von ${modelName}...`);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let fullText = '';
+
+        while (true) {
+          timer = setTimeout(() => controller.abort(), 10000);
+          const { done, value } = await reader.read();
+          clearTimeout(timer);
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const jsonStr = trimmed.slice(5).trim();
+            if (!jsonStr || jsonStr === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const chunkParts = parsed.candidates?.[0]?.content?.parts || [];
+              for (const p of chunkParts) {
+                if (p.text && !p.thought) {
+                  fullText += p.text;
+                  if (onChunk) onChunk(fullText);
+                }
+              }
+            } catch (e) {}
+          }
+        }
+
+        if (!fullText.trim()) {
+          return { ok: false, status: 500, error: 'Leere Antwort vom Modell erhalten.', timedOut: false };
+        }
+
+        return { ok: true, text: fullText };
       } catch (err) {
         clearTimeout(timer);
         if (err.name === 'AbortError') {
-          return { ok: false, status: 408, data: {}, timedOut: true };
+          return {
+            ok: false,
+            status: 408,
+            timedOut: true,
+            error: `Keine Antwort von Google nach 12 Sekunden (${modelName}). Falls du im WLAN bist, schalte WLAN kurz aus und teste über Mobilfunk (manche Router oder DNS-Filter blockieren POST-Anfragen an googleapis.com).`
+          };
         }
-        throw new Error('Netzwerkfehler zur Google-API: ' + err.message);
+        return {
+          ok: false,
+          status: 0,
+          timedOut: false,
+          error: `Netzwerkfehler (${modelName}): ${err.message}`
+        };
       }
     }
 
-    async function callGemini(parts, onStatus) {
+    async function callGemini(parts, onStatus, onChunk) {
       const cfg = getConfig();
       if (!cfg.geminiKey) {
         switchTab('setup');
         throw new Error('Bitte hinterlege zuerst deinen Gemini API-Schlüssel unter Einrichtung.');
       }
 
-      const models = await getActiveModels(cfg.geminiKey);
-      let lastError = 'Kein aktives Gemini-Modell verfügbar.';
+      if (availableModels.length === 0) {
+        await discoverAvailableModels(cfg.geminiKey);
+      }
 
-      for (const modelName of models) {
-        updateModelBadge(modelName);
-        if (onStatus) onStatus(`Verbinde mit ${modelName}...`);
+      const selected = document.getElementById('modelSelect').value || availableModels[0] || 'gemini-2.5-flash';
+      const fallback = availableModels.find(m => m !== selected);
+      const modelsToTry = fallback ? [selected, fallback] : [selected];
 
-        let res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'minimal', 35000);
+      let lastError = 'Unbekannter API-Fehler.';
+
+      for (const modelName of modelsToTry) {
+        let res = await streamSingleModel(cfg.geminiKey, modelName, parts, true, onChunk, onStatus);
 
         if (!res.ok && res.status === 400) {
-          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'zero', 35000);
-        }
-        if (!res.ok && res.status === 400) {
-          res = await postGenerateFast(cfg.geminiKey, modelName, parts, 'none', 35000);
+          res = await streamSingleModel(cfg.geminiKey, modelName, parts, false, onChunk, onStatus);
         }
 
         if (res.ok) {
-          const text = res.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          if (!text) {
-            const reason = res.data.candidates?.[0]?.finishReason || 'Leere Antwort';
-            throw new Error(`Keine Textausgabe erhalten (${reason}).`);
-          }
-          setSavedModel(cfg.geminiKey, modelName);
-          return text;
+          document.getElementById('modelSelect').value = modelName;
+          localStorage.setItem(SELECTED_MODEL_KEY, modelName);
+          return res.text;
         }
 
-        skippedModels.add(modelName);
-        localStorage.removeItem(MODEL_CACHE_KEY);
+        lastError = `${modelName}: ${res.error}`;
 
         if (res.timedOut) {
-          lastError = `Zeitüberschreitung (35s) bei ${modelName}. Google antwortet aktuell verzögert – bitte erneut antippen.`;
-          continue;
+          break;
         }
-
-        const msg = res.data.error?.message || `HTTP ${res.status}`;
-        lastError = `Google API Fehler (${res.status} bei ${modelName}): ${msg}`;
-
-        if (res.status === 404 || res.status === 429 || res.status === 503) {
-          continue;
-        }
-
-        throw new Error(lastError);
       }
 
       throw new Error(lastError);
@@ -621,11 +671,17 @@
       btn.textContent = 'Prüfe Verbindung...';
       try {
         saveSettings();
-        const start = Date.now();
-        const reply = await callGemini([{ text: 'Antworte nur mit: OK' }], (s) => { btn.textContent = s; });
-        const sec = ((Date.now() - start) / 1000).toFixed(1);
-        const active = getSavedModel(getConfig().geminiKey) || 'gemini-3.8-flash';
-        showAlert(`Verbindung steht in ${sec}s! Aktives Modell: ${active} (Antwort: ${reply.trim()})`, 'success');
+        const cfg = getConfig();
+        const t0 = Date.now();
+        const models = await discoverAvailableModels(cfg.geminiKey);
+        const tList = ((Date.now() - t0) / 1000).toFixed(1);
+
+        const t1 = Date.now();
+        const reply = await callGemini([{ text: 'Antworte nur mit OK.' }], (s) => { btn.textContent = s; });
+        const tPost = ((Date.now() - t1) / 1000).toFixed(1);
+        const active = document.getElementById('modelSelect').value;
+
+        showAlert(`Verbindung erfolgreich! Modellliste in ${tList}s (${models.length} Modelle), Antwort von ${active} in ${tPost}s: ${reply.trim()}`, 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
@@ -644,6 +700,28 @@
         .trim();
     }
 
+    function applyDraftToFields(rawResult) {
+      const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
+      const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
+      const bodySplit = rawResult.split(/TEXT:\s*/i);
+
+      if (toMatch) {
+        const cleanedTo = cleanExtractedEmail(toMatch[1].replace(/\[|\]/g, '').trim());
+        if (cleanedTo && cleanedTo.includes('@')) {
+          document.getElementById('mailTo').value = cleanedTo;
+        }
+      }
+      if (subMatch) {
+        const rawSub = subMatch[1].replace(/\[|\]/g, '').trim();
+        if (rawSub) {
+          document.getElementById('mailSubject').value = rawSub;
+        }
+      }
+      if (bodySplit.length > 1) {
+        document.getElementById('mailBody').value = bodySplit[1].trim();
+      }
+    }
+
     async function generateEmailDraft() {
       const prompt = document.getElementById('mailPrompt').value.trim();
       if (!prompt) {
@@ -654,50 +732,40 @@
       const btn = document.getElementById('btnGenerateMail');
       btn.disabled = true;
       let sec = 0;
-      let statusPrefix = 'Generiere Entwurf';
-      btn.textContent = `${statusPrefix}...`;
+      let statusLabel = 'Starte Anfrage';
+      btn.textContent = `${statusLabel}...`;
 
       const tick = setInterval(() => {
         sec++;
-        btn.textContent = `${statusPrefix} (${sec}s)...`;
+        btn.textContent = `${statusLabel} (${sec}s)...`;
       }, 1000);
 
       try {
-        const instruction = `Formuliere aus der folgenden gesprochenen oder geschriebenen Anweisung eine kurze, natürliche E-Mail auf Deutsch.
-WICHTIG zur E-Mail-Adresse:
-- Wende gesprochene Buchstabier-Korrekturen direkt an (z. B. wenn jemand diktiert "Mark mark.tens@gmx.de dabei schreibt sich Mark mit C und Henz mit S", dann ist die korrekte Adresse "marc.hens@gmx.de").
-- Entferne versehentliche Leerzeichen vor oder nach Punkten und @-Zeichen.
-
-Antworte direkt und ohne Umschweife exakt in diesen drei Zeilen:
-EMPFAENGER: [korrigierte E-Mail-Adresse oder leer lassen]
-BETREFF: [kurzer passender Betreff]
+        const instruction = `Erstelle aus der Anweisung eine natürliche deutsche E-Mail. Wende gesprochene Buchstabier-Korrekturen auf die E-Mail-Adresse an (z. B. "Mark mark.tens@gmx.de dabei schreibt sich Mark mit C und Henz mit S" ergibt "marc.hens@gmx.de") und entferne Leerzeichen in der Adresse.
+Antworte exakt in diesem Format:
+EMPFAENGER: [E-Mail-Adresse oder leer]
+BETREFF: [Betreff]
 TEXT:
-[E-Mail-Text mit Anrede und Grußformel]
+[E-Mail-Text]
 
 Anweisung: ${prompt}`;
 
-        const rawResult = await callGemini([{ text: instruction }], (statusText) => {
-          statusPrefix = statusText.replace(/\.\.\.$/, '');
-          btn.textContent = `${statusPrefix} (${sec}s)...`;
-        });
+        const rawResult = await callGemini(
+          [{ text: instruction }],
+          (statusText) => {
+            statusLabel = statusText.replace(/\.\.\.$/, '');
+            btn.textContent = `${statusLabel} (${sec}s)...`;
+          },
+          (partialText) => {
+            applyDraftToFields(partialText);
+          }
+        );
 
-        const toMatch = rawResult.match(/EMPFAENGER:\s*(.*)/i);
-        const subMatch = rawResult.match(/BETREFF:\s*(.*)/i);
-        const bodySplit = rawResult.split(/TEXT:\s*/i);
-
-        const rawTo = toMatch ? toMatch[1].replace(/\[|\]/g, '').trim() : '';
-        const rawSub = subMatch ? subMatch[1].replace(/\[|\]/g, '').trim() : '';
-        const rawBody = bodySplit[1] ? bodySplit[1].trim() : rawResult.trim();
-
-        const cleanedTo = cleanExtractedEmail(rawTo);
-        if (cleanedTo && cleanedTo.includes('@')) {
-          document.getElementById('mailTo').value = cleanedTo;
+        applyDraftToFields(rawResult);
+        if (!rawResult.match(/TEXT:\s*/i)) {
+          document.getElementById('mailBody').value = rawResult.trim();
         }
-        if (rawSub) {
-          document.getElementById('mailSubject').value = rawSub;
-        }
-        document.getElementById('mailBody').value = rawBody;
-        showAlert('E-Mail-Entwurf erstellt und aufgeteilt.', 'success');
+        showAlert(`E-Mail-Entwurf in ${sec}s erstellt.`, 'success');
       } catch (err) {
         showAlert(err.message, 'error');
       } finally {
@@ -867,9 +935,13 @@ Anweisung: ${prompt}`;
           });
         }
 
-        const output = await callGemini(parts, (s) => { btn.textContent = s; });
-        document.getElementById('docResultOutput').textContent = output;
         document.getElementById('docResultCard').classList.remove('hidden');
+        const output = await callGemini(
+          parts,
+          (s) => { btn.textContent = s; },
+          (partial) => { document.getElementById('docResultOutput').textContent = partial; }
+        );
+        document.getElementById('docResultOutput').textContent = output;
         showAlert('Dokument erfolgreich ausgewertet.', 'success');
       } catch (err) {
         showAlert(err.message, 'error');
