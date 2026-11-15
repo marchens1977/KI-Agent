@@ -18,7 +18,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base font-semibold leading-tight text-white">KI-Agent</h1>
-            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 08:54</span>
+            <span id="buildVersionBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-blue-300 border border-slate-700">15.11.2026 · 08:58</span>
           </div>
           <p id="activeAccountLabel" class="text-xs text-slate-400 truncate max-w-[170px] sm:max-w-xs mt-0.5">Nicht verbunden</p>
         </div>
@@ -119,6 +119,18 @@
           <textarea id="mailBody" oninput="hideSendConfirmation()" rows="8" placeholder="Hier erscheint der generierte Text samt Signatur..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"></textarea>
         </div>
 
+        <div class="space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <label class="block text-xs text-slate-400">Dateianhänge (optional)</label>
+            <input type="file" id="mailAttachmentInput" multiple onchange="handleMailAttachmentSelect(event)" class="hidden" />
+            <button type="button" onclick="document.getElementById('mailAttachmentInput').click()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
+              <span>Dateien anhängen</span>
+            </button>
+          </div>
+          <div id="mailAttachmentList" class="hidden space-y-1.5"></div>
+        </div>
+
         <button onclick="sendGmailMessage()" id="btnSendMail" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-sm font-medium text-white transition">
           Über Assistenten-Konto senden
         </button>
@@ -158,7 +170,12 @@
         <div>
           <label class="block text-xs text-slate-400 mb-1">Datei auswählen (PDF, Bild, TXT, CSV)</label>
           <input type="file" id="docFileInput" accept=".pdf,.txt,.csv,.md,image/*" onchange="handleFileSelect(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700" />
-          <p id="selectedFileName" class="text-xs text-blue-400 mt-1 hidden"></p>
+          <div id="docFileActions" class="hidden flex items-center justify-between gap-2 mt-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+            <p id="selectedFileName" class="text-xs text-blue-400 truncate"></p>
+            <button type="button" onclick="attachDocFileToMail()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shrink-0 transition">
+              An E-Mail anhängen
+            </button>
+          </div>
         </div>
 
         <div>
@@ -183,11 +200,16 @@
       </div>
 
       <div id="docResultCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
           <h2 class="text-sm font-semibold text-white">Analyse-Ergebnis</h2>
-          <button onclick="transferDocToMail()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
-            In E-Mail übernehmen
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="btnAttachDocFromResult" type="button" onclick="attachDocFileToMail()" class="hidden text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+              Datei anhängen
+            </button>
+            <button onclick="transferDocToMail()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
+              Text in E-Mail übernehmen
+            </button>
+          </div>
         </div>
         <div id="docResultOutput" class="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-950 p-3.5 rounded-xl border border-slate-800"></div>
       </div>
@@ -247,17 +269,19 @@
   </main>
 
   <script>
-    const BUILD_TIMESTAMP = '15.11.2026 · 08:54';
+    const BUILD_TIMESTAMP = '15.11.2026 · 08:58';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
-    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v30';
+    const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v31';
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
     const SENDER_DISPLAY_NAME = 'KI-Assistent von Marc Hens';
-    const EMAIL_SIGNATURE = 'Viele Grüße,\n\nKI-Assistent von Marc Hens';
+    const EMAIL_SIGNATURE = 'Viele Grüße\n\nKI-Assistent von Marc Hens';
+    const MAX_ATTACHMENT_TOTAL_BYTES = 15 * 1024 * 1024;
 
     let accessToken = null;
     let tokenClient = null;
     let uploadedFilePayload = null;
+    let mailAttachments = [];
     let availableModels = [];
     let inboxMessagesCache = {};
     let replyContext = null;
@@ -266,6 +290,98 @@
     let activeVoiceBtn = null;
     let activeVoiceDefaultLabel = '';
     let alertTimer = null;
+
+    function formatFileSize(bytes) {
+      if (!bytes || bytes < 1024) return `${bytes || 0} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function renderMailAttachments() {
+      const listEl = document.getElementById('mailAttachmentList');
+      if (!listEl) return;
+
+      if (mailAttachments.length === 0) {
+        listEl.innerHTML = '';
+        listEl.classList.add('hidden');
+        return;
+      }
+
+      listEl.classList.remove('hidden');
+      listEl.innerHTML = '';
+      mailAttachments.forEach((att, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs';
+        row.innerHTML = `
+          <div class="truncate">
+            <span class="font-medium text-slate-200">${escapeHtml(att.name)}</span>
+            <span class="text-slate-400 ml-1.5">(${formatFileSize(att.size)})</span>
+          </div>
+          <button type="button" onclick="removeMailAttachment(${idx})" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 shrink-0">Entfernen</button>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function removeMailAttachment(index) {
+      mailAttachments.splice(index, 1);
+      renderMailAttachments();
+    }
+
+    function handleMailAttachmentSelect(event) {
+      const files = Array.from(event.target.files || []);
+      event.target.value = '';
+      if (files.length === 0) return;
+
+      hideSendConfirmation();
+
+      let currentTotal = mailAttachments.reduce((sum, item) => sum + (item.size || 0), 0);
+
+      files.forEach(file => {
+        if (currentTotal + file.size > MAX_ATTACHMENT_TOTAL_BYTES) {
+          showAlert(`Die Datei ${file.name} überschreitet das Gesamtlimit von 15 MB für Anhänge.`, 'error');
+          return;
+        }
+        currentTotal += file.size;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64Data = reader.result.split(',')[1] || '';
+          mailAttachments.push({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            data: base64Data
+          });
+          renderMailAttachments();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function attachDocFileToMail() {
+      if (!uploadedFilePayload) return;
+      hideSendConfirmation();
+
+      const currentTotal = mailAttachments.reduce((sum, item) => sum + (item.size || 0), 0);
+      if (currentTotal + (uploadedFilePayload.size || 0) > MAX_ATTACHMENT_TOTAL_BYTES) {
+        showAlert('Die Datei überschreitet das Gesamtlimit von 15 MB für Anhänge.', 'error');
+        return;
+      }
+
+      mailAttachments.push({
+        name: uploadedFilePayload.name || 'Dokument',
+        mimeType: uploadedFilePayload.mimeType || 'application/octet-stream',
+        size: uploadedFilePayload.size || 0,
+        data: uploadedFilePayload.data
+      });
+      renderMailAttachments();
+      switchTab('mail');
+      showAlert(`Datei ${uploadedFilePayload.name} als E-Mail-Anhang hinzugefügt.`, 'success');
+      setTimeout(() => {
+        document.getElementById('mailReviewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
 
     function getContacts() {
       const defaults = [{ name: 'Marc Hens', email: 'marc.hens@gmx.de' }];
@@ -565,6 +681,7 @@
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
       discoverAvailableModels(cfg.geminiKey);
       renderContactsUI();
+      renderMailAttachments();
     }
 
     function saveSettings() {
@@ -649,6 +766,8 @@
       hideSendConfirmation();
       hideAlert();
       replyContext = null;
+      mailAttachments = [];
+      renderMailAttachments();
       updateReplyBannerUI();
       document.getElementById('mailPrompt').value = '';
       document.getElementById('mailTo').value = '';
@@ -938,7 +1057,7 @@
     function ensureSignature(bodyText) {
       const cleaned = (bodyText || '').trim();
       if (!cleaned) return EMAIL_SIGNATURE;
-      if (/Viele Grüße,\s*\n\s*\n\s*KI-Assistent von Marc Hens\s*$/i.test(cleaned)) {
+      if (/Viele Grüße\s*\n\s*\n\s*KI-Assistent von Marc Hens\s*$/i.test(cleaned)) {
         return cleaned;
       }
       const withoutOldSig = cleaned
@@ -1018,8 +1137,8 @@ ${userNoteBlock}
 Regeln für den Antworttext (TEXT):
 - Gehe konkret auf die Fragen, Informationen oder Wünsche in der eingegangenen E-Mail ein.
 - Schreibe in einwandfreier deutscher Rechtschreibung und Zeichensetzung.
-- Beende den Text exakt mit dieser Signatur (inklusive der Leerzeile dazwischen):
-Viele Grüße,
+- Beende den Text exakt mit dieser Signatur (ohne Komma hinter Viele Grüße und inklusive der Leerzeile dazwischen):
+Viele Grüße
 
 KI-Assistent von Marc Hens
 
@@ -1038,8 +1157,8 @@ Regeln für den Empfänger (EMPFAENGER):
 
 Regeln für den Text (TEXT):
 - Formuliere den Inhalt klar, natürlich und vollständig aus.
-- Beende den Text exakt mit dieser Signatur (inklusive der Leerzeile dazwischen):
-Viele Grüße,
+- Beende den Text exakt mit dieser Signatur (ohne Komma hinter Viele Grüße und inklusive der Leerzeile dazwischen):
+Viele Grüße
 
 KI-Assistent von Marc Hens
 
@@ -1087,13 +1206,26 @@ Anweisung: ${prompt}`;
       }
     }
 
-    function encodeBase64Url(str) {
+    function utf8ToBase64(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
       }
-      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return btoa(binary);
+    }
+
+    function encodeMimeHeaderWord(str) {
+      return '=?UTF-8?B?' + utf8ToBase64(str) + '?=';
+    }
+
+    function wrapBase64(b64) {
+      return (b64 || '').replace(/(.{76})/g, '$1\r\n');
+    }
+
+    function asciiToBase64Url(asciiStr) {
+      return btoa(asciiStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
     function decodeBase64UrlUtf8(data) {
@@ -1166,8 +1298,8 @@ Anweisung: ${prompt}`;
       btn.textContent = 'Sende E-Mail...';
 
       try {
-        const encodedSubject = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(subject))) + '?=';
-        const encodedSenderName = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(SENDER_DISPLAY_NAME))) + '?=';
+        const encodedSubject = encodeMimeHeaderWord(subject);
+        const encodedSenderName = encodeMimeHeaderWord(SENDER_DISPLAY_NAME);
 
         const mailHeaders = [];
         if (cfg.agentEmail) {
@@ -1184,12 +1316,43 @@ Anweisung: ${prompt}`;
           mailHeaders.push(`References: ${refs}`);
         }
 
-        mailHeaders.push('Content-Type: text/plain; charset="UTF-8"');
-        mailHeaders.push('');
-        mailHeaders.push(body);
+        mailHeaders.push('MIME-Version: 1.0');
 
-        const rawMail = mailHeaders.join('\r\n');
-        const sendPayload = { raw: encodeBase64Url(rawMail) };
+        let rawMail = '';
+        const attachedCount = mailAttachments.length;
+
+        if (attachedCount === 0) {
+          mailHeaders.push('Content-Type: text/plain; charset="UTF-8"');
+          mailHeaders.push('Content-Transfer-Encoding: base64');
+          mailHeaders.push('');
+          mailHeaders.push(wrapBase64(utf8ToBase64(body)));
+          rawMail = mailHeaders.join('\r\n');
+        } else {
+          const boundary = '----=_Part_KIAgent_' + Date.now().toString(36);
+          mailHeaders.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+          mailHeaders.push('');
+          mailHeaders.push(`--${boundary}`);
+          mailHeaders.push('Content-Type: text/plain; charset="UTF-8"');
+          mailHeaders.push('Content-Transfer-Encoding: base64');
+          mailHeaders.push('');
+          mailHeaders.push(wrapBase64(utf8ToBase64(body)));
+
+          for (const att of mailAttachments) {
+            const encodedFileName = encodeMimeHeaderWord(att.name || 'anhang');
+            const mimeType = att.mimeType || 'application/octet-stream';
+            mailHeaders.push(`--${boundary}`);
+            mailHeaders.push(`Content-Type: ${mimeType}; name="${encodedFileName}"`);
+            mailHeaders.push(`Content-Disposition: attachment; filename="${encodedFileName}"`);
+            mailHeaders.push('Content-Transfer-Encoding: base64');
+            mailHeaders.push('');
+            mailHeaders.push(wrapBase64(att.data));
+          }
+
+          mailHeaders.push(`--${boundary}--`);
+          rawMail = mailHeaders.join('\r\n');
+        }
+
+        const sendPayload = { raw: asciiToBase64Url(rawMail) };
         if (replyContext && replyContext.threadId) {
           sendPayload.threadId = replyContext.threadId;
         }
@@ -1211,6 +1374,8 @@ Anweisung: ${prompt}`;
         rememberContactEmail(to);
 
         replyContext = null;
+        mailAttachments = [];
+        renderMailAttachments();
         updateReplyBannerUI();
 
         document.getElementById('mailPrompt').value = '';
@@ -1219,7 +1384,8 @@ Anweisung: ${prompt}`;
         document.getElementById('mailBody').value = '';
 
         const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('sendConfirmationDetail').textContent = `Gesendet an ${to} um ${now} Uhr (Betreff: ${subject}).`;
+        const attInfo = attachedCount > 0 ? ` · ${attachedCount} Anhang/Anhänge` : '';
+        document.getElementById('sendConfirmationDetail').textContent = `Gesendet an ${to} um ${now} Uhr (Betreff: ${subject}${attInfo}).`;
         document.getElementById('sendConfirmationBox').classList.remove('hidden');
 
         showAlert(`E-Mail erfolgreich an ${to} versandt.`, 'success');
@@ -1336,10 +1502,14 @@ Anweisung: ${prompt}`;
 
     function handleFileSelect(event) {
       const file = event.target.files[0];
+      const actionsBox = document.getElementById('docFileActions');
       const label = document.getElementById('selectedFileName');
+      const resultAttachBtn = document.getElementById('btnAttachDocFromResult');
+
       if (!file) {
         uploadedFilePayload = null;
-        label.classList.add('hidden');
+        actionsBox.classList.add('hidden');
+        resultAttachBtn.classList.add('hidden');
         return;
       }
 
@@ -1347,11 +1517,14 @@ Anweisung: ${prompt}`;
       reader.onload = () => {
         const base64Data = reader.result.split(',')[1];
         uploadedFilePayload = {
-          mimeType: file.type || 'text/plain',
+          name: file.name,
+          size: file.size,
+          mimeType: file.type || 'application/octet-stream',
           data: base64Data
         };
-        label.textContent = `Geladen: ${file.name}`;
-        label.classList.remove('hidden');
+        label.textContent = `Geladen: ${file.name} (${formatFileSize(file.size)})`;
+        actionsBox.classList.remove('hidden');
+        resultAttachBtn.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
     }
