@@ -54,7 +54,7 @@ sobald bekannt (z. B. Adresse von GitHub Pages).
 | Datum | Was | PR |
 |---|---|---|
 | 14.–15.11.2026 | App aufgebaut und in vielen Schritten verbessert (Dateien direkt über GitHub hochgeladen) | – |
-| 16.11.2026 | Projekt-Tagebuch `CLAUDE.md` angelegt | (folgt) |
+| 16.11.2026 | Projekt-Tagebuch `CLAUDE.md` angelegt | #1 |
 
 ## 4. Offene Ideen / nächste Schritte
 
