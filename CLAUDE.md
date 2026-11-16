@@ -18,8 +18,10 @@ Was die App kann:
 - Kontakte speichern, damit die Spracheingabe Namen besser erkennt
 - Spracheingabe (der Browser wandelt Sprache in Text um)
 
-**Wo ist die App online?** Noch nicht festgehalten – bitte ergänzen,
-sobald bekannt (z. B. Adresse von GitHub Pages).
+**Wo ist die App online?** Über GitHub Pages:
+https://marchens1977.github.io/KI-Agent/
+Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
+1 Minute dort veröffentlicht.
 
 ### Technischer Aufbau
 
@@ -55,10 +57,10 @@ sobald bekannt (z. B. Adresse von GitHub Pages).
 |---|---|---|
 | 14.–15.11.2026 | App aufgebaut und in vielen Schritten verbessert (Dateien direkt über GitHub hochgeladen) | – |
 | 16.11.2026 | Projekt-Tagebuch `CLAUDE.md` angelegt | #1 |
+| 16.11.2026 | Online-Adresse im Tagebuch eingetragen | #2 |
 
 ## 4. Offene Ideen / nächste Schritte
 
-- Festhalten, wo die App online erreichbar ist.
 - Weitere Wünsche des Nutzers hier sammeln.
 
 ## 5. Zusammenarbeit mit dem Nutzer
