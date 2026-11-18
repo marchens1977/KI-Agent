@@ -114,6 +114,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Analyse der App (Sicherheit, Freigabe, Wiederverwendung) und Überlegung „Claude statt Gemini“ festgehalten | #4 |
 | 18.11.2026 | KI-Anbieter wählbar (Gemini/Claude), Dokumente automatisch mit Claude Sonnet, Warnung vor Gemini, Schutz für erlaubte Verbindungen (CSP) | #5 |
 | 18.11.2026 | Claude-Verbindung vom Nutzer erfolgreich getestet ✅. Auswahlfeld zeigt Claude- und Gemini-Modelle; Einrichtung übersichtlicher; Rückmeldungen direkt am Knopf bzw. unten am Bildschirm | #6 |
+| 18.11.2026 | Vom Nutzer mit echtem Claude-Schlüssel auf dem Handy getestet: E-Mail-Entwurf (Claude Haiku 5.5) und Dokument-Auswertung (Claude Sonnet 5.5) funktionieren ✅ | #7 |
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -126,7 +127,6 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   den Pi nur über https ansprechen → HTTPS auf dem Pi oder App auch vom Pi ausliefern; Pi muss
   eingeschaltet sein. Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“.
   Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
-- Mit echtem Claude-Schlüssel noch testen: E-Mail-Entwurf und Dokument-Auswertung (Verbindungstest klappte bereits).
 - Weitere Wünsche des Nutzers hier sammeln.
 
 ## 5. Zusammenarbeit mit dem Nutzer
