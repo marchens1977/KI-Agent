@@ -35,8 +35,11 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Google Cloud (eine Art Ausweisnummer der App bei Google). Sie wird in den
   Einstellungen der App eingetragen.
 - **Gmail-Schnittstelle** – Berechtigungen: E-Mails lesen und senden.
-- **KI-Anbieter wählbar** (Einrichtung → „KI-Anbieter für E-Mails“: Gemini / Claude).
-  Zentrale Weiche ist `callAI()`: E-Mails gehen an den gewählten Anbieter.
+- **KI-Anbieter wählbar** (Einrichtung → „Standard-KI für E-Mails“: Claude / Gemini).
+  Das Modell-Auswahlfeld im Reiter „E-Mail“ zeigt **alle** Modelle mit gespeichertem
+  Schlüssel in zwei Gruppen (Claude / Gemini). **Was dort ausgewählt ist, wird für E-Mails
+  genutzt** und stellt zugleich die Standard-KI um (`onModelChange`, `buildModelDropdown`).
+  Zentrale Weiche ist `callAI()`.
   **Dokumente** (PDF, Fotos, eingefügte Texte im Reiter „Dokumente“ und E-Mail-Anhänge
   beim Antworten) gehen **immer an Claude Sonnet 5.5**, sobald ein Claude-Schlüssel
   eingetragen ist. Ohne Claude-Schlüssel kommt vorher eine Warnung (Bestätigungsfenster),
@@ -53,6 +56,12 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 - **Schutz für erlaubte Verbindungen (CSP)** – Kopfzeile in `index.html`: Die Seite darf
   Daten nur an sich selbst, Gmail, Gemini, Claude und die Google-Anmeldung schicken
   (`connect-src`). Neue Dienste dort eintragen, sonst blockiert der Browser sie.
+- **Einrichtungsseite** in Bereichen: „1. KI-Verbindungen“ (je ein Kasten für Claude und
+  Gemini mit Schlüssel, Status-Anzeige „✓ gespeichert“, Test-Knopf und Ergebnis direkt
+  darunter; Standard-KI; Hinweis zu Dokumenten; Speichern-Knopf mit Rückmeldung) und
+  „2. Gmail-Konto“ (Client-ID, Agenten-Adresse, Absendername, eigener Speichern-Knopf).
+  Rückmeldungen erscheinen **direkt am Knopf** (`setInlineStatus`); allgemeine Meldungen
+  (`showAlert`) erscheinen **unten am Bildschirm** als schwebende Meldung.
 - **Gemini-Schnittstelle** – die KI. Dafür braucht die App einen
   *API-Schlüssel* (ein Passwort für die KI). Es gibt eine Modellauswahl
   (z. B. verschiedene „Gemini Flash“-Versionen).
@@ -104,6 +113,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | App installierbar gemacht (Manifest, Service Worker, Symbol) und auf Mets-Farben umgestellt | #3 |
 | 18.11.2026 | Analyse der App (Sicherheit, Freigabe, Wiederverwendung) und Überlegung „Claude statt Gemini“ festgehalten | #4 |
 | 18.11.2026 | KI-Anbieter wählbar (Gemini/Claude), Dokumente automatisch mit Claude Sonnet, Warnung vor Gemini, Schutz für erlaubte Verbindungen (CSP) | #5 |
+| 18.11.2026 | Claude-Verbindung vom Nutzer erfolgreich getestet ✅. Auswahlfeld zeigt Claude- und Gemini-Modelle; Einrichtung übersichtlicher; Rückmeldungen direkt am Knopf bzw. unten am Bildschirm | #6 |
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -116,7 +126,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   den Pi nur über https ansprechen → HTTPS auf dem Pi oder App auch vom Pi ausliefern; Pi muss
   eingeschaltet sein. Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“.
   Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
-- Den Claude-Weg mit echtem Schlüssel auf dem Handy testen (bisher nur mit nachgespielten Antworten getestet).
+- Mit echtem Claude-Schlüssel noch testen: E-Mail-Entwurf und Dokument-Auswertung (Verbindungstest klappte bereits).
 - Weitere Wünsche des Nutzers hier sammeln.
 
 ## 5. Zusammenarbeit mit dem Nutzer
