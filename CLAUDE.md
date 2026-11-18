@@ -29,7 +29,15 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 - **`index.html`** – die gesamte App steckt in dieser einen Datei
   (Aussehen, Texte und Programmlogik). Sprache der Oberfläche: Deutsch,
   dunkles Design, für das Handy optimiert.
-- **Tailwind** (wird aus dem Internet geladen) – sorgt für das Aussehen.
+- **Tailwind CSS (Aussehen) ist fest eingebaut** (seit 18.11.2026, PR #8): Das fertige CSS
+  steht als `<style id="tailwind-css">` am Ende des Kopfbereichs von `index.html` zwischen
+  `/* TAILWIND-START */` und `/* TAILWIND-END */`. Es wird **nichts mehr** von
+  `cdn.tailwindcss.com` geladen.
+  **Wichtig:** Kommen in `index.html` neue Tailwind-Klassen dazu (z. B. `mt-3`, `bg-slate-700`),
+  danach im Projektordner `bash werkzeuge/aussehen-bauen.sh` ausführen – sonst fehlen diese
+  Klassen. Das Werkzeug erzeugt nur die benutzten Klassen (Tailwind 3.4.19, wie früher das CDN).
+  Dazugehörige Dateien: `werkzeuge/tailwind.config.js` (Mets-Farben), `werkzeuge/tailwind-eingabe.css`.
+  Die App selbst braucht diese Dateien nicht.
 - **Google-Anmeldung** („Google Identity Services“) – damit meldet sich der
   Nutzer bei Gmail an. Dafür braucht die App eine *OAuth-Client-ID* aus der
   Google Cloud (eine Art Ausweisnummer der App bei Google). Sie wird in den
@@ -55,7 +63,9 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   (Schutz: Ausgaben-Limit 5 $ und eigener Arbeitsbereich in der Anthropic-Konsole).
 - **Schutz für erlaubte Verbindungen (CSP)** – Kopfzeile in `index.html`: Die Seite darf
   Daten nur an sich selbst, Gmail, Gemini, Claude und die Google-Anmeldung schicken
-  (`connect-src`). Neue Dienste dort eintragen, sonst blockiert der Browser sie.
+  (`connect-src`). Skripte und Stile nur aus der App selbst und von `accounts.google.com`
+  (`script-src`, `style-src`; `'unsafe-inline'` nötig wegen der eingebauten Skripte und
+  `onclick`-Knöpfe). Neue Dienste dort eintragen, sonst blockiert der Browser sie.
 - **Einrichtungsseite** in Bereichen: „1. KI-Verbindungen“ (je ein Kasten für Claude und
   Gemini mit Schlüssel, Status-Anzeige „✓ gespeichert“, Test-Knopf und Ergebnis direkt
   darunter; Standard-KI; Hinweis zu Dokumenten; Speichern-Knopf mit Rückmeldung) und
@@ -74,7 +84,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 - **`icons/`** – App-Symbol: weißer Briefumschlag mit orangem KI-Funkeln auf
   Mets-Blau. Vorlagen `icon.svg` und `icon-maskable.svg` (für Android-Rundungen);
   die PNG-Dateien werden daraus erzeugt (z. B. mit Playwright-Screenshot).
-- **Farben** – oben in `index.html` (`tailwind.config`) umgedeutet:
+- **Farben** – in `werkzeuge/tailwind.config.js` umgedeutet:
   `slate` = Dunkelblau-Töne, `blue` = Mets-Orange, `indigo` = Mets-Blau.
   Grün/Rot/Gelb bleiben für Erfolg/Fehler/Warnung.
 - **Versionsanzeige** – `BUILD_TIMESTAMP` in `index.html`, bei Änderungen anpassen.
@@ -97,10 +107,11 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Gmail-Anmeldung nicht in „eingepackten“ Apps (Capacitor-WebView), und die
   Spracheingabe von Chrome fehlt dort. Für eine APK bräuchte es eine eigene
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
-- Lokal (in Claudes Arbeitsumgebung) sind `cdn.tailwindcss.com` und `github.io`
-  gesperrt (`api.anthropic.com` ist erreichbar, aber ohne echten Schlüssel) → zum Testen Tailwind mit `npx tailwindcss@3` selbst bauen und in
-  Playwright für die CDN-Adresse einsetzen. Gemini- und Claude-Antworten im Test per
-  `context.route` nachspielen (Beispiel: Test-Skript im Verlauf von PR #5 beschrieben).
+- Lokal (in Claudes Arbeitsumgebung) ist `github.io` gesperrt (`api.anthropic.com` ist
+  erreichbar, aber ohne echten Schlüssel). Testen: `index.html` mit `python3 -m http.server`
+  ausliefern und mit Playwright öffnen; Gemini- und Claude-Antworten per `context.route`
+  nachspielen (Beispiel: Test-Skript im Verlauf von PR #5 beschrieben). Das Aussehen ist
+  eingebaut, also kein Tailwind-Ersatz im Test mehr nötig.
 - E-Mails werden vor dem Senden **vom Nutzer geprüft** („Nachricht prüfen und senden“).
 
 ## 3. Verlauf
@@ -115,6 +126,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | KI-Anbieter wählbar (Gemini/Claude), Dokumente automatisch mit Claude Sonnet, Warnung vor Gemini, Schutz für erlaubte Verbindungen (CSP) | #5 |
 | 18.11.2026 | Claude-Verbindung vom Nutzer erfolgreich getestet ✅. Auswahlfeld zeigt Claude- und Gemini-Modelle; Einrichtung übersichtlicher; Rückmeldungen direkt am Knopf bzw. unten am Bildschirm | #6 |
 | 18.11.2026 | Vom Nutzer mit echtem Claude-Schlüssel auf dem Handy getestet: E-Mail-Entwurf (Claude Haiku 5.5) und Dokument-Auswertung (Claude Sonnet 5.5) funktionieren ✅ | #7 |
+| 18.11.2026 | Aussehen (Tailwind) fest eingebaut statt aus dem Internet geladen; Bau-Werkzeug `werkzeuge/aussehen-bauen.sh`; Schutz (CSP) verbietet fremde Skripte/Stile außer Google-Anmeldung; Zwischenspeicher-Version v4. Vorher/nachher-Bildvergleich: optisch gleich | #8 |
 
 ## 4. Offene Ideen / nächste Schritte
 
