@@ -162,6 +162,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mail-Entwürfe ohne Zeilenumbrüche mitten im Satz ✅ | #13 |
 | 18.11.2026 | E-Mails werden zusätzlich als formatierte HTML-Fassung verschickt (Text fließt im Hochformat als Block, keine festen 70-Zeichen-Umbrüche mehr); KI soll bei Gedankenwechsel neue Absätze bilden; 5 neue Prüfpunkte (jetzt 50) | #14 |
 | 19.11.2026 | E-Mail-Darstellung angepasst: linksbündig statt Blocksatz, normaler Zeilenabstand, Schrift Arial | #15 |
+| 19.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mails erscheinen im Hoch- und Querformat sauber (linksbündig, normaler Zeilenabstand, keine festen Umbrüche) ✅ | #16 |
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -176,7 +177,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
 - Weitere Wünsche des Nutzers hier sammeln.
 
-**Stand am Ende der Sitzung vom 18.11.2026:** Alles umgesetzte ist vom Nutzer getestet und
+**Stand am Ende der Sitzung vom 18./19.11.2026:** Alles umgesetzte ist vom Nutzer getestet und
 funktioniert. Keine offenen Fehler. Für die nächste Arbeit eine neue Sitzung öffnen; dieses
 Tagebuch ist die Grundlage.
 
