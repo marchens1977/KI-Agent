@@ -200,7 +200,7 @@ async function analyseDoc(p, file) {
   check('H Text- und HTML-Fassung enthalten', raw.includes('multipart/alternative') && raw.includes('text/plain') && raw.includes('text/html'));
   const htmlB64 = (raw.split('Content-Type: text/html; charset="UTF-8"')[1] || '').split('\r\n\r\n')[1] || '';
   const html = Buffer.from(htmlB64.split('\r\n--')[0].replace(/\r\n/g, ''), 'base64').toString('utf8');
-  check('H HTML: Absätze im Blocksatz, langer Absatz in einem Stück', html.includes(`>${longPar}</p>`) && html.includes('text-align:justify') && (html.match(/<p /g) || []).length === 4, html.slice(0, 120));
+  check('H HTML: Absätze linksbündig, normaler Zeilenabstand, langer Absatz in einem Stück', html.includes(`>${longPar}</p>`) && html.includes('text-align:left') && !html.includes('justify') && !html.includes('line-height') && (html.match(/<p /g) || []).length === 4, html.slice(0, 120));
   check('H HTML: Signatur-Zeilen bleiben getrennt', html.includes('KI-Assistent<br>von Marc'));
   check('H Versand-Bestätigung angezeigt', !(await p.$eval('#sendConfirmationBox', e => e.classList.contains('hidden'))));
   require('fs').writeFileSync(S + '/gesendete-mail.eml', raw);

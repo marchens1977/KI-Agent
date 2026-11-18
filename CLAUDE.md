@@ -104,8 +104,10 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   eine reine Textfassung und eine formatierte HTML-Fassung (`multipart/alternative`). Grund:
   Reine Text-Mails wurden beim Empfänger nach ca. 70 Zeichen fest umgebrochen – im Hochformat
   entstand unruhiger Flattersatz. In der HTML-Fassung fließt der Text passend zur
-  Bildschirmbreite: Absätze (`<p>`) im Blocksatz mit Silbentrennung, einzelne Umbrüche als `<br>`,
-  Schrift Arial 15 px. Bei Anhängen steckt dieser Teil innerhalb von `multipart/mixed`.
+  Bildschirmbreite: Absätze (`<p>`) **linksbündig** mit Silbentrennung, einzelne Umbrüche als
+  `<br>`, Schrift Arial. Schriftgröße und Zeilenabstand bewusst **nicht** vorgegeben – die bestimmt
+  das E-Mail-Programm, damit es wie eine normale E-Mail aussieht (Wunsch des Nutzers; Blocksatz
+  und großer Zeilenabstand waren ihm zu unruhig). Bei Anhängen steckt dieser Teil innerhalb von `multipart/mixed`.
 - **Versionsanzeige** – `BUILD_TIMESTAMP` in `index.html`, bei Änderungen anpassen.
 - **Speicherung** – Einstellungen werden nur im Browser auf dem Gerät
   gespeichert (`localStorage`), nicht auf einem Server.
@@ -159,6 +161,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Zeilenumbrüche mitten im Satz in E-Mails behoben (KI-Anweisung + Aufräumen des Entwurfs mit `unwrapHardLineBreaks`); 3 neue Prüfpunkte (jetzt 45). Hinweis an den Nutzer: Signatur im KI-Profil ggf. ohne feste Umbrüche speichern | #12 |
 | 18.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mail-Entwürfe ohne Zeilenumbrüche mitten im Satz ✅ | #13 |
 | 18.11.2026 | E-Mails werden zusätzlich als formatierte HTML-Fassung verschickt (Text fließt im Hochformat als Block, keine festen 70-Zeichen-Umbrüche mehr); KI soll bei Gedankenwechsel neue Absätze bilden; 5 neue Prüfpunkte (jetzt 50) | #14 |
+| 19.11.2026 | E-Mail-Darstellung angepasst: linksbündig statt Blocksatz, normaler Zeilenabstand, Schrift Arial | #15 |
 
 ## 4. Offene Ideen / nächste Schritte
 
