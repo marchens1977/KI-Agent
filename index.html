@@ -9,6 +9,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="KI-Agent" />
+  <!-- Schutz: Die Seite darf Daten nur an diese Adressen schicken (Gmail, Gemini, Claude, Google-Anmeldung). -->
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://gmail.googleapis.com https://generativelanguage.googleapis.com https://api.anthropic.com https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com; object-src 'none'; base-uri 'self'" />
   <title>KI-Agent</title>
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
@@ -188,7 +190,7 @@
         </div>
 
         <div class="relative">
-          <label for="modelSelect" class="sr-only">Gemini-Modell auswählen</label>
+          <label for="modelSelect" class="sr-only">KI-Modell auswählen</label>
           <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z"/></svg></span>
           <select id="modelSelect" onchange="onModelChange()" class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-7 pr-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
             <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
@@ -341,6 +343,7 @@
         <button type="button" onclick="processDocument()" id="btnProcessDoc" class="w-full py-2.5 px-4 rounded-xl btn-blue text-sm font-semibold">
           Dokument analysieren
         </button>
+        <p id="docProviderHint" class="text-[11px] text-slate-500 text-center"></p>
       </div>
 
       <div id="docResultCard" class="hidden card rounded-2xl p-4 space-y-3 shadow-sm">
@@ -482,8 +485,23 @@
         </div>
 
         <div>
+          <label for="cfgProvider" class="block text-xs text-slate-400 mb-1">KI-Anbieter für E-Mails</label>
+          <select id="cfgProvider" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
+            <option value="gemini">Google Gemini</option>
+            <option value="claude">Claude (Anthropic)</option>
+          </select>
+          <p class="text-[11px] text-slate-500 mt-1.5">Dokumente (PDFs, Fotos, eingefügte Texte und E-Mail-Anhänge) wertet die App immer mit Claude Sonnet aus, sobald ein Claude-Schlüssel eingetragen ist. Ohne Claude-Schlüssel fragt sie vorher nach, bevor ein Dokument an Gemini geht.</p>
+        </div>
+
+        <div>
           <label for="cfgGeminiKey" class="block text-xs text-slate-400 mb-1">Google Gemini API-Schlüssel</label>
           <input type="password" id="cfgGeminiKey" placeholder="AIzaSy..." class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label for="cfgClaudeKey" class="block text-xs text-slate-400 mb-1">Claude API-Schlüssel (Anthropic)</label>
+          <input type="password" id="cfgClaudeKey" placeholder="sk-ant-..." autocomplete="off" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <p class="text-[11px] text-slate-500 mt-1.5">Erstellen unter platform.claude.com. Tipp: dort ein monatliches Ausgaben-Limit setzen.</p>
         </div>
 
         <div>
@@ -507,6 +525,9 @@
           </button>
           <button type="button" onclick="testGeminiConnection()" id="btnTestGemini" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-200 border border-slate-700 transition">
             Gemini-Verbindung prüfen
+          </button>
+          <button type="button" onclick="testClaudeConnection()" id="btnTestClaude" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-200 border border-slate-700 transition sm:col-span-2">
+            Claude-Verbindung prüfen
           </button>
         </div>
       </div>
@@ -537,7 +558,7 @@
     </section>
 
     <footer class="pt-4 pb-2 text-center space-y-1">
-      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">18.11.2026 · 20:14</span></p>
+      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">18.11.2026 · 21:22</span></p>
       <p class="text-[11px] text-slate-600">Einstellungen und Kontakte bleiben lokal in deinem Browser.</p>
     </footer>
   </main>
@@ -570,13 +591,27 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '18.11.2026 · 20:14';
+    const BUILD_TIMESTAMP = '18.11.2026 · 21:22';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
     const CORRESPONDENTS_CACHE_KEY = 'ki_agent_correspondents_cache_v1';
     const PERSONA_KEY = 'ki_agent_persona_v2';
     const SELECTED_MODEL_KEY = 'ki_agent_selected_model_v35';
+    const SELECTED_CLAUDE_MODEL_KEY = 'ki_agent_selected_claude_model_v1';
+
+    // Claude (Anthropic): Haiku für einfache Aufgaben, Sonnet als Ersatz und für Dokumente.
+    const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+    const CLAUDE_API_VERSION = '2026-10-21';
+    const CLAUDE_DEFAULT_MODEL = 'claude-haiku-5-5';
+    const CLAUDE_DOC_MODEL = 'claude-sonnet-5-5';
+    const CLAUDE_MODELS = [CLAUDE_DEFAULT_MODEL, CLAUDE_DOC_MODEL];
+    const CLAUDE_MODEL_LABELS = { 'claude-haiku-5-5': 'Claude Haiku 5.5', 'claude-sonnet-5-5': 'Claude Sonnet 5.5' };
+    const CLAUDE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+    const CLAUDE_EMAIL_TIMEOUT_MS = 45000;
+    const CLAUDE_DOC_TIMEOUT_MS = 90000;
+    const CLAUDE_EMAIL_MAX_TOKENS = 8000;
+    const CLAUDE_DOC_MAX_TOKENS = 16000;
 
     const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash-lite';
     const FALLBACK_MODELS = [DEFAULT_PRIMARY_MODEL, 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
@@ -1595,7 +1630,9 @@
       const saved = storageGet(STORAGE_KEY, {});
       const obj = (saved && typeof saved === 'object') ? saved : {};
       return {
+        provider: obj.provider === 'claude' ? 'claude' : 'gemini',
         geminiKey: (obj.geminiKey ? obj.geminiKey : '').trim(),
+        claudeKey: (obj.claudeKey ? obj.claudeKey : '').trim(),
         clientId: (obj.clientId ? obj.clientId : '').trim(),
         agentEmail: (obj.agentEmail ? obj.agentEmail : '').trim().toLowerCase(),
         senderName: (obj.senderName ? obj.senderName : '').trim()
@@ -1611,6 +1648,7 @@
     }
 
     function prettyModelName(name) {
+      if (CLAUDE_MODEL_LABELS[name]) return CLAUDE_MODEL_LABELS[name];
       return String(name || '')
         .split('-')
         .filter(Boolean)
@@ -1618,9 +1656,9 @@
         .join(' ');
     }
 
-    function populateModelDropdown(models) {
+    function populateModelDropdown(models, storeKey = SELECTED_MODEL_KEY, defaultModel = DEFAULT_PRIMARY_MODEL) {
       const select = document.getElementById('modelSelect');
-      const savedChoice = storageGet(SELECTED_MODEL_KEY, null);
+      const savedChoice = storageGet(storeKey, null);
       select.innerHTML = '';
 
       models.forEach(m => {
@@ -1632,19 +1670,43 @@
 
       if (savedChoice && typeof savedChoice === 'string' && models.includes(savedChoice)) {
         select.value = savedChoice;
-      } else if (models.includes(DEFAULT_PRIMARY_MODEL)) {
-        select.value = DEFAULT_PRIMARY_MODEL;
-        storageSet(SELECTED_MODEL_KEY, DEFAULT_PRIMARY_MODEL);
+      } else if (models.includes(defaultModel)) {
+        select.value = defaultModel;
+        storageSet(storeKey, defaultModel);
       } else if (models.length > 0) {
         select.value = models[0];
-        storageSet(SELECTED_MODEL_KEY, models[0]);
+        storageSet(storeKey, models[0]);
       }
     }
 
     function onModelChange() {
       const val = document.getElementById('modelSelect').value;
       if (val) {
-        storageSet(SELECTED_MODEL_KEY, val);
+        storageSet(getConfig().provider === 'claude' ? SELECTED_CLAUDE_MODEL_KEY : SELECTED_MODEL_KEY, val);
+      }
+    }
+
+    // Füllt das Modell-Auswahlfeld passend zum gewählten KI-Anbieter.
+    function refreshModelDropdown() {
+      const cfg = getConfig();
+      if (cfg.provider === 'claude') {
+        populateModelDropdown(CLAUDE_MODELS, SELECTED_CLAUDE_MODEL_KEY, CLAUDE_DEFAULT_MODEL);
+      } else {
+        discoverAvailableModels(cfg.geminiKey);
+      }
+      updateDocProviderHint();
+    }
+
+    function updateDocProviderHint() {
+      const el = document.getElementById('docProviderHint');
+      if (!el) return;
+      const cfg = getConfig();
+      if (cfg.claudeKey) {
+        el.textContent = 'Wird mit Claude Sonnet 5.5 ausgewertet (Ersatz: Claude Haiku 5.5).';
+      } else if (cfg.provider === 'claude') {
+        el.textContent = 'Bitte unter „Einrichtung“ einen Claude-Schlüssel eintragen.';
+      } else {
+        el.textContent = 'Kein Claude-Schlüssel eingetragen: Vor dem Versand an Google Gemini wird nachgefragt.';
       }
     }
 
@@ -1696,7 +1758,10 @@
     async function discoverAvailableModels(apiKey) {
       const models = await fetchModelListForKey(apiKey);
       availableModels = models;
-      populateModelDropdown(models);
+      // Während die Liste lädt, kann auf Claude umgestellt worden sein – dann das Feld nicht überschreiben.
+      if (getConfig().provider !== 'claude') {
+        populateModelDropdown(models);
+      }
       return models;
     }
 
@@ -1704,11 +1769,13 @@
       initMicIcons();
       document.getElementById('buildVersionBadge').textContent = BUILD_TIMESTAMP;
       const cfg = getConfig();
+      document.getElementById('cfgProvider').value = cfg.provider;
       document.getElementById('cfgGeminiKey').value = cfg.geminiKey;
+      document.getElementById('cfgClaudeKey').value = cfg.claudeKey;
       document.getElementById('cfgClientId').value = cfg.clientId;
       document.getElementById('cfgAgentEmail').value = cfg.agentEmail;
       document.getElementById('cfgSenderName').value = cfg.senderName;
-      discoverAvailableModels(cfg.geminiKey);
+      refreshModelDropdown();
       renderContactsUI();
       renderMailAttachments();
       loadPersonaToUI();
@@ -1733,12 +1800,19 @@
 
     function saveSettings() {
       const prevCfg = getConfig();
+      const provider = document.getElementById('cfgProvider').value === 'claude' ? 'claude' : 'gemini';
       const geminiKey = document.getElementById('cfgGeminiKey').value.trim();
+      const claudeKey = document.getElementById('cfgClaudeKey').value.trim();
       const clientId = document.getElementById('cfgClientId').value.trim();
       const agentEmail = document.getElementById('cfgAgentEmail').value.trim().toLowerCase();
       const senderName = document.getElementById('cfgSenderName').value.trim();
 
-      const saved = storageSet(STORAGE_KEY, { geminiKey, clientId, agentEmail, senderName });
+      if (provider === 'claude' && !claudeKey) {
+        showAlert('Für den Anbieter „Claude“ wird ein Claude-Schlüssel benötigt. Bitte trage ihn ein.', 'error');
+        return;
+      }
+
+      const saved = storageSet(STORAGE_KEY, { provider, geminiKey, claudeKey, clientId, agentEmail, senderName });
       if (!saved) {
         showAlert('Die Einstellungen konnten nicht gespeichert werden (Browser-Speicher blockiert oder voll).', 'error');
         return;
@@ -1755,8 +1829,9 @@
       if (prevCfg.geminiKey !== geminiKey) {
         storageRemove(SELECTED_MODEL_KEY);
         modelsWithoutZeroThinking.clear();
-        discoverAvailableModels(geminiKey);
+        availableModels = [];
       }
+      refreshModelDropdown();
 
       showAlert('Einstellungen erfolgreich lokal gespeichert.', 'success');
     }
@@ -2286,6 +2361,266 @@
       throw new Error(lastError);
     }
 
+    // ===== Claude (Anthropic) =====
+
+    function base64ToUtf8(b64) {
+      const bin = atob(String(b64 || ''));
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+
+    // Wandelt die (Gemini-)Bausteine einer Anfrage in das Format von Claude um.
+    function convertPartsForClaude(parts) {
+      const fileBlocks = [];
+      const textBlocks = [];
+      for (const p of parts) {
+        if (p.text) {
+          textBlocks.push({ type: 'text', text: p.text });
+          continue;
+        }
+        if (!p.inlineData) continue;
+        let mime = sanitizeMimeType(p.inlineData.mimeType);
+        if (mime === 'image/jpg') mime = 'image/jpeg';
+        const data = p.inlineData.data;
+        if (mime === 'application/pdf') {
+          fileBlocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } });
+        } else if (CLAUDE_IMAGE_TYPES.has(mime)) {
+          fileBlocks.push({ type: 'image', source: { type: 'base64', media_type: mime, data } });
+        } else if (mime.startsWith('text/') || mime === 'application/json') {
+          const safeText = sanitizeDelimiterTags(base64ToUtf8(data));
+          textBlocks.push({ type: 'text', text: `<dokument_inhalt>\n${safeText}\n</dokument_inhalt>` });
+        } else if (mime === 'image/heic' || mime === 'image/heif') {
+          throw new Error('Claude kann Fotos im HEIC-Format nicht lesen. Bitte das Foto als JPEG speichern (Samsung-Kamera: Einstellungen → Bildformat) oder einen Screenshot davon verwenden.');
+        } else {
+          throw new Error(`Dieser Dateityp (${mime}) kann nicht ausgewertet werden. Möglich sind PDF, JPEG, PNG, WebP, GIF und Textdateien.`);
+        }
+      }
+      // Claude empfiehlt: Dateien vor dem Text.
+      return [...fileBlocks, ...textBlocks];
+    }
+
+    // Wandelt das Gemini-Antwortschema (z. B. type: 'OBJECT') in ein JSON-Schema für Claude um.
+    function toClaudeJsonSchema(schema) {
+      if (!schema || typeof schema !== 'object') return schema;
+      const out = {};
+      if (schema.type) out.type = String(schema.type).toLowerCase();
+      if (schema.properties) {
+        out.properties = {};
+        for (const [k, v] of Object.entries(schema.properties)) out.properties[k] = toClaudeJsonSchema(v);
+        out.additionalProperties = false;
+      }
+      if (schema.required) out.required = schema.required;
+      if (schema.items) out.items = toClaudeJsonSchema(schema.items);
+      return out;
+    }
+
+    function friendlyClaudeError(status, rawMsg) {
+      const msg = String(rawMsg || '');
+      if (status === 401) return 'Der Claude-Schlüssel ist ungültig oder abgelaufen. Bitte unter „Einrichtung“ prüfen.';
+      if (status === 403) return 'Der Claude-Schlüssel hat keine Berechtigung für diese Anfrage.';
+      if (/credit balance|billing|spend limit|usage limit/i.test(msg)) {
+        return 'Das Claude-Guthaben ist aufgebraucht oder das Ausgaben-Limit erreicht. Bitte auf platform.claude.com prüfen. (' + msg + ')';
+      }
+      if (status === 429) return 'Zu viele Anfragen an Claude in kurzer Zeit. Bitte kurz warten. (' + msg + ')';
+      if (status === 529 || status >= 500) return 'Claude ist gerade überlastet oder nicht erreichbar. (' + (msg || 'HTTP ' + status) + ')';
+      return msg || ('HTTP ' + status);
+    }
+
+    async function streamClaudeModel(apiKey, modelName, content, options, onChunk, onStatus) {
+      const timeoutMs = options.claudeTimeoutMs || CLAUDE_EMAIL_TIMEOUT_MS;
+      const label = prettyModelName(modelName);
+      const externalSignal = options.signal || null;
+      const abortedResult = { ok: false, status: 0, aborted: true, timedOut: false, error: 'Vorgang abgebrochen.' };
+      if (externalSignal && externalSignal.aborted) return abortedResult;
+
+      const payload = {
+        model: modelName,
+        max_tokens: options.claudeMaxTokens || CLAUDE_EMAIL_MAX_TOKENS,
+        stream: true,
+        messages: [{ role: 'user', content }],
+        output_config: { effort: options.claudeEffort || 'low' }
+      };
+      if (options.systemInstruction) payload.system = options.systemInstruction;
+      if (options.responseSchema) {
+        payload.output_config.format = { type: 'json_schema', schema: toClaudeJsonSchema(options.responseSchema) };
+      }
+
+      const controller = new AbortController();
+      let abortedByCaller = false;
+      const onExternalAbort = () => { abortedByCaller = true; controller.abort(); };
+      if (externalSignal) externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+      let timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        if (onStatus) onStatus(`Sende an ${label}...`);
+        const response = await fetch(CLAUDE_API_URL, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': CLAUDE_API_VERSION,
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        if (!response.ok) {
+          const errJson = await response.json().catch(() => ({}));
+          return { ok: false, status: response.status, error: friendlyClaudeError(response.status, errJson.error?.message), timedOut: false };
+        }
+        if (!response.body) throw new Error('Browser unterstützt kein Streaming.');
+
+        if (onStatus) onStatus(`Empfange Antwort von ${label}...`);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let fullText = '';
+        let stopReason = '';
+        let streamError = '';
+
+        const handleSseLine = (line) => {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) return;
+          let ev;
+          try { ev = JSON.parse(trimmed.slice(5).trim()); } catch (e) { return; }
+          if (ev.type === 'content_block_delta' && ev.delta && ev.delta.type === 'text_delta') {
+            fullText += ev.delta.text || '';
+            if (onChunk && !abortedByCaller) onChunk(fullText);
+          } else if (ev.type === 'message_delta' && ev.delta && ev.delta.stop_reason) {
+            stopReason = ev.delta.stop_reason;
+          } else if (ev.type === 'error') {
+            streamError = ev.error?.message || 'Unbekannter Fehler im Antwort-Strom.';
+          }
+        };
+
+        while (true) {
+          timer = setTimeout(() => controller.abort(), timeoutMs);
+          const { done, value } = await reader.read();
+          clearTimeout(timer);
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          lines.forEach(handleSseLine);
+        }
+        buffer += decoder.decode();
+        if (buffer.trim()) handleSseLine(buffer);
+
+        if (abortedByCaller) return abortedResult;
+        if (streamError) return { ok: false, status: 500, error: friendlyClaudeError(500, streamError), timedOut: false };
+        if (stopReason === 'refusal') {
+          return { ok: false, status: 200, error: `${label} hat die Anfrage abgelehnt.`, timedOut: false };
+        }
+        if (!fullText.trim()) {
+          return { ok: false, status: 500, error: 'Leere Antwort von Claude erhalten.', timedOut: false };
+        }
+        return { ok: true, text: fullText, finishReason: stopReason === 'max_tokens' ? 'MAX_TOKENS' : stopReason };
+      } catch (err) {
+        if (abortedByCaller) return abortedResult;
+        if (err.name === 'AbortError') {
+          return { ok: false, status: 408, timedOut: true, error: `Keine Antwort von Claude nach ${Math.round(timeoutMs / 1000)} Sekunden (${label}).` };
+        }
+        return { ok: false, status: 0, timedOut: false, error: `Netzwerkfehler (${label}): ${err.message}` };
+      } finally {
+        clearTimeout(timer);
+        if (externalSignal) externalSignal.removeEventListener('abort', onExternalAbort);
+      }
+    }
+
+    async function callClaude(parts, options = {}, onStatus = null, onChunk = null) {
+      const cfg = getConfig();
+      const apiKey = (options.overrideApiKey || cfg.claudeKey || '').trim();
+      if (!apiKey) {
+        switchTab('setup');
+        throw new Error('Bitte hinterlege zuerst deinen Claude-Schlüssel unter Einrichtung.');
+      }
+      const content = convertPartsForClaude(parts);
+      const modelsToTry = (Array.isArray(options.claudeModels) && options.claudeModels.length > 0)
+        ? options.claudeModels
+        : CLAUDE_MODELS;
+
+      let lastError = 'Unbekannter Fehler bei Claude.';
+      for (const modelName of modelsToTry) {
+        const res = await streamClaudeModel(apiKey, modelName, content, options, onChunk, onStatus);
+        if (res.aborted) {
+          const abortErr = new Error(res.error);
+          abortErr.aborted = true;
+          throw abortErr;
+        }
+        if (res.ok) return { text: res.text, finishReason: res.finishReason, usedModel: modelName };
+        lastError = `${prettyModelName(modelName)}: ${res.error}`;
+        // Bei falschem Schlüssel, Guthaben-Problem oder Zeitüberschreitung bringt ein zweites Modell nichts.
+        if (res.timedOut || res.status === 401 || res.status === 403 || res.status === 400) break;
+      }
+      throw new Error(lastError);
+    }
+
+    // Zentrale Stelle: entscheidet, ob eine Anfrage an Gemini oder Claude geht.
+    async function callAI(parts, options = {}, onStatus = null, onChunk = null) {
+      const cfg = getConfig();
+      const hasDocument = Boolean(options.isDocumentTask) || parts.some(p => p && p.inlineData);
+
+      if (hasDocument) {
+        if (cfg.claudeKey) {
+          return callClaude(parts, {
+            ...options,
+            claudeModels: [CLAUDE_DOC_MODEL, CLAUDE_DEFAULT_MODEL],
+            claudeEffort: options.claudeEffort || 'medium',
+            claudeMaxTokens: options.claudeMaxTokens || CLAUDE_DOC_MAX_TOKENS,
+            claudeTimeoutMs: options.claudeTimeoutMs || CLAUDE_DOC_TIMEOUT_MS
+          }, onStatus, onChunk);
+        }
+        if (cfg.provider === 'claude') {
+          switchTab('setup');
+          throw new Error('Bitte hinterlege zuerst deinen Claude-Schlüssel unter Einrichtung.');
+        }
+        const okToSend = window.confirm('Achtung: Es ist kein Claude-Schlüssel eingetragen.\n\nDieses Dokument würde jetzt an Google Gemini (kostenlose Stufe) geschickt. Google darf solche Inhalte unter Umständen auch zur Verbesserung seiner Dienste nutzen.\n\nTrotzdem an Gemini senden?');
+        if (!okToSend) {
+          throw new Error('Abgebrochen: Das Dokument wurde nicht verschickt. Trage unter „Einrichtung“ einen Claude-Schlüssel ein, damit Dokumente mit Claude ausgewertet werden.');
+        }
+        return callGemini(parts, options, onStatus, onChunk);
+      }
+
+      if (cfg.provider === 'claude') {
+        const selected = document.getElementById('modelSelect').value;
+        const first = CLAUDE_MODELS.includes(selected) ? selected : CLAUDE_DEFAULT_MODEL;
+        return callClaude(parts, {
+          ...options,
+          claudeModels: [first, ...CLAUDE_MODELS.filter(m => m !== first)]
+        }, onStatus, onChunk);
+      }
+      return callGemini(parts, options, onStatus, onChunk);
+    }
+
+    async function testClaudeConnection() {
+      const btn = document.getElementById('btnTestClaude');
+      const keyFromInput = document.getElementById('cfgClaudeKey').value.trim();
+      if (!keyFromInput) {
+        showAlert('Bitte trage zuerst einen Claude-Schlüssel ein.', 'error');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Prüfe Verbindung...';
+      try {
+        const t0 = Date.now();
+        const result = await callClaude(
+          [{ text: 'Antworte nur mit OK.' }],
+          { overrideApiKey: keyFromInput, claudeModels: [CLAUDE_DEFAULT_MODEL], claudeTimeoutMs: 20000, claudeMaxTokens: 2000 },
+          (s) => { btn.textContent = s; }
+        );
+        const secs = ((Date.now() - t0) / 1000).toFixed(1);
+        showAlert(`Claude-Verbindung erfolgreich! Antwort von ${prettyModelName(result.usedModel)} in ${secs}s: ${result.text.trim()}`, 'success');
+      } catch (err) {
+        showAlert(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Claude-Verbindung prüfen';
+      }
+    }
+
     async function testGeminiConnection() {
       const btn = document.getElementById('btnTestGemini');
       const keyFromInput = document.getElementById('cfgGeminiKey').value.trim();
@@ -2576,7 +2911,7 @@ Anforderung: ${prompt}`;
 
         const parts = [{ text: userInstruction }, ...attachmentParts];
 
-        const result = await callGemini(
+        const result = await callAI(
           parts,
           {
             systemInstruction,
@@ -3539,9 +3874,9 @@ Anforderung: ${prompt}`;
 
         document.getElementById('docResultOutput').textContent = '';
         document.getElementById('docResultCard').classList.remove('hidden');
-        const result = await callGemini(
+        const result = await callAI(
           parts,
-          { systemInstruction, timeoutMs: DOC_TIMEOUT_MS, maxOutputTokens: DOC_MAX_TOKENS },
+          { systemInstruction, timeoutMs: DOC_TIMEOUT_MS, maxOutputTokens: DOC_MAX_TOKENS, isDocumentTask: true },
           (s) => { btn.textContent = s; },
           (partial) => { document.getElementById('docResultOutput').textContent = partial; }
         );

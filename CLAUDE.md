@@ -6,7 +6,7 @@ zu wissen, worum es geht, was schon erledigt ist und wie wir zusammenarbeiten.
 ## 1. Worum es in der App geht
 
 Der **KI-Agent** ist ein persönlicher E-Mail-Assistent als Webseite.
-Er nutzt die KI **Google Gemini** und ist mit **Gmail** verbunden.
+Er nutzt wahlweise die KI **Google Gemini** oder **Claude (Anthropic)** und ist mit **Gmail** verbunden.
 
 Was die App kann:
 - E-Mails mit KI-Hilfe schreiben, prüfen und senden
@@ -35,6 +35,24 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Google Cloud (eine Art Ausweisnummer der App bei Google). Sie wird in den
   Einstellungen der App eingetragen.
 - **Gmail-Schnittstelle** – Berechtigungen: E-Mails lesen und senden.
+- **KI-Anbieter wählbar** (Einrichtung → „KI-Anbieter für E-Mails“: Gemini / Claude).
+  Zentrale Weiche ist `callAI()`: E-Mails gehen an den gewählten Anbieter.
+  **Dokumente** (PDF, Fotos, eingefügte Texte im Reiter „Dokumente“ und E-Mail-Anhänge
+  beim Antworten) gehen **immer an Claude Sonnet 5.5**, sobald ein Claude-Schlüssel
+  eingetragen ist. Ohne Claude-Schlüssel kommt vorher eine Warnung (Bestätigungsfenster),
+  erst nach „OK“ geht das Dokument an Gemini.
+- **Claude-Schnittstelle** – `callClaude()` / `streamClaudeModel()`, direkt vom Browser an
+  `api.anthropic.com` (Kopfeintrag `anthropic-dangerous-direct-browser-access`,
+  API-Version `2026-10-21`). Modelle: Claude Haiku 5.5 (`claude-haiku-5-5`, Standard für
+  E-Mails) und Claude Sonnet 5.5 (`claude-sonnet-5-5`, Ersatz und für Dokumente).
+  Schreibt Stück für Stück, feste Antwortfelder per `output_config.format` (JSON-Schema),
+  Denk-Aufwand `effort`: E-Mails `low`, Dokumente `medium`. Bei Ablehnung/Überlastung
+  wird das andere Claude-Modell versucht. Fotos im Format HEIC nimmt Claude nicht an.
+  Claude-Schlüssel liegt wie der Gemini-Schlüssel nur im Browser-Speicher
+  (Schutz: Ausgaben-Limit 5 $ und eigener Arbeitsbereich in der Anthropic-Konsole).
+- **Schutz für erlaubte Verbindungen (CSP)** – Kopfzeile in `index.html`: Die Seite darf
+  Daten nur an sich selbst, Gmail, Gemini, Claude und die Google-Anmeldung schicken
+  (`connect-src`). Neue Dienste dort eintragen, sonst blockiert der Browser sie.
 - **Gemini-Schnittstelle** – die KI. Dafür braucht die App einen
   *API-Schlüssel* (ein Passwort für die KI). Es gibt eine Modellauswahl
   (z. B. verschiedene „Gemini Flash“-Versionen).
@@ -71,8 +89,9 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Spracheingabe von Chrome fehlt dort. Für eine APK bräuchte es eine eigene
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
 - Lokal (in Claudes Arbeitsumgebung) sind `cdn.tailwindcss.com` und `github.io`
-  gesperrt → zum Testen Tailwind mit `npx tailwindcss@3` selbst bauen und in
-  Playwright für die CDN-Adresse einsetzen.
+  gesperrt (`api.anthropic.com` ist erreichbar, aber ohne echten Schlüssel) → zum Testen Tailwind mit `npx tailwindcss@3` selbst bauen und in
+  Playwright für die CDN-Adresse einsetzen. Gemini- und Claude-Antworten im Test per
+  `context.route` nachspielen (Beispiel: Test-Skript im Verlauf von PR #5 beschrieben).
 - E-Mails werden vor dem Senden **vom Nutzer geprüft** („Nachricht prüfen und senden“).
 
 ## 3. Verlauf
@@ -84,29 +103,20 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 16.11.2026 | Online-Adresse im Tagebuch eingetragen | #2 |
 | 18.11.2026 | App installierbar gemacht (Manifest, Service Worker, Symbol) und auf Mets-Farben umgestellt | #3 |
 | 18.11.2026 | Analyse der App (Sicherheit, Freigabe, Wiederverwendung) und Überlegung „Claude statt Gemini“ festgehalten | #4 |
+| 18.11.2026 | KI-Anbieter wählbar (Gemini/Claude), Dokumente automatisch mit Claude Sonnet, Warnung vor Gemini, Schutz für erlaubte Verbindungen (CSP) | #5 |
 
 ## 4. Offene Ideen / nächste Schritte
 
 - Später evtl. echte Android-App (APK) wie bei Abo-Übersicht/Fitness-Tracker
   (Capacitor + GitHub Actions); Vorteile: Teilen an die App, Benachrichtigungen, Widget.
   Hürden siehe Abschnitt 2.
-- **Überlegung (noch nicht umgesetzt, wartet auf OK des Nutzers): Claude statt/neben Gemini**
-  - Ziel: für sensible Themen (Versicherungen, Finanzen) wahlweise Claude von Anthropic nutzen,
-    z. B. Claude Haiku 5.5 (`claude-haiku-5-5`) für einfache und Claude Sonnet 5.5
-    (`claude-sonnet-5-5`) für schwierige Aufgaben.
-  - Umsetzung: Anbieter-Auswahl „Gemini / Claude“ in der Einrichtung. Betroffen sind nur die
-    KI-Teile (`streamSingleModel`, `callGemini`, Modellliste, Verbindungstest, Dateitypen);
-    Gmail, Spracheingabe, Freigabe usw. bleiben gleich. Aufwand: mittel.
-  - Funktionen: Stück-für-Stück-Schreiben, PDFs, Fotos und Ersatz-Modelle gehen auch mit Claude.
-    Fotos im Format HEIC nimmt Claude nicht an (JPEG/PNG/WebP/GIF schon).
-  - Weg: Claude ist direkt vom Handy-Browser erreichbar (mit einem besonderen Kopfeintrag für
-    Browser-Zugriff); der Schlüssel läge dann wie heute der Gemini-Schlüssel im Browser-Speicher.
-    Schutz: eigener Arbeitsbereich und Ausgaben-Limit in der Anthropic-Konsole, Ablaufdatum für den Schlüssel.
-  - Später sicherer: Zwischenstation auf dem Raspberry Pi (Schlüssel bleibt auf dem Pi).
-    Hürden: Pi nur im Heimnetz/über WireGuard erreichbar, und die App auf GitHub Pages (https)
-    darf den Pi nur über https ansprechen → HTTPS auf dem Pi oder App auch vom Pi ausliefern.
-    Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“ (Pi verwahrt Claude-Schlüssel).
-    Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
+- **Später: Claude über den Raspberry Pi** (Idee, noch nicht umgesetzt). Der Claude-Schlüssel
+  läge dann nur auf dem Pi; die App fragt den Pi statt Anthropic direkt.
+  Hürden: Pi nur im Heimnetz/über WireGuard erreichbar; die App auf GitHub Pages (https) darf
+  den Pi nur über https ansprechen → HTTPS auf dem Pi oder App auch vom Pi ausliefern; Pi muss
+  eingeschaltet sein. Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“.
+  Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
+- Den Claude-Weg mit echtem Schlüssel auf dem Handy testen (bisher nur mit nachgespielten Antworten getestet).
 - Weitere Wünsche des Nutzers hier sammeln.
 
 ## 5. Zusammenarbeit mit dem Nutzer
