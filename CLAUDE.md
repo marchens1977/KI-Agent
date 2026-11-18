@@ -98,6 +98,14 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   (Anweisung in `buildPersonaSystemInstruction`). Zusätzlich entfernt `unwrapHardLineBreaks()`
   im fertigen Entwurf feste Umbrüche mitten im Satz (vorige Zeile ≥ 45 Zeichen ohne Satzende).
   Leerzeilen, kurze Zeilen (Grußformel, Name, Adresse) und Aufzählungen bleiben.
+  Die KI soll außerdem bei jedem Themen-/Gedankenwechsel einen neuen Absatz beginnen
+  (kurze Absätze von 2–4 Sätzen).
+- **Versand als Text + HTML** (`buildBodyMimeLines`, `emailBodyToHtml`): Jede E-Mail enthält
+  eine reine Textfassung und eine formatierte HTML-Fassung (`multipart/alternative`). Grund:
+  Reine Text-Mails wurden beim Empfänger nach ca. 70 Zeichen fest umgebrochen – im Hochformat
+  entstand unruhiger Flattersatz. In der HTML-Fassung fließt der Text passend zur
+  Bildschirmbreite: Absätze (`<p>`) im Blocksatz mit Silbentrennung, einzelne Umbrüche als `<br>`,
+  Schrift Arial 15 px. Bei Anhängen steckt dieser Teil innerhalb von `multipart/mixed`.
 - **Versionsanzeige** – `BUILD_TIMESTAMP` in `index.html`, bei Änderungen anpassen.
 - **Speicherung** – Einstellungen werden nur im Browser auf dem Gerät
   gespeichert (`localStorage`), nicht auf einem Server.
@@ -120,9 +128,9 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
 - **Automatische Prüfung:** `bash werkzeuge/test/test-starten.sh` (Programm:
   `werkzeuge/test/test-ki.js`). Öffnet die App mit Playwright im Handy-Format, spielt Gemini-
-  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 45 Punkte:
+  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 50 Punkte:
   Gemini-/Claude-Entwurf, Dokumente an Claude Sonnet, Warnung ohne Claude-Schlüssel, Einrichtung
-  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf.
+  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf, Versand mit Text- und HTML-Fassung (Gmail-Versand nachgespielt).
   **Regel für Claude:** Nach jeder Code-Änderung die Prüfung laufen lassen. Bei neuen Funktionen
   passende Prüfpunkte in `test-ki.js` ergänzen. Hilfsprogramme, die über eine Aufgabe hinaus
   nützlich sind, gehören ins Projekt (Ordner `werkzeuge/`) und ins Tagebuch – nicht nur in den
@@ -150,6 +158,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Automatische Prüfung dauerhaft ins Projekt gelegt (`werkzeuge/test/`, 42 Prüfpunkte) und Regel im Tagebuch: nach jeder Änderung ausführen, bei neuen Funktionen erweitern | #11 |
 | 18.11.2026 | Zeilenumbrüche mitten im Satz in E-Mails behoben (KI-Anweisung + Aufräumen des Entwurfs mit `unwrapHardLineBreaks`); 3 neue Prüfpunkte (jetzt 45). Hinweis an den Nutzer: Signatur im KI-Profil ggf. ohne feste Umbrüche speichern | #12 |
 | 18.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mail-Entwürfe ohne Zeilenumbrüche mitten im Satz ✅ | #13 |
+| 18.11.2026 | E-Mails werden zusätzlich als formatierte HTML-Fassung verschickt (Text fließt im Hochformat als Block, keine festen 70-Zeichen-Umbrüche mehr); KI soll bei Gedankenwechsel neue Absätze bilden; 5 neue Prüfpunkte (jetzt 50) | #14 |
 
 ## 4. Offene Ideen / nächste Schritte
 
