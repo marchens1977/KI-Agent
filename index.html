@@ -568,7 +568,7 @@
     </section>
 
     <footer class="pt-4 pb-2 text-center space-y-1">
-      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">18.11.2026 · 22:01</span></p>
+      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">18.11.2026 · 22:06</span></p>
       <p class="text-[11px] text-slate-600">Einstellungen und Kontakte bleiben lokal in deinem Browser.</p>
     </footer>
   </main>
@@ -601,7 +601,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '18.11.2026 · 22:01';
+    const BUILD_TIMESTAMP = '18.11.2026 · 22:06';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -1844,7 +1844,8 @@
         return;
       }
 
-      if (prevCfg.clientId !== clientId || prevCfg.agentEmail !== agentEmail) {
+      const gmailChanged = prevCfg.clientId !== clientId || prevCfg.agentEmail !== agentEmail;
+      if (gmailChanged) {
         clearStoredToken();
         tokenClient = null;
         accessToken = null;
@@ -1861,8 +1862,12 @@
       updateKeyChips();
 
       const aiName = provider === 'claude' ? 'Claude' : 'Gemini';
+      // Gmail meldet sich automatisch an; nach geänderten Gmail-Daten gleich neu verbinden.
+      if (gmailChanged && clientId && agentEmail) {
+        autoConnectGmailOnStartup();
+      }
       report(statusId === 'statusSaveGmail'
-        ? 'Gespeichert. Tippe oben auf „Verbinden“, um Gmail zu verbinden.'
+        ? (gmailChanged ? 'Gespeichert. Gmail verbindet sich automatisch mit den neuen Daten.' : 'Gespeichert.')
         : `Gespeichert. Standard-KI für E-Mails: ${aiName}.`, 'success');
     }
 
