@@ -83,12 +83,30 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 16.11.2026 | Projekt-Tagebuch `CLAUDE.md` angelegt | #1 |
 | 16.11.2026 | Online-Adresse im Tagebuch eingetragen | #2 |
 | 18.11.2026 | App installierbar gemacht (Manifest, Service Worker, Symbol) und auf Mets-Farben umgestellt | #3 |
+| 18.11.2026 | Analyse der App (Sicherheit, Freigabe, Wiederverwendung) und Überlegung „Claude statt Gemini“ festgehalten | #4 |
 
 ## 4. Offene Ideen / nächste Schritte
 
 - Später evtl. echte Android-App (APK) wie bei Abo-Übersicht/Fitness-Tracker
   (Capacitor + GitHub Actions); Vorteile: Teilen an die App, Benachrichtigungen, Widget.
   Hürden siehe Abschnitt 2.
+- **Überlegung (noch nicht umgesetzt, wartet auf OK des Nutzers): Claude statt/neben Gemini**
+  - Ziel: für sensible Themen (Versicherungen, Finanzen) wahlweise Claude von Anthropic nutzen,
+    z. B. Claude Haiku 5.5 (`claude-haiku-5-5`) für einfache und Claude Sonnet 5.5
+    (`claude-sonnet-5-5`) für schwierige Aufgaben.
+  - Umsetzung: Anbieter-Auswahl „Gemini / Claude“ in der Einrichtung. Betroffen sind nur die
+    KI-Teile (`streamSingleModel`, `callGemini`, Modellliste, Verbindungstest, Dateitypen);
+    Gmail, Spracheingabe, Freigabe usw. bleiben gleich. Aufwand: mittel.
+  - Funktionen: Stück-für-Stück-Schreiben, PDFs, Fotos und Ersatz-Modelle gehen auch mit Claude.
+    Fotos im Format HEIC nimmt Claude nicht an (JPEG/PNG/WebP/GIF schon).
+  - Weg: Claude ist direkt vom Handy-Browser erreichbar (mit einem besonderen Kopfeintrag für
+    Browser-Zugriff); der Schlüssel läge dann wie heute der Gemini-Schlüssel im Browser-Speicher.
+    Schutz: eigener Arbeitsbereich und Ausgaben-Limit in der Anthropic-Konsole, Ablaufdatum für den Schlüssel.
+  - Später sicherer: Zwischenstation auf dem Raspberry Pi (Schlüssel bleibt auf dem Pi).
+    Hürden: Pi nur im Heimnetz/über WireGuard erreichbar, und die App auf GitHub Pages (https)
+    darf den Pi nur über https ansprechen → HTTPS auf dem Pi oder App auch vom Pi ausliefern.
+    Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“ (Pi verwahrt Claude-Schlüssel).
+    Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
 - Weitere Wünsche des Nutzers hier sammeln.
 
 ## 5. Zusammenarbeit mit dem Nutzer
