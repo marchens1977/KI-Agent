@@ -149,6 +149,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Vom Nutzer auf dem Handy getestet: eingebautes Aussehen unverändert, automatische Gmail-Anmeldung, Claude-Entwurf und Spracheingabe funktionieren mit dem verschärften Schutz (CSP) ✅ | #10 |
 | 18.11.2026 | Automatische Prüfung dauerhaft ins Projekt gelegt (`werkzeuge/test/`, 42 Prüfpunkte) und Regel im Tagebuch: nach jeder Änderung ausführen, bei neuen Funktionen erweitern | #11 |
 | 18.11.2026 | Zeilenumbrüche mitten im Satz in E-Mails behoben (KI-Anweisung + Aufräumen des Entwurfs mit `unwrapHardLineBreaks`); 3 neue Prüfpunkte (jetzt 45). Hinweis an den Nutzer: Signatur im KI-Profil ggf. ohne feste Umbrüche speichern | #12 |
+| 18.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mail-Entwürfe ohne Zeilenumbrüche mitten im Satz ✅ | #13 |
 
 ## 4. Offene Ideen / nächste Schritte
 
