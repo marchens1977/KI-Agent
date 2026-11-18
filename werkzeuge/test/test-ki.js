@@ -183,6 +183,29 @@ async function analyseDoc(p, file) {
   check('G KI-Anweisung: Absatz als durchgehende Zeile', sys.includes('jeden Absatz als eine durchgehende Zeile'));
   await b.close();
 
+  // H: Versand – E-Mail enthält Text- und formatierte HTML-Fassung (fließt im Hochformat sauber)
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test', agentEmail: 'agent@example.com', senderName: 'KI-Assistent' }));
+  let sentRaw = null;
+  await p.route('https://gmail.googleapis.com/**', r => {
+    const u = r.request().url();
+    if (u.includes('/messages/send')) { sentRaw = r.request().postDataJSON().raw; return r.fulfill({ contentType: 'application/json', body: '{"id":"1"}' }); }
+    return r.fulfill({ contentType: 'application/json', body: '{"messages":[]}' });
+  });
+  const longPar = 'Dies ist ein langer Absatz, der auf dem Handy im Hochformat sauber umbrechen soll, ohne feste Zeilenumbrüche nach siebzig Zeichen und ohne Flattersatz.';
+  await p.evaluate(t => { accessToken = 'test-token'; document.getElementById('mailTo').value = 'anna@example.com'; document.getElementById('mailSubject').value = 'Test Ü'; document.getElementById('mailBody').value = t; }, `Hallo Anna,\n\n${longPar}\n\nViele Grüße\n\nKI-Assistent\nvon Marc`);
+  await p.evaluate(() => confirmAndSendGmailMessage());
+  await p.waitForTimeout(800);
+  const raw = sentRaw ? Buffer.from(sentRaw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
+  check('H E-Mail an Gmail übergeben', Boolean(raw));
+  check('H Text- und HTML-Fassung enthalten', raw.includes('multipart/alternative') && raw.includes('text/plain') && raw.includes('text/html'));
+  const htmlB64 = (raw.split('Content-Type: text/html; charset="UTF-8"')[1] || '').split('\r\n\r\n')[1] || '';
+  const html = Buffer.from(htmlB64.split('\r\n--')[0].replace(/\r\n/g, ''), 'base64').toString('utf8');
+  check('H HTML: Absätze im Blocksatz, langer Absatz in einem Stück', html.includes(`>${longPar}</p>`) && html.includes('text-align:justify') && (html.match(/<p /g) || []).length === 4, html.slice(0, 120));
+  check('H HTML: Signatur-Zeilen bleiben getrennt', html.includes('KI-Assistent<br>von Marc'));
+  check('H Versand-Bestätigung angezeigt', !(await p.$eval('#sendConfirmationBox', e => e.classList.contains('hidden'))));
+  require('fs').writeFileSync(S + '/gesendete-mail.eml', raw);
+  await b.close();
+
   console.log(results.join('\n'));
   const fehler = results.filter(r => r.startsWith('FEHLER')).length;
   console.log(`\n${results.length - fehler} von ${results.length} Prüfungen bestanden. Bildschirmfotos: ${S}`);
