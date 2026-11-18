@@ -94,6 +94,10 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 - **Farben** – in `werkzeuge/tailwind.config.js` umgedeutet:
   `slate` = Dunkelblau-Töne, `blue` = Mets-Orange, `indigo` = Mets-Blau.
   Grün/Rot/Gelb bleiben für Erfolg/Fehler/Warnung.
+- **Zeilenumbrüche in E-Mails** – Die KI soll jeden Absatz als durchgehende Zeile schreiben
+  (Anweisung in `buildPersonaSystemInstruction`). Zusätzlich entfernt `unwrapHardLineBreaks()`
+  im fertigen Entwurf feste Umbrüche mitten im Satz (vorige Zeile ≥ 45 Zeichen ohne Satzende).
+  Leerzeilen, kurze Zeilen (Grußformel, Name, Adresse) und Aufzählungen bleiben.
 - **Versionsanzeige** – `BUILD_TIMESTAMP` in `index.html`, bei Änderungen anpassen.
 - **Speicherung** – Einstellungen werden nur im Browser auf dem Gerät
   gespeichert (`localStorage`), nicht auf einem Server.
@@ -116,9 +120,9 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
 - **Automatische Prüfung:** `bash werkzeuge/test/test-starten.sh` (Programm:
   `werkzeuge/test/test-ki.js`). Öffnet die App mit Playwright im Handy-Format, spielt Gemini-
-  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 42 Punkte:
+  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 45 Punkte:
   Gemini-/Claude-Entwurf, Dokumente an Claude Sonnet, Warnung ohne Claude-Schlüssel, Einrichtung
-  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet.
+  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf.
   **Regel für Claude:** Nach jeder Code-Änderung die Prüfung laufen lassen. Bei neuen Funktionen
   passende Prüfpunkte in `test-ki.js` ergänzen. Hilfsprogramme, die über eine Aufgabe hinaus
   nützlich sind, gehören ins Projekt (Ordner `werkzeuge/`) und ins Tagebuch – nicht nur in den
@@ -144,6 +148,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Automatische Gmail-Anmeldung im Tagebuch dokumentiert; Meldung beim Speichern der Gmail-Daten korrigiert (kein „Verbinden tippen“ mehr), nach geänderten Gmail-Daten automatische Neuverbindung | #9 |
 | 18.11.2026 | Vom Nutzer auf dem Handy getestet: eingebautes Aussehen unverändert, automatische Gmail-Anmeldung, Claude-Entwurf und Spracheingabe funktionieren mit dem verschärften Schutz (CSP) ✅ | #10 |
 | 18.11.2026 | Automatische Prüfung dauerhaft ins Projekt gelegt (`werkzeuge/test/`, 42 Prüfpunkte) und Regel im Tagebuch: nach jeder Änderung ausführen, bei neuen Funktionen erweitern | #11 |
+| 18.11.2026 | Zeilenumbrüche mitten im Satz in E-Mails behoben (KI-Anweisung + Aufräumen des Entwurfs mit `unwrapHardLineBreaks`); 3 neue Prüfpunkte (jetzt 45). Hinweis an den Nutzer: Signatur im KI-Profil ggf. ohne feste Umbrüche speichern | #12 |
 
 ## 4. Offene Ideen / nächste Schritte
 

@@ -1,7 +1,7 @@
 // Service Worker: macht die Web-App installierbar und zeigt die Seite
 // auch kurz ohne Internet an. Verbindungen zu Google (Gmail, Gemini,
 // Anmeldung) und Tailwind werden NICHT zwischengespeichert.
-const CACHE = 'ki-agent-v5';
+const CACHE = 'ki-agent-v6';
 const FILES = ['./', './index.html', './manifest.json?v=1',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 

@@ -173,6 +173,16 @@ async function analyseDoc(p, file) {
   check('F Auswahl bleibt nach Neuladen', (await p.inputValue('#modelSelect')) === 'claude-sonnet-5-5');
   await b.close();
 
+  // G: Feste Zeilenumbrüche mitten im Satz werden aus dem KI-Entwurf entfernt
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }));
+  const wrapped = 'Hallo Marc,\n\nich wollte dir mitteilen, dass die neue Version des KI-Assistenten\nwunderbar funktioniert.\n\nViele Grüße\n\nKI-Assistent\nMusterstraße 1\n\nDiese E-Mail wurde automatisiert erstellt, jedoch vor dem Absenden von\nMarc geprüft.\n\nWichtige Punkte für das Treffen am kommenden Dienstag in der Stadt:\n- Pünktlich sein\n- Unterlagen mitbringen';
+  const body = await p.evaluate(t => { applyFinalJsonDraft(JSON.stringify({ empfaenger: '', betreff: 'x', text: t }), {}); return document.getElementById('mailBody').value; }, wrapped);
+  check('G Umbruch mitten im Satz entfernt', body.includes('des KI-Assistenten wunderbar funktioniert.') && body.includes('vor dem Absenden von Marc geprüft.'));
+  check('G Absätze, Signatur-Zeilen und Aufzählung bleiben', body.includes('Hallo Marc,\n\nich') && body.includes('Viele Grüße\n\nKI-Assistent\nMusterstraße 1') && body.includes('Stadt:\n- Pünktlich sein\n- Unterlagen mitbringen'), JSON.stringify(body));
+  const sys = await p.evaluate(() => buildPersonaSystemInstruction());
+  check('G KI-Anweisung: Absatz als durchgehende Zeile', sys.includes('jeden Absatz als eine durchgehende Zeile'));
+  await b.close();
+
   console.log(results.join('\n'));
   const fehler = results.filter(r => r.startsWith('FEHLER')).length;
   console.log(`\n${results.length - fehler} von ${results.length} Prüfungen bestanden. Bildschirmfotos: ${S}`);
