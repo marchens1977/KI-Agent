@@ -43,6 +43,13 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Google Cloud (eine Art Ausweisnummer der App bei Google). Sie wird in den
   Einstellungen der App eingetragen.
 - **Gmail-Schnittstelle** – Berechtigungen: E-Mails lesen und senden.
+- **Gmail meldet sich automatisch an** (`autoConnectGmailOnStartup`): Beim Öffnen der App
+  wird der gespeicherte Zugangsschein genutzt bzw. still ein neuer geholt – **ohne** Tippen auf
+  „Verbinden“. Der Zugangsschein wird vor Ablauf (ca. 1 Stunde) still erneuert
+  (`scheduleTokenRefresh`). Nach geänderten Gmail-Daten in der Einrichtung verbindet sich die
+  App ebenfalls automatisch neu. „Verbinden“ ist nur nötig, wenn die stille Anmeldung scheitert.
+  **In Anleitungen für den Nutzer daher nicht „auf Verbinden tippen“ schreiben**, sondern:
+  „prüfen, dass oben das Gmail-Konto als verbunden angezeigt wird“.
 - **KI-Anbieter wählbar** (Einrichtung → „Standard-KI für E-Mails“: Claude / Gemini).
   Das Modell-Auswahlfeld im Reiter „E-Mail“ zeigt **alle** Modelle mit gespeichertem
   Schlüssel in zwei Gruppen (Claude / Gemini). **Was dort ausgewählt ist, wird für E-Mails
@@ -127,6 +134,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Claude-Verbindung vom Nutzer erfolgreich getestet ✅. Auswahlfeld zeigt Claude- und Gemini-Modelle; Einrichtung übersichtlicher; Rückmeldungen direkt am Knopf bzw. unten am Bildschirm | #6 |
 | 18.11.2026 | Vom Nutzer mit echtem Claude-Schlüssel auf dem Handy getestet: E-Mail-Entwurf (Claude Haiku 5.5) und Dokument-Auswertung (Claude Sonnet 5.5) funktionieren ✅ | #7 |
 | 18.11.2026 | Aussehen (Tailwind) fest eingebaut statt aus dem Internet geladen; Bau-Werkzeug `werkzeuge/aussehen-bauen.sh`; Schutz (CSP) verbietet fremde Skripte/Stile außer Google-Anmeldung; Zwischenspeicher-Version v4. Vorher/nachher-Bildvergleich: optisch gleich | #8 |
+| 18.11.2026 | Automatische Gmail-Anmeldung im Tagebuch dokumentiert; Meldung beim Speichern der Gmail-Daten korrigiert (kein „Verbinden tippen“ mehr), nach geänderten Gmail-Daten automatische Neuverbindung | #9 |
 
 ## 4. Offene Ideen / nächste Schritte
 
