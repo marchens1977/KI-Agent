@@ -135,6 +135,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Vom Nutzer mit echtem Claude-Schlüssel auf dem Handy getestet: E-Mail-Entwurf (Claude Haiku 5.5) und Dokument-Auswertung (Claude Sonnet 5.5) funktionieren ✅ | #7 |
 | 18.11.2026 | Aussehen (Tailwind) fest eingebaut statt aus dem Internet geladen; Bau-Werkzeug `werkzeuge/aussehen-bauen.sh`; Schutz (CSP) verbietet fremde Skripte/Stile außer Google-Anmeldung; Zwischenspeicher-Version v4. Vorher/nachher-Bildvergleich: optisch gleich | #8 |
 | 18.11.2026 | Automatische Gmail-Anmeldung im Tagebuch dokumentiert; Meldung beim Speichern der Gmail-Daten korrigiert (kein „Verbinden tippen“ mehr), nach geänderten Gmail-Daten automatische Neuverbindung | #9 |
+| 18.11.2026 | Vom Nutzer auf dem Handy getestet: eingebautes Aussehen unverändert, automatische Gmail-Anmeldung, Claude-Entwurf und Spracheingabe funktionieren mit dem verschärften Schutz (CSP) ✅ | #10 |
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -148,6 +149,10 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   eingeschaltet sein. Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“.
   Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
 - Weitere Wünsche des Nutzers hier sammeln.
+
+**Stand am Ende der Sitzung vom 18.11.2026:** Alles umgesetzte ist vom Nutzer getestet und
+funktioniert. Keine offenen Fehler. Für die nächste Arbeit eine neue Sitzung öffnen; dieses
+Tagebuch ist die Grundlage.
 
 ## 5. Zusammenarbeit mit dem Nutzer
 
