@@ -17,6 +17,7 @@ Was die App kann:
 - Zugangsdaten verwalten, getrennt nach Konten (Kontotrennung)
 - Kontakte speichern, damit die Spracheingabe Namen besser erkennt
 - Spracheingabe (der Browser wandelt Sprache in Text um)
+- Als App installierbar (PWA): Chrome → ⋮ → „App installieren“
 
 **Wo ist die App online?** Über GitHub Pages:
 https://marchens1977.github.io/KI-Agent/
@@ -37,6 +38,19 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 - **Gemini-Schnittstelle** – die KI. Dafür braucht die App einen
   *API-Schlüssel* (ein Passwort für die KI). Es gibt eine Modellauswahl
   (z. B. verschiedene „Gemini Flash“-Versionen).
+- **`manifest.json`** – App-Name, Farben, Symbole für die Installation.
+  Wird als `manifest.json?v=1` eingebunden; bei Änderungen die Nummer erhöhen.
+- **`sw.js`** – „Service Worker“ (kleines Hilfsprogramm im Browser), macht die
+  App installierbar. Eigene Dateien: erst Internet, sonst gespeicherte Kopie.
+  Google-Verbindungen und Tailwind werden **nicht** zwischengespeichert.
+  Bei Änderungen die `CACHE`-Version erhöhen.
+- **`icons/`** – App-Symbol: weißer Briefumschlag mit orangem KI-Funkeln auf
+  Mets-Blau. Vorlagen `icon.svg` und `icon-maskable.svg` (für Android-Rundungen);
+  die PNG-Dateien werden daraus erzeugt (z. B. mit Playwright-Screenshot).
+- **Farben** – oben in `index.html` (`tailwind.config`) umgedeutet:
+  `slate` = Dunkelblau-Töne, `blue` = Mets-Orange, `indigo` = Mets-Blau.
+  Grün/Rot/Gelb bleiben für Erfolg/Fehler/Warnung.
+- **Versionsanzeige** – `BUILD_TIMESTAMP` in `index.html`, bei Änderungen anpassen.
 - **Speicherung** – Einstellungen werden nur im Browser auf dem Gerät
   gespeichert (`localStorage`), nicht auf einem Server.
 
@@ -49,6 +63,16 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 - **Niemals** Zugangsdaten (API-Schlüssel, Client-ID, Passwörter,
   E-Mail-Adressen) in den Code oder in dieses Tagebuch schreiben.
   Diese trägt der Nutzer nur in der App selbst ein.
+- Design: **New-York-Mets-Farben** (gilt für alle Apps des Nutzers):
+  Orange `#FF5910`, Blau `#002D72`, helles Blau `#6e9bff`, dunkle Hintergründe
+  (`#0a1020`). Nur die Farben – **kein Mets-Logo, kein Baseball-Motiv**.
+- Vorerst **nur installierbar (PWA)**, keine APK. Grund: Google erlaubt die
+  Gmail-Anmeldung nicht in „eingepackten“ Apps (Capacitor-WebView), und die
+  Spracheingabe von Chrome fehlt dort. Für eine APK bräuchte es eine eigene
+  Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
+- Lokal (in Claudes Arbeitsumgebung) sind `cdn.tailwindcss.com` und `github.io`
+  gesperrt → zum Testen Tailwind mit `npx tailwindcss@3` selbst bauen und in
+  Playwright für die CDN-Adresse einsetzen.
 - E-Mails werden vor dem Senden **vom Nutzer geprüft** („Nachricht prüfen und senden“).
 
 ## 3. Verlauf
@@ -58,9 +82,13 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 14.–15.11.2026 | App aufgebaut und in vielen Schritten verbessert (Dateien direkt über GitHub hochgeladen) | – |
 | 16.11.2026 | Projekt-Tagebuch `CLAUDE.md` angelegt | #1 |
 | 16.11.2026 | Online-Adresse im Tagebuch eingetragen | #2 |
+| 18.11.2026 | App installierbar gemacht (Manifest, Service Worker, Symbol) und auf Mets-Farben umgestellt | #3 |
 
 ## 4. Offene Ideen / nächste Schritte
 
+- Später evtl. echte Android-App (APK) wie bei Abo-Übersicht/Fitness-Tracker
+  (Capacitor + GitHub Actions); Vorteile: Teilen an die App, Benachrichtigungen, Widget.
+  Hürden siehe Abschnitt 2.
 - Weitere Wünsche des Nutzers hier sammeln.
 
 ## 5. Zusammenarbeit mit dem Nutzer
