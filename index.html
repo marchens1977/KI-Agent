@@ -568,7 +568,7 @@
     </section>
 
     <footer class="pt-4 pb-2 text-center space-y-1">
-      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">19.11.2026 · 00:00</span></p>
+      <p class="text-[11px] text-slate-500">KI-Agent · Version <span id="buildVersionBadge">19.11.2026 · 00:04</span></p>
       <p class="text-[11px] text-slate-600">Einstellungen und Kontakte bleiben lokal in deinem Browser.</p>
     </footer>
   </main>
@@ -601,7 +601,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '19.11.2026 · 00:00';
+    const BUILD_TIMESTAMP = '19.11.2026 · 00:04';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -3137,17 +3137,18 @@ Anforderung: ${prompt}`;
 
     // Wandelt den E-Mail-Text in eine formatierte Fassung (HTML) um: Leerzeilen trennen Absätze,
     // einzelne Zeilenumbrüche (z. B. in der Signatur) bleiben erhalten. Der Text fließt beim
-    // Empfänger passend zur Bildschirmbreite (Hoch- und Querformat) im Blocksatz.
+    // Empfänger passend zur Bildschirmbreite (Hoch- und Querformat), linksbündig, schlichte Schrift
+    // (Arial). Schriftgröße und Zeilenabstand bestimmt das E-Mail-Programm – wie bei einer normalen E-Mail.
     function emailBodyToHtml(body) {
       const paragraphs = String(body || '').replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/);
-      const pStyle = 'margin:0 0 1em 0;text-align:justify;-webkit-hyphens:auto;hyphens:auto;';
+      const pStyle = 'margin:0 0 1em 0;text-align:left;-webkit-hyphens:auto;hyphens:auto;';
       const html = paragraphs
         .map(par => `<p style="${pStyle}">${escapeHtml(par.trim()).replace(/\n/g, '<br>')}</p>`)
         .join('\n');
       return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">'
         + '<meta name="viewport" content="width=device-width, initial-scale=1"></head>'
         + '<body style="margin:0;padding:0;">'
-        + '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#222222;max-width:640px;">'
+        + '<div style="font-family:Arial,Helvetica,sans-serif;">'
         + html + '</div></body></html>';
     }
 
