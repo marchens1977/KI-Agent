@@ -114,11 +114,18 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Gmail-Anmeldung nicht in „eingepackten“ Apps (Capacitor-WebView), und die
   Spracheingabe von Chrome fehlt dort. Für eine APK bräuchte es eine eigene
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
-- Lokal (in Claudes Arbeitsumgebung) ist `github.io` gesperrt (`api.anthropic.com` ist
-  erreichbar, aber ohne echten Schlüssel). Testen: `index.html` mit `python3 -m http.server`
-  ausliefern und mit Playwright öffnen; Gemini- und Claude-Antworten per `context.route`
-  nachspielen (Beispiel: Test-Skript im Verlauf von PR #5 beschrieben). Das Aussehen ist
-  eingebaut, also kein Tailwind-Ersatz im Test mehr nötig.
+- **Automatische Prüfung:** `bash werkzeuge/test/test-starten.sh` (Programm:
+  `werkzeuge/test/test-ki.js`). Öffnet die App mit Playwright im Handy-Format, spielt Gemini-
+  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 42 Punkte:
+  Gemini-/Claude-Entwurf, Dokumente an Claude Sonnet, Warnung ohne Claude-Schlüssel, Einrichtung
+  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet.
+  **Regel für Claude:** Nach jeder Code-Änderung die Prüfung laufen lassen. Bei neuen Funktionen
+  passende Prüfpunkte in `test-ki.js` ergänzen. Hilfsprogramme, die über eine Aufgabe hinaus
+  nützlich sind, gehören ins Projekt (Ordner `werkzeuge/`) und ins Tagebuch – nicht nur in den
+  Arbeitsbereich der Sitzung, der beim Archivieren verloren geht.
+- Lokal (in Claudes Arbeitsumgebung) ist `github.io` gesperrt; `api.anthropic.com` ist
+  erreichbar, aber ohne echten Schlüssel. Echte Gmail-Anmeldung kann Claude nicht testen –
+  das testet der Nutzer auf dem Handy.
 - E-Mails werden vor dem Senden **vom Nutzer geprüft** („Nachricht prüfen und senden“).
 
 ## 3. Verlauf
@@ -136,6 +143,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 18.11.2026 | Aussehen (Tailwind) fest eingebaut statt aus dem Internet geladen; Bau-Werkzeug `werkzeuge/aussehen-bauen.sh`; Schutz (CSP) verbietet fremde Skripte/Stile außer Google-Anmeldung; Zwischenspeicher-Version v4. Vorher/nachher-Bildvergleich: optisch gleich | #8 |
 | 18.11.2026 | Automatische Gmail-Anmeldung im Tagebuch dokumentiert; Meldung beim Speichern der Gmail-Daten korrigiert (kein „Verbinden tippen“ mehr), nach geänderten Gmail-Daten automatische Neuverbindung | #9 |
 | 18.11.2026 | Vom Nutzer auf dem Handy getestet: eingebautes Aussehen unverändert, automatische Gmail-Anmeldung, Claude-Entwurf und Spracheingabe funktionieren mit dem verschärften Schutz (CSP) ✅ | #10 |
+| 18.11.2026 | Automatische Prüfung dauerhaft ins Projekt gelegt (`werkzeuge/test/`, 42 Prüfpunkte) und Regel im Tagebuch: nach jeder Änderung ausführen, bei neuen Funktionen erweitern | #11 |
 
 ## 4. Offene Ideen / nächste Schritte
 
