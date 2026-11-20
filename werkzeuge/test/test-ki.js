@@ -206,6 +206,28 @@ async function analyseDoc(p, file) {
   require('fs').writeFileSync(S + '/gesendete-mail.eml', raw);
   await b.close();
 
+  // I: Kontakt-Namen von Hand ändern (Adressbuch in der Einrichtung)
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }));
+  await p.evaluate(() => { localStorage.setItem('ki_agent_contacts_v1', JSON.stringify([{ name: 'Falscher Name', email: 'xy123@example.com' }, { name: 'Anna', email: 'anna@example.com' }])); renderContactsUI(); });
+  await p.click(`[onclick="switchTab('setup')"]`);
+  const editBtns = await p.$$('#savedContactsList .contact-edit-btn');
+  check('I Knopf „Bearbeiten“ bei jedem Kontakt', editBtns.length === 2);
+  await editBtns[0].click();
+  await p.fill('#savedContactsList .contact-edit-input', 'Erika Mustermann');
+  await p.screenshot({ path: S + '/kontakt-bearbeiten.png', fullPage: false });
+  await p.click('#savedContactsList .contact-edit-save');
+  const contactsAfter = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
+  check('I Name gespeichert, Adresse unverändert', contactsAfter.length === 2 && contactsAfter[0].name === 'Erika Mustermann' && contactsAfter[0].email === 'xy123@example.com' && contactsAfter[1].name === 'Anna', JSON.stringify(contactsAfter));
+  check('I Liste und Schnellauswahl zeigen neuen Namen', (await p.textContent('#savedContactsList')).includes('Erika Mustermann') && (await p.textContent('#quickContactChips')).includes('Erika Mustermann (xy123@example.com)'));
+  await (await p.$$('#savedContactsList .contact-edit-btn'))[0].click();
+  await p.fill('#savedContactsList .contact-edit-input', '   ');
+  await p.click('#savedContactsList .contact-edit-save');
+  const contactsEmpty = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
+  check('I Leerer Name wird nicht gespeichert', contactsEmpty[0].name === 'Erika Mustermann');
+  const match = await p.evaluate(() => (findBestContactMatch('Schreib eine Mail an Erika Mustermann') || {}).email);
+  check('I Spracheingabe findet neuen Namen', match === 'xy123@example.com', String(match));
+  await b.close();
+
   console.log(results.join('\n'));
   const fehler = results.filter(r => r.startsWith('FEHLER')).length;
   console.log(`\n${results.length - fehler} von ${results.length} Prüfungen bestanden. Bildschirmfotos: ${S}`);
