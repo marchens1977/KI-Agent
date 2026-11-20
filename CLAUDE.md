@@ -22,6 +22,7 @@ Was die App kann:
   unbekannten Adresse der vorgeschlagene Name mit „Namen festlegen“. Nach dem Versand an eine neue
   Adresse: „Neu im Adressbuch als … – Name ändern“. Schnellauswahl = 4 zuletzt benutzte Namen
   (Feld `used` im Kontakt) + „Alle …“. Funktionen: `openAddressBook`, `upsertContact`, `renderAddressBook`.
+<<<<<<< HEAD
 - **Spracheingabe** (der Browser wandelt Sprache in Text um): **Start/Stopp** – eine Aufnahme läuft,
   bis der Nutzer „Stopp“ tippt. Chrome beendet die Erkennung nach jeder Sprechpause; die App startet
   sie dann unbemerkt neu und hängt den Text an (`voiceSession`, `runVoiceRound`, `stopVoiceInput`).
@@ -34,6 +35,9 @@ Was die App kann:
   `<aktueller_entwurf>`) mit der Anweisung, nur die betroffenen Stellen zu ändern und den Rest
   wörtlich zu übernehmen. Empfänger bleibt fest. „↶ Rückgängig“ (`undoDraftChange`) stellt die
   vorige Fassung her – auch nach einem komplett neuen Entwurf über Schritt 1.
+=======
+- Spracheingabe (der Browser wandelt Sprache in Text um)
+>>>>>>> origin/main
 - Als App installierbar (PWA): Chrome → ⋮ → „App installieren“
 
 **Wo ist die App online?** Über GitHub Pages:
@@ -147,9 +151,15 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
 - **Automatische Prüfung:** `bash werkzeuge/test/test-starten.sh` (Programm:
   `werkzeuge/test/test-ki.js`). Öffnet die App mit Playwright im Handy-Format, spielt Gemini-
+<<<<<<< HEAD
   und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 84 Punkte:
   Gemini-/Claude-Entwurf, Dokumente an Claude Sonnet, Warnung ohne Claude-Schlüssel, Einrichtung
   und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf, Versand mit Text- und HTML-Fassung (Gmail-Versand nachgespielt), Adressbuch (auswählen, ändern, neu, löschen, Hinweis beim Empfänger, Hinweis nach Versand), deutscher Datei-Knopf, Spracheingabe bis „Stopp“ (nachgespielt), Entwurf anpassen + Rückgängig.
+=======
+  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 67 Punkte:
+  Gemini-/Claude-Entwurf, Dokumente an Claude Sonnet, Warnung ohne Claude-Schlüssel, Einrichtung
+  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf, Versand mit Text- und HTML-Fassung (Gmail-Versand nachgespielt), Adressbuch (auswählen, ändern, neu, löschen, Hinweis beim Empfänger, Hinweis nach Versand), deutscher Datei-Knopf.
+>>>>>>> origin/main
   **Regel für Claude:** Nach jeder Code-Änderung die Prüfung laufen lassen. Bei neuen Funktionen
   passende Prüfpunkte in `test-ki.js` ergänzen. Hilfsprogramme, die über eine Aufgabe hinaus
   nützlich sind, gehören ins Projekt (Ordner `werkzeuge/`) und ins Tagebuch – nicht nur in den
@@ -182,7 +192,10 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 19.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mails erscheinen im Hoch- und Querformat sauber (linksbündig, normaler Zeilenabstand, keine festen Umbrüche) ✅ | #16 |
 | 20.11.2026 | Adressbuch: Namen gespeicherter Kontakte von Hand änderbar (Knopf „Bearbeiten“ in der Einrichtung); 5 neue Prüfpunkte (jetzt 55); Zwischenspeicher v9 | #17 |
 | 20.11.2026 | Übersichtlicher: Adressbuch-Fenster im Reiter E-Mail (statt Liste in der Einrichtung), Name-Hinweis unter dem Empfänger, „Neu im Adressbuch“ nach Versand, kurze Namens-Knöpfe, Schritt-Nummern 1–3, deutscher Datei-Knopf bei Dokumenten; 67 Prüfpunkte; Zwischenspeicher v10 | #18 |
+<<<<<<< HEAD
 | 20.11.2026 | Spracheingabe mit Start/Stopp (bricht nach Pausen nicht mehr ab); Entwurf per Kommando anpassen statt neu schreiben, Schnellknöpfe, Rückgängig; Empfänger-Hinweis bricht um statt abgeschnitten; 84 Prüfpunkte; Zwischenspeicher v11 | #19 |
+=======
+>>>>>>> origin/main
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -202,11 +215,14 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   - [ ] Per Spracheingabe eine Mail an den geänderten Namen diktieren → richtige Adresse
   - [ ] Reiter Dokumente → „Datei oder Foto auswählen“ öffnet die Dateiauswahl des Handys
   - [ ] Gefällt dir das neue Aussehen? Sonst kann die Änderung (PR #18) zurückgenommen werden
+<<<<<<< HEAD
   - [ ] „Einsprechen“ antippen, mit Pausen sprechen → Aufnahme läuft weiter, bis „Stopp“ getippt wird
   - [ ] Entwurf erstellen → im Kasten „Entwurf mit KI anpassen“ z. B. „Mach den Schluss herzlicher“
         einsprechen → „Entwurf anpassen“ → nur der Schluss ändert sich, Rest bleibt gleich
   - [ ] Danach „↶ Rückgängig“ → vorige Fassung ist wieder da
   - [ ] Schnellknopf „Kürzer“ ausprobieren
+=======
+>>>>>>> origin/main
 - Weitere Wünsche des Nutzers hier sammeln.
 
 **Stand am Ende der Sitzung vom 18./19.11.2026:** Alles umgesetzte ist vom Nutzer getestet und
