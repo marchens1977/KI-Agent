@@ -183,7 +183,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 20.11.2026 | Adressbuch: Namen gespeicherter Kontakte von Hand änderbar (Knopf „Bearbeiten“ in der Einrichtung); 5 neue Prüfpunkte (jetzt 55); Zwischenspeicher v9 | #17 |
 | 20.11.2026 | Übersichtlicher: Adressbuch-Fenster im Reiter E-Mail (statt Liste in der Einrichtung), Name-Hinweis unter dem Empfänger, „Neu im Adressbuch“ nach Versand, kurze Namens-Knöpfe, Schritt-Nummern 1–3, deutscher Datei-Knopf bei Dokumenten; 67 Prüfpunkte; Zwischenspeicher v10 | #18 |
 | 20.11.2026 | Spracheingabe mit Start/Stopp (bricht nach Pausen nicht mehr ab); Entwurf per Kommando anpassen statt neu schreiben, Schnellknöpfe, Rückgängig; Empfänger-Hinweis bricht um statt abgeschnitten; 84 Prüfpunkte; Zwischenspeicher v11 | #19 |
-| 21.11.2026 | Vom Nutzer auf dem Handy getestet: Adressbuch (Namen ändern, auswählen, Hinweis beim Empfänger), neues Aussehen, Datei-Knopf, Spracheingabe mit Start/Stopp, Entwurf anpassen und Rückgängig funktionieren ✅ | #20 |
+| 20.11.2026 | Vom Nutzer auf dem Handy getestet: Adressbuch (Namen ändern, auswählen, Hinweis beim Empfänger), neues Aussehen, Datei-Knopf, Spracheingabe mit Start/Stopp, Entwurf anpassen und Rückgängig funktionieren ✅ | #20 |
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -198,7 +198,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
 - Weitere Wünsche des Nutzers hier sammeln.
 
-**Stand am Ende der Sitzung vom 20./21.11.2026:** Alles umgesetzte ist vom Nutzer getestet und
+**Stand am Ende der Sitzung vom 20.11.2026:** Alles umgesetzte ist vom Nutzer getestet und
 funktioniert. Keine offenen Fehler. Für die nächste Arbeit eine neue Sitzung öffnen; dieses
 Tagebuch ist die Grundlage.
 
