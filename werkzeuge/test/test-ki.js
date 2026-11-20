@@ -16,9 +16,10 @@ const draft = JSON.stringify({ empfaenger: 'anna@example.com', betreff: 'Treffen
 const results = [];
 const check = (name, cond, extra = '') => { results.push(`${cond ? 'OK  ' : 'FEHLER'} ${name}${extra ? ' – ' + extra : ''}`); };
 
-async function setup(cfg) {
+async function setup(cfg, initScript) {
   const b = await chromium.launch();
   const ctx = await b.newContext({ ...devices['Galaxy S9+'] });
+  if (initScript) await ctx.addInitScript(initScript);
   const log = { gemini: [], claude: [], csp: [], errors: [], dialogs: [] };
   await ctx.route('https://cdn.tailwindcss.com/**', r => { log.cdn = (log.cdn || 0) + 1; r.abort(); });
   await ctx.route('https://accounts.google.com/**', r => r.abort());
@@ -56,6 +57,37 @@ async function setup(cfg) {
   await p.waitForTimeout(500);
   return { b, p, log };
 }
+
+// Claude-Antwort als Datenstrom nachspielen (für einzelne Tests mit eigener Antwort)
+function claudeSse(text) {
+  const ev = (o) => `event: ${o.type}\ndata: ${JSON.stringify(o)}\n\n`;
+  return ev({ type: 'message_start', message: { id: 'msg_2', type: 'message', role: 'assistant', content: [] } }) +
+    ev({ type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } }) +
+    ev({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } }) +
+    ev({ type: 'content_block_stop', index: 0 }) +
+    ev({ type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 20 } }) +
+    ev({ type: 'message_stop' });
+}
+
+// Nachgespielte Spracherkennung: liefert pro Runde einen Satz und endet dann (wie Chrome nach einer Pause).
+const FAKE_SPEECH = `
+  window.__srRounds = 0; window.__srPhrases = ['Hallo', 'Welt', 'wie geht es'];
+  class FakeSR {
+    start() {
+      const n = window.__srRounds++; window.__srContinuous = this.continuous;
+      const ph = window.__srPhrases[n];
+      setTimeout(() => {
+        if (this._stopped) return;
+        if (ph) { this.onresult && this.onresult({ resultIndex: 0, results: [{ 0: { transcript: ph }, isFinal: true, length: 1 }] }); }
+        else { this.onerror && this.onerror({ error: 'no-speech' }); }
+        setTimeout(() => { if (!this._ended) { this._ended = true; this.onend && this.onend(); } }, 20);
+      }, ph ? 60 : 1100);
+    }
+    stop() { this._stopped = true; setTimeout(() => { if (!this._ended) { this._ended = true; this.onend && this.onend(); } }, 10); }
+    abort() { this.stop(); }
+  }
+  window.SpeechRecognition = FakeSR; window.webkitSpeechRecognition = FakeSR;
+`;
 const alertText = p => p.$eval('#globalAlertText', e => e.textContent).catch(() => '');
 
 async function writeMail(p) {
@@ -269,6 +301,57 @@ async function analyseDoc(p, file) {
   ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }));
   await p.click(`[onclick="switchTab('docs')"]`);
   check('J Datei-Knopf auf Deutsch, kein „Choose File“', (await p.isVisible('#btnPickDocFile')) && !(await p.isVisible('#docFileInput')) && (await p.textContent('#btnPickDocFile')).includes('Datei oder Foto auswählen'));
+  await b.close();
+
+
+  // K: Spracheingabe läuft weiter, bis "Stopp" getippt wird
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }, FAKE_SPEECH));
+  const micBtn = '#view-mail button[onclick*="mailPrompt"]';
+  await p.click(micBtn);
+  await p.waitForTimeout(700);
+  check('K Text aus mehreren Sprechpausen wird aneinandergehängt', (await p.inputValue('#mailPrompt')) === 'Hallo Welt wie geht es', await p.inputValue('#mailPrompt'));
+  const rounds1 = await p.evaluate(() => window.__srRounds);
+  check('K Aufnahme läuft nach Pausen weiter (Knopf zeigt „Stopp“)', rounds1 >= 4 && (await p.textContent(micBtn)).includes('Stopp'), `Runden: ${rounds1}`);
+  check('K Android-sichere Einstellung (continuous = false)', (await p.evaluate(() => window.__srContinuous)) === false);
+  await p.click(micBtn);
+  await p.waitForTimeout(1500);
+  const rounds2 = await p.evaluate(() => window.__srRounds);
+  await p.waitForTimeout(1500);
+  check('K Nach „Stopp“ ist die Aufnahme wirklich beendet', (await p.evaluate(() => window.__srRounds)) === rounds2 && (await p.textContent(micBtn)).includes('Einsprechen'));
+  check('K Keine Programmfehler', log.errors.length === 0, log.errors.join(' | '));
+  await b.close();
+
+  // L: Vorhandenen Entwurf per Kommando anpassen (nicht neu schreiben) + Rückgängig
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }));
+  check('L Anpassen-Kasten ohne Entwurf ausgeblendet', !(await p.isVisible('#reviseBox')));
+  await writeMail(p);
+  await p.waitForTimeout(500);
+  check('L Anpassen-Kasten erscheint mit Entwurf', await p.isVisible('#reviseBox'));
+  await (await p.$('#mailReviewCard')).screenshot({ path: S + '/entwurf-anpassen.png' });
+  let reviseReq = null;
+  const revised = JSON.stringify({ empfaenger: 'falsch@example.com', betreff: 'Treffen morgen', text: 'Hallo Anna,\n\nwir treffen uns morgen um 15 Uhr.\n\nViele Grüße' });
+  await p.route('https://api.anthropic.com/**', r => { reviseReq = JSON.stringify(r.request().postDataJSON()); r.fulfill({ status: 200, contentType: 'text/event-stream', body: claudeSse(revised) }); });
+  await p.fill('#revisePrompt', 'Ändere die Uhrzeit auf 15 Uhr');
+  await p.click('#btnReviseMail');
+  await p.waitForFunction(() => document.getElementById('mailBody').value.includes('15 Uhr'), null, { timeout: 8000 }).catch(() => {});
+  check('L Entwurf angepasst', (await p.inputValue('#mailBody')).includes('15 Uhr'));
+  check('L KI bekommt bisherigen Entwurf + Änderungswunsch + „nicht neu schreiben“', Boolean(reviseReq) && reviseReq.includes('<aktueller_entwurf>') && reviseReq.includes('14 Uhr') && reviseReq.includes('Änderungswunsch des Nutzers: Ändere die Uhrzeit auf 15 Uhr') && reviseReq.includes('KEIN Neuschreiben'));
+  check('L Empfänger und Betreff bleiben', (await p.inputValue('#mailTo')) === 'anna@example.com' && (await p.inputValue('#mailSubject')) === 'Treffen morgen', await p.inputValue('#mailTo'));
+  check('L Eingabefeld für Änderungswunsch geleert', (await p.inputValue('#revisePrompt')) === '');
+  check('L „Rückgängig“ sichtbar', await p.isVisible('#btnUndoDraft'));
+  await p.click('#btnUndoDraft');
+  check('L „Rückgängig“ stellt vorherige Fassung her', (await p.inputValue('#mailBody')).includes('14 Uhr') && !(await p.isVisible('#btnUndoDraft')));
+  reviseReq = null;
+  await p.click('.revise-chip:has-text("Kürzer")');
+  await p.waitForTimeout(800);
+  check('L Schnellknopf „Kürzer“ schickt passenden Wunsch', Boolean(reviseReq) && reviseReq.includes('kürzer'));
+  await p.fill('#revisePrompt', '');
+  await p.click('#btnReviseMail');
+  check('L Leerer Wunsch: Hinweis statt Anfrage', (await alertText(p)).includes('was geändert werden soll'));
+  await p.evaluate(() => startNewEmail());
+  await p.waitForTimeout(500);
+  check('L Neue E-Mail: Kasten und Rückgängig weg', !(await p.isVisible('#reviseBox')) && !(await p.isVisible('#btnUndoDraft')));
+  check('L Keine Programmfehler', log.errors.length === 0, log.errors.join(' | '));
   await b.close();
 
   console.log(results.join('\n'));
