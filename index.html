@@ -86,6 +86,7 @@
     }
 
     /* Karten */
+    .step-badge { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:1.35rem; height:1.35rem; border-radius:9999px; background:linear-gradient(135deg,#ff7a3a,#ff5910); color:#fff; font-size:.7rem; font-weight:700; }
     .card {
       background: linear-gradient(180deg, rgba(28, 40, 71, 0.5) 0%, rgba(18, 27, 51, 0.75) 100%);
       border: 1px solid rgba(169, 182, 212, 0.11);
@@ -121,7 +122,7 @@
     }
   </style>
   <!-- Aussehen (Tailwind CSS), fest eingebaut. Nicht von Hand ändern, sondern neu bauen mit: bash werkzeuge/aussehen-bauen.sh -->
-  <style id="tailwind-css">/* TAILWIND-START */*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(255,89,16,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(255,89,16,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.pointer-events-none{pointer-events:none}.visible{visibility:visible}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.left-2\.5{left:.625rem}.left-3{left:.75rem}.right-3{right:.75rem}.top-0{top:0}.top-1\/2{top:50%}.z-30{z-index:30}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:.25rem}.mb-1\.5{margin-bottom:.375rem}.ml-1\.5{margin-left:.375rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.line-clamp-2{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.contents{display:contents}.hidden{display:none}.h-10{height:2.5rem}.h-2{height:.5rem}.h-3{height:.75rem}.h-3\.5{height:.875rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-9{height:2.25rem}.h-\[18px\]{height:18px}.max-h-24{max-height:6rem}.max-h-32{max-height:8rem}.max-h-\[60vh\]{max-height:60vh}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-2{width:.5rem}.w-3{width:.75rem}.w-3\.5{width:.875rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-9{width:2.25rem}.w-\[18px\]{width:18px}.w-full{width:100%}.min-w-0{min-width:0}.max-w-3xl{max-width:48rem}.max-w-md{max-width:28rem}.max-w-xl{max-width:36rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-y-1\/2{--tw-translate-y:-50%}.-translate-y-1\/2,.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}@keyframes spin{to{transform:rotate(1turn)}}.animate-spin{animation:spin 1s linear infinite}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.select-text{-webkit-user-select:text;-moz-user-select:text;user-select:text}.resize{resize:both}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-1\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.375rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.375rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-2\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.625rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.625rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis}.truncate,.whitespace-nowrap{white-space:nowrap}.whitespace-pre-wrap{white-space:pre-wrap}.break-words{overflow-wrap:break-word}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.border-t{border-top-width:1px}.border-amber-800\/80{border-color:rgba(146,64,14,.8)}.border-blue-500{--tw-border-opacity:1;border-color:rgb(255 89 16/var(--tw-border-opacity,1))}.border-blue-600\/70{border-color:rgba(230,74,6,.7)}.border-blue-800{--tw-border-opacity:1;border-color:rgb(152 48 15/var(--tw-border-opacity,1))}.border-emerald-700{--tw-border-opacity:1;border-color:rgb(4 120 87/var(--tw-border-opacity,1))}.border-emerald-800{--tw-border-opacity:1;border-color:rgb(6 95 70/var(--tw-border-opacity,1))}.border-emerald-800\/80{border-color:rgba(6,95,70,.8)}.border-indigo-700{--tw-border-opacity:1;border-color:rgb(15 60 158/var(--tw-border-opacity,1))}.border-indigo-700\/80{border-color:rgba(15,60,158,.8)}.border-indigo-800\/70{border-color:rgba(0,45,114,.7)}.border-indigo-900\/60{border-color:rgba(1,34,88,.6)}.border-rose-500{--tw-border-opacity:1;border-color:rgb(244 63 94/var(--tw-border-opacity,1))}.border-rose-800{--tw-border-opacity:1;border-color:rgb(159 18 57/var(--tw-border-opacity,1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(44 58 94/var(--tw-border-opacity,1))}.border-slate-700\/80{border-color:rgba(44,58,94,.8)}.border-slate-800{--tw-border-opacity:1;border-color:rgb(28 40 71/var(--tw-border-opacity,1))}.border-slate-900{--tw-border-opacity:1;border-color:rgb(18 27 51/var(--tw-border-opacity,1))}.bg-amber-950\/90{background-color:rgba(69,26,3,.9)}.bg-blue-950\/90{background-color:rgba(66,18,6,.9)}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105/var(--tw-bg-opacity,1))}.bg-emerald-950\/80{background-color:rgba(2,44,34,.8)}.bg-emerald-950\/90{background-color:rgba(2,44,34,.9)}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(31 79 196/var(--tw-bg-opacity,1))}.bg-indigo-600\/90{background-color:rgba(31,79,196,.9)}.bg-indigo-900\/80{background-color:rgba(1,34,88,.8)}.bg-indigo-950\/60{background-color:rgba(1,21,56,.6)}.bg-indigo-950\/70{background-color:rgba(1,21,56,.7)}.bg-indigo-950\/80{background-color:rgba(1,21,56,.8)}.bg-rose-600{--tw-bg-opacity:1;background-color:rgb(225 29 72/var(--tw-bg-opacity,1))}.bg-rose-950\/90{background-color:rgba(76,5,25,.9)}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(28 40 71/var(--tw-bg-opacity,1))}.bg-slate-800\/80{background-color:rgba(28,40,71,.8)}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(18 27 51/var(--tw-bg-opacity,1))}.bg-slate-900\/90{background-color:rgba(18,27,51,.9)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(10 16 32/var(--tw-bg-opacity,1))}.bg-slate-950\/40{background-color:rgba(10,16,32,.4)}.bg-slate-950\/70{background-color:rgba(10,16,32,.7)}.bg-slate-950\/80{background-color:rgba(10,16,32,.8)}.p-1{padding:.25rem}.p-2{padding:.5rem}.p-2\.5{padding:.625rem}.p-3{padding:.75rem}.p-3\.5{padding:.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-1{padding-left:.25rem;padding-right:.25rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.pb-2{padding-bottom:.5rem}.pb-3{padding-bottom:.75rem}.pl-7{padding-left:1.75rem}.pr-2{padding-right:.5rem}.pt-0\.5{padding-top:.125rem}.pt-1{padding-top:.25rem}.pt-4{padding-top:1rem}.text-center{text-align:center}.font-sans{font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji}.text-\[11px\]{font-size:11px}.text-\[17px\]{font-size:17px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.italic{font-style:italic}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-.025em}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.text-blue-200{--tw-text-opacity:1;color:rgb(255 201 168/var(--tw-text-opacity,1))}.text-blue-400{--tw-text-opacity:1;color:rgb(255 122 58/var(--tw-text-opacity,1))}.text-blue-600{--tw-text-opacity:1;color:rgb(230 74 6/var(--tw-text-opacity,1))}.text-emerald-100{--tw-text-opacity:1;color:rgb(209 250 229/var(--tw-text-opacity,1))}.text-emerald-200{--tw-text-opacity:1;color:rgb(167 243 208/var(--tw-text-opacity,1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183/var(--tw-text-opacity,1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153/var(--tw-text-opacity,1))}.text-indigo-200{--tw-text-opacity:1;color:rgb(191 208 255/var(--tw-text-opacity,1))}.text-indigo-300{--tw-text-opacity:1;color:rgb(147 176 255/var(--tw-text-opacity,1))}.text-rose-200{--tw-text-opacity:1;color:rgb(254 205 211/var(--tw-text-opacity,1))}.text-rose-300{--tw-text-opacity:1;color:rgb(253 164 175/var(--tw-text-opacity,1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.text-slate-100{--tw-text-opacity:1;color:rgb(230 235 245/var(--tw-text-opacity,1))}.text-slate-200{--tw-text-opacity:1;color:rgb(205 214 234/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(169 182 212/var(--tw-text-opacity,1))}.text-slate-400{--tw-text-opacity:1;color:rgb(132 148 187/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(95 111 153/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(68 84 124/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.placeholder-slate-500::-moz-placeholder{--tw-placeholder-opacity:1;color:rgb(95 111 153/var(--tw-placeholder-opacity,1))}.placeholder-slate-500::placeholder{--tw-placeholder-opacity:1;color:rgb(95 111 153/var(--tw-placeholder-opacity,1))}.opacity-75{opacity:.75}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgba(0,0,0,.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color)}.shadow-2xl,.shadow-md{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.blur{--tw-blur:blur(8px)}.blur,.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px)}.backdrop-blur-sm,.backdrop-filter{-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.ease-out{transition-timing-function:cubic-bezier(0,0,.2,1)}.selection\:bg-blue-500 ::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:bg-blue-500 ::selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:text-white ::-moz-selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:text-white ::selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:bg-blue-500::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:bg-blue-500::selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:text-white::-moz-selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.file\:mr-3::file-selector-button{margin-right:.75rem}.file\:rounded-lg::file-selector-button{border-radius:.5rem}.file\:border-0::file-selector-button{border-width:0}.file\:bg-slate-800::file-selector-button{--tw-bg-opacity:1;background-color:rgb(28 40 71/var(--tw-bg-opacity,1))}.file\:px-3::file-selector-button{padding-left:.75rem;padding-right:.75rem}.file\:py-2::file-selector-button{padding-top:.5rem;padding-bottom:.5rem}.file\:text-xs::file-selector-button{font-size:.75rem;line-height:1rem}.file\:font-medium::file-selector-button{font-weight:500}.file\:text-slate-200::file-selector-button{--tw-text-opacity:1;color:rgb(205 214 234/var(--tw-text-opacity,1))}.hover\:border-slate-700:hover{--tw-border-opacity:1;border-color:rgb(44 58 94/var(--tw-border-opacity,1))}.hover\:bg-emerald-500:hover{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.hover\:bg-indigo-500:hover{--tw-bg-opacity:1;background-color:rgb(61 111 230/var(--tw-bg-opacity,1))}.hover\:bg-indigo-800:hover{--tw-bg-opacity:1;background-color:rgb(0 45 114/var(--tw-bg-opacity,1))}.hover\:bg-indigo-900:hover{--tw-bg-opacity:1;background-color:rgb(1 34 88/var(--tw-bg-opacity,1))}.hover\:bg-rose-500:hover{--tw-bg-opacity:1;background-color:rgb(244 63 94/var(--tw-bg-opacity,1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(44 58 94/var(--tw-bg-opacity,1))}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(28 40 71/var(--tw-bg-opacity,1))}.hover\:text-blue-300:hover{--tw-text-opacity:1;color:rgb(255 163 111/var(--tw-text-opacity,1))}.hover\:text-rose-300:hover{--tw-text-opacity:1;color:rgb(253 164 175/var(--tw-text-opacity,1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.hover\:opacity-100:hover{opacity:1}.hover\:file\:bg-slate-700::file-selector-button:hover{--tw-bg-opacity:1;background-color:rgb(44 58 94/var(--tw-bg-opacity,1))}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(255 89 16/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-blue-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(255 89 16/var(--tw-ring-opacity,1))}.active\:bg-emerald-700:active{--tw-bg-opacity:1;background-color:rgb(4 120 87/var(--tw-bg-opacity,1))}.active\:bg-indigo-700:active{--tw-bg-opacity:1;background-color:rgb(15 60 158/var(--tw-bg-opacity,1))}@media (min-width:640px){.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:gap-2{gap:.5rem}.sm\:text-sm{font-size:.875rem;line-height:1.25rem}}/* TAILWIND-END */</style>
+  <style id="tailwind-css">/* TAILWIND-START */*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(255,89,16,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(255,89,16,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.pointer-events-none{pointer-events:none}.visible{visibility:visible}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.left-2\.5{left:.625rem}.left-3{left:.75rem}.right-3{right:.75rem}.top-0{top:0}.top-1\/2{top:50%}.z-30{z-index:30}.z-50{z-index:50}.-mx-1{margin-left:-.25rem;margin-right:-.25rem}.mx-auto{margin-left:auto;margin-right:auto}.-mt-1{margin-top:-.25rem}.mb-1{margin-bottom:.25rem}.mb-1\.5{margin-bottom:.375rem}.ml-1\.5{margin-left:.375rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-1\.5{margin-top:.375rem}.mt-2{margin-top:.5rem}.line-clamp-2{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.contents{display:contents}.hidden{display:none}.h-10{height:2.5rem}.h-2{height:.5rem}.h-3{height:.75rem}.h-3\.5{height:.875rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-\[18px\]{height:18px}.max-h-24{max-height:6rem}.max-h-32{max-height:8rem}.max-h-\[60vh\]{max-height:60vh}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-2{width:.5rem}.w-3{width:.75rem}.w-3\.5{width:.875rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-8{width:2rem}.w-9{width:2.25rem}.w-\[18px\]{width:18px}.w-full{width:100%}.min-w-0{min-width:0}.max-w-3xl{max-width:48rem}.max-w-\[45\%\]{max-width:45%}.max-w-md{max-width:28rem}.max-w-xl{max-width:36rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-y-1\/2{--tw-translate-y:-50%}.-translate-y-1\/2,.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}@keyframes spin{to{transform:rotate(1turn)}}.animate-spin{animation:spin 1s linear infinite}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.select-text{-webkit-user-select:text;-moz-user-select:text;user-select:text}.resize{resize:both}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-1\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.375rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.375rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-2\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.625rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.625rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis}.truncate,.whitespace-nowrap{white-space:nowrap}.whitespace-pre-wrap{white-space:pre-wrap}.break-words{overflow-wrap:break-word}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}.rounded-xl{border-radius:.75rem}.rounded-t-2xl{border-top-left-radius:1rem;border-top-right-radius:1rem}.border{border-width:1px}.border-t{border-top-width:1px}.border-dashed{border-style:dashed}.border-amber-800\/80{border-color:rgba(146,64,14,.8)}.border-blue-500{--tw-border-opacity:1;border-color:rgb(255 89 16/var(--tw-border-opacity,1))}.border-blue-600\/70{border-color:rgba(230,74,6,.7)}.border-blue-800{--tw-border-opacity:1;border-color:rgb(152 48 15/var(--tw-border-opacity,1))}.border-emerald-700{--tw-border-opacity:1;border-color:rgb(4 120 87/var(--tw-border-opacity,1))}.border-emerald-800{--tw-border-opacity:1;border-color:rgb(6 95 70/var(--tw-border-opacity,1))}.border-emerald-800\/80{border-color:rgba(6,95,70,.8)}.border-indigo-700{--tw-border-opacity:1;border-color:rgb(15 60 158/var(--tw-border-opacity,1))}.border-indigo-700\/80{border-color:rgba(15,60,158,.8)}.border-indigo-800\/70{border-color:rgba(0,45,114,.7)}.border-indigo-900\/60{border-color:rgba(1,34,88,.6)}.border-rose-500{--tw-border-opacity:1;border-color:rgb(244 63 94/var(--tw-border-opacity,1))}.border-rose-800{--tw-border-opacity:1;border-color:rgb(159 18 57/var(--tw-border-opacity,1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(44 58 94/var(--tw-border-opacity,1))}.border-slate-700\/80{border-color:rgba(44,58,94,.8)}.border-slate-800{--tw-border-opacity:1;border-color:rgb(28 40 71/var(--tw-border-opacity,1))}.border-slate-900{--tw-border-opacity:1;border-color:rgb(18 27 51/var(--tw-border-opacity,1))}.bg-amber-950\/90{background-color:rgba(69,26,3,.9)}.bg-blue-950\/90{background-color:rgba(66,18,6,.9)}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105/var(--tw-bg-opacity,1))}.bg-emerald-950\/80{background-color:rgba(2,44,34,.8)}.bg-emerald-950\/90{background-color:rgba(2,44,34,.9)}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(31 79 196/var(--tw-bg-opacity,1))}.bg-indigo-600\/90{background-color:rgba(31,79,196,.9)}.bg-indigo-900{--tw-bg-opacity:1;background-color:rgb(1 34 88/var(--tw-bg-opacity,1))}.bg-indigo-900\/80{background-color:rgba(1,34,88,.8)}.bg-indigo-950\/60{background-color:rgba(1,21,56,.6)}.bg-indigo-950\/70{background-color:rgba(1,21,56,.7)}.bg-indigo-950\/80{background-color:rgba(1,21,56,.8)}.bg-rose-600{--tw-bg-opacity:1;background-color:rgb(225 29 72/var(--tw-bg-opacity,1))}.bg-rose-950\/90{background-color:rgba(76,5,25,.9)}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(28 40 71/var(--tw-bg-opacity,1))}.bg-slate-800\/80{background-color:rgba(28,40,71,.8)}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(18 27 51/var(--tw-bg-opacity,1))}.bg-slate-900\/90{background-color:rgba(18,27,51,.9)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(10 16 32/var(--tw-bg-opacity,1))}.bg-slate-950\/40{background-color:rgba(10,16,32,.4)}.bg-slate-950\/70{background-color:rgba(10,16,32,.7)}.bg-slate-950\/80{background-color:rgba(10,16,32,.8)}.p-1{padding:.25rem}.p-2{padding:.5rem}.p-2\.5{padding:.625rem}.p-3{padding:.75rem}.p-3\.5{padding:.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-1{padding-left:.25rem;padding-right:.25rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.pb-2{padding-bottom:.5rem}.pb-3{padding-bottom:.75rem}.pl-7{padding-left:1.75rem}.pr-2{padding-right:.5rem}.pt-0\.5{padding-top:.125rem}.pt-1{padding-top:.25rem}.pt-4{padding-top:1rem}.text-left{text-align:left}.text-center{text-align:center}.font-sans{font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji}.text-\[11px\]{font-size:11px}.text-\[17px\]{font-size:17px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.italic{font-style:italic}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-.025em}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.text-blue-200{--tw-text-opacity:1;color:rgb(255 201 168/var(--tw-text-opacity,1))}.text-blue-400{--tw-text-opacity:1;color:rgb(255 122 58/var(--tw-text-opacity,1))}.text-blue-600{--tw-text-opacity:1;color:rgb(230 74 6/var(--tw-text-opacity,1))}.text-emerald-100{--tw-text-opacity:1;color:rgb(209 250 229/var(--tw-text-opacity,1))}.text-emerald-200{--tw-text-opacity:1;color:rgb(167 243 208/var(--tw-text-opacity,1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183/var(--tw-text-opacity,1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153/var(--tw-text-opacity,1))}.text-indigo-200{--tw-text-opacity:1;color:rgb(191 208 255/var(--tw-text-opacity,1))}.text-indigo-300{--tw-text-opacity:1;color:rgb(147 176 255/var(--tw-text-opacity,1))}.text-rose-200{--tw-text-opacity:1;color:rgb(254 205 211/var(--tw-text-opacity,1))}.text-rose-300{--tw-text-opacity:1;color:rgb(253 164 175/var(--tw-text-opacity,1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.text-slate-100{--tw-text-opacity:1;color:rgb(230 235 245/var(--tw-text-opacity,1))}.text-slate-200{--tw-text-opacity:1;color:rgb(205 214 234/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(169 182 212/var(--tw-text-opacity,1))}.text-slate-400{--tw-text-opacity:1;color:rgb(132 148 187/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(95 111 153/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(68 84 124/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.underline{text-decoration-line:underline}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.placeholder-slate-500::-moz-placeholder{--tw-placeholder-opacity:1;color:rgb(95 111 153/var(--tw-placeholder-opacity,1))}.placeholder-slate-500::placeholder{--tw-placeholder-opacity:1;color:rgb(95 111 153/var(--tw-placeholder-opacity,1))}.opacity-75{opacity:.75}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgba(0,0,0,.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color)}.shadow-2xl,.shadow-md{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.blur{--tw-blur:blur(8px)}.blur,.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px)}.backdrop-blur-sm,.backdrop-filter{-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.ease-out{transition-timing-function:cubic-bezier(0,0,.2,1)}.selection\:bg-blue-500 ::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:bg-blue-500 ::selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:text-white ::-moz-selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:text-white ::selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:bg-blue-500::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:bg-blue-500::selection{--tw-bg-opacity:1;background-color:rgb(255 89 16/var(--tw-bg-opacity,1))}.selection\:text-white::-moz-selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.hover\:border-blue-500:hover{--tw-border-opacity:1;border-color:rgb(255 89 16/var(--tw-border-opacity,1))}.hover\:border-slate-700:hover{--tw-border-opacity:1;border-color:rgb(44 58 94/var(--tw-border-opacity,1))}.hover\:bg-emerald-500:hover{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.hover\:bg-indigo-500:hover{--tw-bg-opacity:1;background-color:rgb(61 111 230/var(--tw-bg-opacity,1))}.hover\:bg-indigo-800:hover{--tw-bg-opacity:1;background-color:rgb(0 45 114/var(--tw-bg-opacity,1))}.hover\:bg-indigo-900:hover{--tw-bg-opacity:1;background-color:rgb(1 34 88/var(--tw-bg-opacity,1))}.hover\:bg-rose-500:hover{--tw-bg-opacity:1;background-color:rgb(244 63 94/var(--tw-bg-opacity,1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(44 58 94/var(--tw-bg-opacity,1))}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(28 40 71/var(--tw-bg-opacity,1))}.hover\:text-blue-300:hover{--tw-text-opacity:1;color:rgb(255 163 111/var(--tw-text-opacity,1))}.hover\:text-rose-300:hover{--tw-text-opacity:1;color:rgb(253 164 175/var(--tw-text-opacity,1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.hover\:opacity-100:hover{opacity:1}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(255 89 16/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-blue-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(255 89 16/var(--tw-ring-opacity,1))}.active\:bg-emerald-700:active{--tw-bg-opacity:1;background-color:rgb(4 120 87/var(--tw-bg-opacity,1))}.active\:bg-indigo-700:active{--tw-bg-opacity:1;background-color:rgb(15 60 158/var(--tw-bg-opacity,1))}@media (min-width:640px){.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:gap-2{gap:.5rem}.sm\:rounded-2xl{border-radius:1rem}.sm\:text-sm{font-size:.875rem;line-height:1.25rem}}/* TAILWIND-END */</style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500 selection:text-white">
 
@@ -175,7 +176,7 @@
     <section id="view-mail" class="space-y-4">
       <div id="mailComposeCard" class="card rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between gap-2">
-          <h2 id="composeCardTitle" class="text-sm font-semibold text-white truncate">Neue E-Mail</h2>
+          <div class="flex items-center gap-2 min-w-0"><span class="step-badge" aria-hidden="true">1</span><h2 id="composeCardTitle" class="text-sm font-semibold text-white truncate">Neue E-Mail</h2></div>
           <button type="button" onclick="switchTab('persona')" id="personaStatusChip" class="shrink-0 inline-flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/70 transition">
             Profil aktiv
           </button>
@@ -220,11 +221,18 @@
       </div>
 
       <div id="mailReviewCard" class="card rounded-2xl p-4 space-y-3 shadow-sm">
-        <h2 class="text-sm font-semibold text-white">Nachricht prüfen und senden</h2>
+        <div class="flex items-center gap-2"><span class="step-badge" aria-hidden="true">2</span><h2 class="text-sm font-semibold text-white">Prüfen und senden</h2></div>
 
         <div class="space-y-1.5">
-          <label for="mailTo" class="block text-xs text-slate-400">Empfänger (E-Mail-Adresse)</label>
-          <input type="email" id="mailTo" oninput="hideSendConfirmation(); mailToIsManual = Boolean(this.value.trim())" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <div class="flex items-center justify-between gap-2">
+            <label for="mailTo" class="block text-xs text-slate-400">Empfänger</label>
+            <button type="button" id="btnOpenAddressBook" onclick="openAddressBook()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+              <span>Adressbuch</span>
+            </button>
+          </div>
+          <input type="email" id="mailTo" oninput="hideSendConfirmation(); mailToIsManual = Boolean(this.value.trim()); updateRecipientHint()" placeholder="empfaenger@beispiel.de" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <div id="recipientHint" class="hidden flex items-center justify-between gap-2 text-xs px-1"></div>
           <div id="quickContactChips" class="flex flex-wrap gap-1.5 pt-0.5"></div>
         </div>
 
@@ -266,6 +274,7 @@
             <div>
               <p class="font-semibold text-emerald-100">E-Mail erfolgreich versandt</p>
               <p id="sendConfirmationDetail" class="text-xs text-emerald-300 mt-0.5"></p>
+              <p id="sendNewContactNote" class="hidden text-xs text-emerald-200 mt-1.5"></p>
             </div>
           </div>
           <button type="button" onclick="startNewEmail()" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-xs font-semibold text-white transition">
@@ -276,7 +285,7 @@
 
       <div class="card rounded-2xl p-4 space-y-3 shadow-sm">
         <div class="flex items-center justify-between gap-2">
-          <h2 class="text-sm font-semibold text-white">Nachrichtenverlauf (Assistenten-Konto)</h2>
+          <div class="flex items-center gap-2 min-w-0"><span class="step-badge" aria-hidden="true">3</span><h2 class="text-sm font-semibold text-white">Postfach des Assistenten</h2></div>
           <button type="button" onclick="loadInbox()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition shrink-0">
             Aktualisieren
           </button>
@@ -306,8 +315,14 @@
         <h2 class="text-sm font-semibold text-white">Dokument hochladen oder Text einfügen</h2>
 
         <div>
-          <label for="docFileInput" class="block text-xs text-slate-400 mb-1">Datei auswählen (PDF, Bild, TXT, CSV, MD – max. 10 MB)</label>
-          <input type="file" id="docFileInput" accept=".pdf,.txt,.csv,.md,image/*" onchange="handleFileSelect(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700" />
+          <input type="file" id="docFileInput" accept=".pdf,.txt,.csv,.md,image/*" onchange="handleFileSelect(event)" class="hidden" aria-label="Datei auswählen" />
+          <button type="button" id="btnPickDocFile" onclick="document.getElementById('docFileInput').click()" class="w-full flex items-center gap-3 rounded-xl border border-dashed border-slate-700 bg-slate-950 hover:border-blue-500 px-3 py-3 text-left transition">
+            <svg class="w-6 h-6 text-blue-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-slate-100">Datei oder Foto auswählen</span>
+              <span class="block text-[11px] text-slate-500">PDF, Bild, TXT, CSV, MD – max. 10 MB</span>
+            </span>
+          </button>
           <div id="docFileActions" class="hidden flex items-center justify-between gap-2 mt-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
             <p id="selectedFileName" class="text-xs text-blue-400 truncate"></p>
             <button type="button" onclick="attachDocFileToMail()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shrink-0 transition">
@@ -542,28 +557,10 @@
         <p id="statusSaveGmail" class="hidden text-xs rounded-lg px-3 py-2 border leading-relaxed"></p>
       </div>
 
-      <div class="card rounded-2xl p-4 space-y-3 shadow-sm">
-        <div>
-          <h2 class="text-sm font-semibold text-white">Gespeicherte Kontakte für Spracherkennung</h2>
-          <p class="text-xs text-slate-400 mt-1">Neue Empfänger werden beim Senden automatisch ergänzt. Gesprochene Namen ordnet die KI diesen Adressen direkt zu. Stimmt ein Name nicht, tippe beim Kontakt auf „Bearbeiten“.</p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div>
-            <label for="newContactName" class="sr-only">Kontaktname</label>
-            <input type="text" id="newContactName" placeholder="Name (z. B. Vorname Nachname)" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
-          </div>
-          <div>
-            <label for="newContactEmail" class="sr-only">Kontakt-E-Mail-Adresse</label>
-            <input type="email" id="newContactEmail" placeholder="E-Mail (z. B. name@beispiel.de)" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
-          </div>
-        </div>
-
-        <button type="button" onclick="addContactFromForm()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
-          Kontakt hinzufügen
-        </button>
-
-        <div id="savedContactsList" class="space-y-1.5 pt-1"></div>
+      <div class="card rounded-2xl p-4 space-y-2 shadow-sm">
+        <h2 class="text-sm font-semibold text-white">3. Kontakte</h2>
+        <p class="text-xs text-slate-400">Deine Kontakte pflegst du jetzt direkt beim Schreiben: Reiter „E-Mail“ → beim Empfänger auf „Adressbuch“ tippen.</p>
+        <button type="button" onclick="switchTab('mail'); openAddressBook()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">Adressbuch öffnen</button>
       </div>
     </section>
 
@@ -572,6 +569,32 @@
       <p class="text-[11px] text-slate-600">Einstellungen und Kontakte bleiben lokal in deinem Browser.</p>
     </footer>
   </main>
+
+  <!-- ADRESSBUCH (öffnet sich von unten) -->
+  <div id="addressBookModal" role="dialog" aria-modal="true" aria-labelledby="addressBookTitle" onclick="if (event.target === this) closeAddressBook()" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+    <div class="card w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 space-y-3 flex flex-col" style="background:#121b33; max-height:88vh; padding-bottom:max(1rem, env(safe-area-inset-bottom))">
+      <div class="flex items-center justify-between gap-2">
+        <h3 id="addressBookTitle" class="text-base font-semibold text-white">Adressbuch <span id="addressBookCount" class="text-xs font-normal text-slate-400"></span></h3>
+        <button type="button" onclick="closeAddressBook()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">Schließen</button>
+      </div>
+      <p class="text-[11px] text-slate-500 -mt-1">Antippen = als Empfänger übernehmen. Die KI nutzt diese Namen auch für die Spracheingabe.</p>
+      <div class="flex gap-2">
+        <input type="search" id="addressBookSearch" oninput="renderAddressBook()" placeholder="Suchen (Name oder Adresse)" aria-label="Kontakte durchsuchen" class="flex-1 min-w-0 rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        <button type="button" id="btnAddressBookNew" onclick="openContactForm()" class="shrink-0 px-3 py-2 rounded-xl btn-primary text-xs font-semibold text-white">+ Neu</button>
+      </div>
+      <div id="contactForm" class="hidden space-y-2 rounded-xl border border-blue-500 bg-slate-950 p-3">
+        <p id="contactFormTitle" class="text-xs font-semibold text-slate-200">Neuer Kontakt</p>
+        <input type="text" id="contactFormName" placeholder="Name (z. B. Vorname Nachname)" aria-label="Name" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        <input type="email" id="contactFormEmail" placeholder="E-Mail (z. B. name@beispiel.de)" aria-label="E-Mail-Adresse" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        <div class="flex gap-2">
+          <button type="button" id="contactFormSave" onclick="saveContactForm()" class="flex-1 py-2 rounded-lg btn-blue text-xs font-semibold text-white">Speichern</button>
+          <button type="button" onclick="closeContactForm()" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200">Abbrechen</button>
+        </div>
+        <button type="button" id="contactFormDelete" onclick="deleteContactFromForm()" class="hidden w-full py-1.5 text-xs text-rose-400 hover:text-rose-300">Kontakt löschen</button>
+      </div>
+      <div id="addressBookList" class="space-y-1.5 overflow-y-auto -mx-1 px-1" style="min-height:4rem"></div>
+    </div>
+  </div>
 
   <!-- BESTÄTIGUNGS-DIALOG VOR DEM VERSAND -->
   <div id="sendConfirmModal" role="dialog" aria-modal="true" aria-labelledby="sendConfirmTitle" onclick="if (event.target === this) closeSendConfirmModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
@@ -601,7 +624,7 @@
   </div>
 
   <script>
-    const BUILD_TIMESTAMP = '20.11.2026 · 12:00';
+    const BUILD_TIMESTAMP = '20.11.2026 · 22:00';
     const STORAGE_KEY = 'ki_agent_config_v1';
     const TOKEN_STORAGE_KEY = 'ki_agent_gmail_token_v1';
     const CONTACTS_KEY = 'ki_agent_contacts_v1';
@@ -1194,7 +1217,7 @@
       }
       return parsed
         .filter(c => c && typeof c.email === 'string' && c.email.includes('@'))
-        .map(c => ({ name: typeof c.name === 'string' ? c.name : '', email: c.email }));
+        .map(c => ({ name: typeof c.name === 'string' ? c.name : '', email: c.email, used: Number(c.used) || 0 }));
     }
 
     function saveContacts(list) {
@@ -1204,23 +1227,20 @@
 
     function rememberContactEmail(email, optionalName = '') {
       const clean = cleanExtractedEmail(email);
-      if (!clean || !clean.includes('@')) return;
+      if (!clean || !clean.includes('@')) return null;
       const list = getContacts();
       const existing = list.find(c => c.email.toLowerCase() === clean);
       if (existing) {
-        if (optionalName && optionalName.trim()) {
-          existing.name = optionalName.trim();
-          saveContacts(list);
-        }
-        return;
+        if (optionalName && optionalName.trim()) existing.name = optionalName.trim();
+        existing.used = Date.now();
+        saveContacts(list);
+        return null;
       }
-      const derivedName = (optionalName || '').trim() || clean.split('@')[0]
-        .split(/[._-]+/)
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-      list.push({ name: derivedName || clean, email: clean });
+      const derivedName = (optionalName || '').trim() || guessNameFromEmail(clean);
+      const created = { name: derivedName || clean, email: clean, used: Date.now() };
+      list.push(created);
       saveContacts(list);
+      return created;
     }
 
     function splitAddressList(headerVal) {
@@ -1437,19 +1457,47 @@
       return bestScore >= 115 && !bestTie ? bestEntry : null;
     }
 
-    function addContactFromForm() {
-      const nameEl = document.getElementById('newContactName');
-      const emailEl = document.getElementById('newContactEmail');
-      const name = nameEl.value.trim();
-      const email = cleanExtractedEmail(emailEl.value);
-      if (!email || !email.includes('@')) {
-        showAlert('Bitte gib eine gültige E-Mail-Adresse für den Kontakt ein.', 'error');
-        return;
+    function findContact(email) {
+      const e = String(email || '').trim().toLowerCase();
+      if (!e) return null;
+      return getContacts().find(c => c.email.toLowerCase() === e) || null;
+    }
+
+    // Name, unter dem eine noch unbekannte Adresse automatisch gespeichert würde.
+    function guessNameFromEmail(email) {
+      return String(email || '').split('@')[0]
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    // Kontakt neu anlegen oder ändern (Name und Adresse). oldEmail = bisherige Adresse beim Ändern.
+    function upsertContact(oldEmail, name, email) {
+      const cleanName = String(name || '').trim();
+      const cleanEmail = cleanExtractedEmail(email);
+      if (!cleanEmail || !cleanEmail.includes('@')) return 'Bitte gib eine gültige E-Mail-Adresse ein.';
+      if (!cleanName) return 'Bitte gib einen Namen ein.';
+      const list = getContacts();
+      const oldKey = String(oldEmail || '').toLowerCase();
+      const clash = list.find(c => c.email.toLowerCase() === cleanEmail && c.email.toLowerCase() !== oldKey);
+      if (clash && oldKey) return `Die Adresse ${cleanEmail} gehört schon zu „${clash.name}“.`;
+      const entry = list.find(c => c.email.toLowerCase() === (oldKey || cleanEmail));
+      if (entry) {
+        entry.name = cleanName;
+        entry.email = cleanEmail;
+      } else {
+        list.push({ name: cleanName, email: cleanEmail, used: 0 });
       }
-      rememberContactEmail(email, name);
-      nameEl.value = '';
-      emailEl.value = '';
-      showAlert(`Kontakt ${name || email} gespeichert.`, 'success');
+      saveContacts(list);
+      return '';
+    }
+
+    // Namen eines gespeicherten Kontakts von Hand ändern (E-Mail-Adresse bleibt gleich).
+    function renameContact(email, newName) {
+      const entry = findContact(email);
+      if (!entry || !String(newName || '').trim()) return false;
+      return upsertContact(entry.email, newName, entry.email) === '';
     }
 
     function removeContact(email) {
@@ -1457,140 +1505,208 @@
       saveContacts(list);
     }
 
-    // Namen eines gespeicherten Kontakts von Hand ändern (E-Mail-Adresse bleibt gleich).
-    function renameContact(email, newName) {
-      const name = String(newName || '').trim();
-      if (!name) return false;
-      const list = getContacts();
-      const entry = list.find(c => c.email.toLowerCase() === String(email).toLowerCase());
-      if (!entry) return false;
-      entry.name = name;
-      saveContacts(list);
-      return true;
-    }
-
-    function startEditContact(row, contact) {
-      row.innerHTML = '';
-      row.className = 'space-y-2 px-3 py-2 rounded-xl bg-slate-950 border border-blue-500 text-xs';
-
-      const emailP = document.createElement('p');
-      emailP.className = 'text-slate-400 truncate';
-      emailP.textContent = contact.email;
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = contact.name;
-      input.placeholder = 'Name (z. B. Vorname Nachname)';
-      input.setAttribute('aria-label', 'Neuer Name für ' + contact.email);
-      input.className = 'contact-edit-input w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500';
-
-      const btnRow = document.createElement('div');
-      btnRow.className = 'flex gap-2';
-      const saveBtn = document.createElement('button');
-      saveBtn.type = 'button';
-      saveBtn.className = 'contact-edit-save flex-1 py-1.5 rounded-lg btn-blue text-xs font-semibold';
-      saveBtn.textContent = 'Speichern';
-      const cancelBtn = document.createElement('button');
-      cancelBtn.type = 'button';
-      cancelBtn.className = 'flex-1 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200';
-      cancelBtn.textContent = 'Abbrechen';
-
-      const doSave = () => {
-        const name = input.value.trim();
-        if (!name) {
-          showAlert('Bitte gib einen Namen ein.', 'error');
-          input.focus();
-          return;
-        }
-        if (renameContact(contact.email, name)) {
-          showAlert(`Name geändert: ${name} (${contact.email})`, 'success');
-        }
-      };
-      saveBtn.addEventListener('click', doSave);
-      cancelBtn.addEventListener('click', () => renderContactsUI());
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); doSave(); }
-        if (e.key === 'Escape') { e.preventDefault(); renderContactsUI(); }
-      });
-
-      btnRow.appendChild(saveBtn);
-      btnRow.appendChild(cancelBtn);
-      row.appendChild(emailP);
-      row.appendChild(input);
-      row.appendChild(btnRow);
-      input.focus();
-      input.select();
-    }
-
     function selectQuickContact(email) {
       hideSendConfirmation();
       mailToIsManual = true;
       document.getElementById('mailTo').value = email;
+      updateRecipientHint();
     }
+
+    // ---- Adressbuch-Fenster ----
+    let contactFormEditEmail = '';
+
+    function openAddressBook() {
+      document.getElementById('addressBookSearch').value = '';
+      closeContactForm();
+      renderAddressBook();
+      document.getElementById('addressBookModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeAddressBook() {
+      document.getElementById('addressBookModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function openContactForm(contact, prefillEmail) {
+      contactFormEditEmail = contact ? contact.email : '';
+      document.getElementById('contactFormTitle').textContent = contact ? 'Kontakt bearbeiten' : 'Neuer Kontakt';
+      document.getElementById('contactFormName').value = contact ? contact.name : '';
+      document.getElementById('contactFormEmail').value = contact ? contact.email : (prefillEmail || '');
+      document.getElementById('contactFormDelete').classList.toggle('hidden', !contact);
+      document.getElementById('contactForm').classList.remove('hidden');
+      const nameEl = document.getElementById('contactFormName');
+      nameEl.focus();
+      nameEl.select();
+    }
+
+    function closeContactForm() {
+      contactFormEditEmail = '';
+      document.getElementById('contactForm').classList.add('hidden');
+    }
+
+    function saveContactForm() {
+      const name = document.getElementById('contactFormName').value;
+      const email = document.getElementById('contactFormEmail').value;
+      const oldEmail = contactFormEditEmail;
+      const err = upsertContact(oldEmail, name, email);
+      if (err) {
+        showAlert(err, 'error');
+        return;
+      }
+      const clean = cleanExtractedEmail(email);
+      // Stand die alte Adresse schon im Empfängerfeld, die neue übernehmen.
+      const toEl = document.getElementById('mailTo');
+      if (oldEmail && toEl.value.trim().toLowerCase() === oldEmail.toLowerCase()) toEl.value = clean;
+      closeContactForm();
+      renderAddressBook();
+      updateRecipientHint();
+      showAlert(`Gespeichert: ${name.trim()} (${clean})`, 'success');
+    }
+
+    function deleteContactFromForm() {
+      const email = contactFormEditEmail;
+      const c = findContact(email);
+      if (!c) return;
+      if (!confirm(`Kontakt „${c.name}“ (${c.email}) wirklich löschen?`)) return;
+      removeContact(email);
+      closeContactForm();
+      renderAddressBook();
+      updateRecipientHint();
+      showAlert(`Kontakt ${c.name} gelöscht.`, 'success');
+    }
+
+    function renderAddressBook() {
+      const listEl = document.getElementById('addressBookList');
+      if (!listEl) return;
+      const all = getContacts().sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+      document.getElementById('addressBookCount').textContent = `(${all.length})`;
+      const q = document.getElementById('addressBookSearch').value.trim().toLowerCase();
+      const shown = q ? all.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)) : all;
+      listEl.innerHTML = '';
+      if (shown.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'text-xs text-slate-500 px-1 py-3 text-center';
+        p.textContent = all.length === 0 ? 'Noch keine Kontakte. Tippe auf „+ Neu“ – oder sende einfach eine E-Mail, dann wird der Empfänger automatisch gespeichert.' : 'Kein Kontakt gefunden.';
+        listEl.appendChild(p);
+        return;
+      }
+      const current = document.getElementById('mailTo').value.trim().toLowerCase();
+      shown.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'contact-row flex items-center gap-2 rounded-xl bg-slate-950 border px-2 py-1.5 ' + (c.email.toLowerCase() === current ? 'border-blue-500' : 'border-slate-800');
+
+        const pick = document.createElement('button');
+        pick.type = 'button';
+        pick.className = 'contact-pick flex-1 min-w-0 flex items-center gap-2.5 text-left py-1';
+        const avatar = document.createElement('span');
+        avatar.className = 'w-8 h-8 shrink-0 rounded-full bg-indigo-900 border border-indigo-700 text-indigo-200 text-xs font-semibold flex items-center justify-center';
+        avatar.textContent = (c.name.trim().charAt(0) || '?').toUpperCase();
+        const txt = document.createElement('span');
+        txt.className = 'min-w-0';
+        const n = document.createElement('span');
+        n.className = 'block text-sm font-medium text-slate-100 truncate';
+        n.textContent = c.name;
+        const m = document.createElement('span');
+        m.className = 'block text-[11px] text-slate-400 truncate';
+        m.textContent = c.email;
+        txt.appendChild(n);
+        txt.appendChild(m);
+        pick.appendChild(avatar);
+        pick.appendChild(txt);
+        pick.addEventListener('click', () => {
+          selectQuickContact(c.email);
+          closeAddressBook();
+          showAlert(`Empfänger: ${c.name}`, 'success');
+        });
+
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'contact-edit-btn shrink-0 px-2.5 py-2 rounded-lg text-xs text-blue-400 hover:bg-slate-800';
+        edit.setAttribute('aria-label', `${c.name} bearbeiten`);
+        edit.textContent = 'Ändern';
+        edit.addEventListener('click', () => {
+          openContactForm(c);
+          document.getElementById('contactForm').scrollIntoView({ block: 'nearest' });
+        });
+
+        row.appendChild(pick);
+        row.appendChild(edit);
+        listEl.appendChild(row);
+      });
+    }
+
+    // Unter dem Empfängerfeld anzeigen, wer das ist – oder als wen eine neue Adresse gespeichert würde.
+    let lastRecipientHintValue = null;
+    function updateRecipientHint() {
+      const el = document.getElementById('recipientHint');
+      const toEl = document.getElementById('mailTo');
+      if (!el || !toEl) return;
+      const raw = toEl.value.trim();
+      lastRecipientHintValue = toEl.value;
+      el.innerHTML = '';
+      const email = cleanExtractedEmail(raw);
+      if (!raw || !email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        el.classList.add('hidden');
+        return;
+      }
+      const c = findContact(email);
+      const info = document.createElement('span');
+      info.className = 'min-w-0 truncate';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'shrink-0 text-blue-400 hover:text-blue-300 font-medium';
+      if (c) {
+        info.className += ' text-emerald-300';
+        info.textContent = `✓ ${c.name}`;
+        btn.textContent = 'Name ändern';
+        btn.addEventListener('click', () => { openAddressBook(); openContactForm(c); });
+      } else {
+        info.className += ' text-amber-300';
+        info.textContent = `Neue Adresse – wird gespeichert als „${guessNameFromEmail(email) || email}“`;
+        btn.textContent = 'Namen festlegen';
+        btn.addEventListener('click', () => { openAddressBook(); openContactForm(null, email); });
+      }
+      el.appendChild(info);
+      el.appendChild(btn);
+      el.classList.remove('hidden');
+    }
+
+    // Das Empfängerfeld wird an vielen Stellen vom Programm gefüllt (KI-Entwurf, Antworten …).
+    // Statt jede Stelle anzupassen, wird der Hinweis bei jeder Änderung des Werts nachgezogen.
+    setInterval(() => {
+      const toEl = document.getElementById('mailTo');
+      if (toEl && toEl.value !== lastRecipientHintValue) updateRecipientHint();
+    }, 400);
 
     function renderContactsUI() {
       const contacts = getContacts();
       const chipsEl = document.getElementById('quickContactChips');
-      const setupListEl = document.getElementById('savedContactsList');
 
       if (chipsEl) {
         chipsEl.innerHTML = '';
-        contacts.slice(0, 6).forEach(c => {
+        // Zuletzt benutzte Kontakte zuerst, nur der Name – das hält die Ansicht ruhig.
+        const recent = contacts.slice().sort((a, b) => (b.used || 0) - (a.used || 0)).slice(0, 4);
+        recent.forEach(c => {
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 transition';
-          btn.textContent = `${c.name} (${c.email})`;
+          btn.className = 'max-w-[45%] truncate px-2.5 py-1 rounded-full bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 transition';
+          btn.textContent = c.name;
+          btn.title = c.email;
           btn.addEventListener('click', () => selectQuickContact(c.email));
           chipsEl.appendChild(btn);
         });
-      }
-
-      if (setupListEl) {
-        setupListEl.innerHTML = '';
-        if (contacts.length === 0) {
-          const emptyP = document.createElement('p');
-          emptyP.className = 'text-xs text-slate-500';
-          emptyP.textContent = 'Noch keine Kontakte hinterlegt.';
-          setupListEl.appendChild(emptyP);
-        } else {
-          contacts.forEach(c => {
-            const row = document.createElement('div');
-            row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs';
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'truncate';
-            const nameSpan = document.createElement('span');
-            nameSpan.className = 'font-medium text-slate-200';
-            nameSpan.textContent = c.name;
-            const emailSpan = document.createElement('span');
-            emailSpan.className = 'text-slate-400 ml-1.5';
-            emailSpan.textContent = c.email;
-            infoDiv.appendChild(nameSpan);
-            infoDiv.appendChild(emailSpan);
-
-            const editBtn = document.createElement('button');
-            editBtn.type = 'button';
-            editBtn.className = 'contact-edit-btn text-blue-400 hover:text-blue-300 px-1.5 py-0.5 shrink-0';
-            editBtn.textContent = 'Bearbeiten';
-            editBtn.addEventListener('click', () => startEditContact(row, c));
-
-            const delBtn = document.createElement('button');
-            delBtn.type = 'button';
-            delBtn.className = 'text-rose-400 hover:text-rose-300 px-1.5 py-0.5 shrink-0';
-            delBtn.textContent = 'Entfernen';
-            delBtn.addEventListener('click', () => removeContact(c.email));
-
-            const btnWrap = document.createElement('div');
-            btnWrap.className = 'flex items-center shrink-0';
-            btnWrap.appendChild(editBtn);
-            btnWrap.appendChild(delBtn);
-
-            row.appendChild(infoDiv);
-            row.appendChild(btnWrap);
-            setupListEl.appendChild(row);
-          });
+        if (contacts.length > recent.length) {
+          const more = document.createElement('button');
+          more.type = 'button';
+          more.className = 'px-2.5 py-1 rounded-full border border-dashed border-slate-700 text-[11px] text-blue-400 hover:bg-slate-800 transition';
+          more.textContent = `Alle ${contacts.length} …`;
+          more.addEventListener('click', openAddressBook);
+          chipsEl.appendChild(more);
         }
       }
+      if (!document.getElementById('addressBookModal').classList.contains('hidden')) renderAddressBook();
+      updateRecipientHint();
     }
 
     function initMicIcons() {
@@ -3578,7 +3694,20 @@ Anforderung: ${prompt}`;
         const replyName = (!alreadyKnown && ctx && ctx.senderEmail === to)
           ? ((extractDisplayNameAndEmail(ctx.senderRaw) || {}).name || '')
           : '';
-        rememberContactEmail(to, replyName);
+        const newContact = rememberContactEmail(to, replyName);
+        const noteEl = document.getElementById('sendNewContactNote');
+        noteEl.innerHTML = '';
+        if (newContact) {
+          noteEl.appendChild(document.createTextNode(`Neu im Adressbuch als „${newContact.name}“. `));
+          const fix = document.createElement('button');
+          fix.type = 'button';
+          fix.id = 'btnFixNewContact';
+          fix.className = 'underline font-semibold text-white';
+          fix.textContent = 'Name ändern';
+          fix.addEventListener('click', () => { openAddressBook(); openContactForm(findContact(newContact.email)); });
+          noteEl.appendChild(fix);
+        }
+        noteEl.classList.toggle('hidden', !newContact);
 
         replyContext = null;
         mailAttachments = [];

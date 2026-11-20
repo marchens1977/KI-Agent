@@ -15,8 +15,13 @@ Was die App kann:
 - Eine Rolle, einen Schreibstil und Grundinformationen für die KI festlegen
 - E-Mail-Signatur und Grußformel einstellen
 - Zugangsdaten verwalten, getrennt nach Konten (Kontotrennung)
-- Kontakte speichern, damit die Spracheingabe Namen besser erkennt; Namen lassen sich in der
-  Einrichtung mit „Bearbeiten“ von Hand ändern (`startEditContact`, `renameContact`)
+- **Adressbuch im Reiter „E-Mail“** (Knopf „Adressbuch“ beim Empfänger): Kontakte suchen, antippen
+  = Empfänger übernehmen, „Ändern“ (Name und Adresse), „+ Neu“, löschen (mit Rückfrage).
+  Kontakte gibt es **nur noch dort** (in der Einrichtung steht nur ein Verweis). Die Spracheingabe
+  nutzt die Namen. Unter dem Empfängerfeld steht, wer das ist (`updateRecipientHint`), bei einer
+  unbekannten Adresse der vorgeschlagene Name mit „Namen festlegen“. Nach dem Versand an eine neue
+  Adresse: „Neu im Adressbuch als … – Name ändern“. Schnellauswahl = 4 zuletzt benutzte Namen
+  (Feld `used` im Kontakt) + „Alle …“. Funktionen: `openAddressBook`, `upsertContact`, `renderAddressBook`.
 - Spracheingabe (der Browser wandelt Sprache in Text um)
 - Als App installierbar (PWA): Chrome → ⋮ → „App installieren“
 
@@ -131,9 +136,9 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   Android-Anmeldung (zweite Client-ID in der Google Cloud) und Android-Spracherkennung.
 - **Automatische Prüfung:** `bash werkzeuge/test/test-starten.sh` (Programm:
   `werkzeuge/test/test-ki.js`). Öffnet die App mit Playwright im Handy-Format, spielt Gemini-
-  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 55 Punkte:
+  und Claude-Antworten nach (keine echten Schlüssel, keine echten Anfragen) und prüft 67 Punkte:
   Gemini-/Claude-Entwurf, Dokumente an Claude Sonnet, Warnung ohne Claude-Schlüssel, Einrichtung
-  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf, Versand mit Text- und HTML-Fassung (Gmail-Versand nachgespielt), Kontakt-Namen bearbeiten.
+  und Rückmeldungen, Modell-Auswahlfeld, Schutz (CSP), kein Tailwind aus dem Internet, Zeilenumbrüche im Entwurf, Versand mit Text- und HTML-Fassung (Gmail-Versand nachgespielt), Adressbuch (auswählen, ändern, neu, löschen, Hinweis beim Empfänger, Hinweis nach Versand), deutscher Datei-Knopf.
   **Regel für Claude:** Nach jeder Code-Änderung die Prüfung laufen lassen. Bei neuen Funktionen
   passende Prüfpunkte in `test-ki.js` ergänzen. Hilfsprogramme, die über eine Aufgabe hinaus
   nützlich sind, gehören ins Projekt (Ordner `werkzeuge/`) und ins Tagebuch – nicht nur in den
@@ -165,6 +170,7 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
 | 19.11.2026 | E-Mail-Darstellung angepasst: linksbündig statt Blocksatz, normaler Zeilenabstand, Schrift Arial | #15 |
 | 19.11.2026 | Vom Nutzer auf dem Handy getestet: E-Mails erscheinen im Hoch- und Querformat sauber (linksbündig, normaler Zeilenabstand, keine festen Umbrüche) ✅ | #16 |
 | 20.11.2026 | Adressbuch: Namen gespeicherter Kontakte von Hand änderbar (Knopf „Bearbeiten“ in der Einrichtung); 5 neue Prüfpunkte (jetzt 55); Zwischenspeicher v9 | #17 |
+| 20.11.2026 | Übersichtlicher: Adressbuch-Fenster im Reiter E-Mail (statt Liste in der Einrichtung), Name-Hinweis unter dem Empfänger, „Neu im Adressbuch“ nach Versand, kurze Namens-Knöpfe, Schritt-Nummern 1–3, deutscher Datei-Knopf bei Dokumenten; 67 Prüfpunkte; Zwischenspeicher v10 | #18 |
 
 ## 4. Offene Ideen / nächste Schritte
 
@@ -177,9 +183,13 @@ Jede Änderung an der Hauptversion (main) wird automatisch nach etwa
   den Pi nur über https ansprechen → HTTPS auf dem Pi oder App auch vom Pi ausliefern; Pi muss
   eingeschaltet sein. Passt zur Ideen-Sammlung im Projekt „Raspberry-Pi-Server“.
   Eine Datei `PLAN-RASPBERRY.md` gibt es nicht; der Pi-Plan steht im Tagebuch jenes Projekts.
-- **Test für den Nutzer (offen):** Einrichtung → Kontakte → beim falschen Namen „Bearbeiten“ →
-  richtigen Namen eintragen → „Speichern“. Danach per Spracheingabe eine Mail an diesen Namen
-  diktieren und prüfen, dass die richtige Adresse eingesetzt wird.
+- **Test-Liste für den Nutzer (offen, am Handy abhaken):**
+  - [ ] Reiter E-Mail → „Adressbuch“ → beim falschen Namen „Ändern“ → richtigen Namen → „Speichern“
+  - [ ] Im Adressbuch einen Kontakt antippen → steht als Empfänger drin, darunter „✓ Name“
+  - [ ] Eine unbekannte Adresse eintippen → Hinweis „Neue Adresse – wird gespeichert als …“
+  - [ ] Per Spracheingabe eine Mail an den geänderten Namen diktieren → richtige Adresse
+  - [ ] Reiter Dokumente → „Datei oder Foto auswählen“ öffnet die Dateiauswahl des Handys
+  - [ ] Gefällt dir das neue Aussehen? Sonst kann die Änderung (PR #18) zurückgenommen werden
 - Weitere Wünsche des Nutzers hier sammeln.
 
 **Stand am Ende der Sitzung vom 18./19.11.2026:** Alles umgesetzte ist vom Nutzer getestet und

@@ -206,26 +206,69 @@ async function analyseDoc(p, file) {
   require('fs').writeFileSync(S + '/gesendete-mail.eml', raw);
   await b.close();
 
-  // I: Kontakt-Namen von Hand ändern (Adressbuch in der Einrichtung)
-  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }));
-  await p.evaluate(() => { localStorage.setItem('ki_agent_contacts_v1', JSON.stringify([{ name: 'Falscher Name', email: 'xy123@example.com' }, { name: 'Anna', email: 'anna@example.com' }])); renderContactsUI(); });
-  await p.click(`[onclick="switchTab('setup')"]`);
-  const editBtns = await p.$$('#savedContactsList .contact-edit-btn');
-  check('I Knopf „Bearbeiten“ bei jedem Kontakt', editBtns.length === 2);
-  await editBtns[0].click();
-  await p.fill('#savedContactsList .contact-edit-input', 'Erika Mustermann');
-  await p.screenshot({ path: S + '/kontakt-bearbeiten.png', fullPage: false });
-  await p.click('#savedContactsList .contact-edit-save');
-  const contactsAfter = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
-  check('I Name gespeichert, Adresse unverändert', contactsAfter.length === 2 && contactsAfter[0].name === 'Erika Mustermann' && contactsAfter[0].email === 'xy123@example.com' && contactsAfter[1].name === 'Anna', JSON.stringify(contactsAfter));
-  check('I Liste und Schnellauswahl zeigen neuen Namen', (await p.textContent('#savedContactsList')).includes('Erika Mustermann') && (await p.textContent('#quickContactChips')).includes('Erika Mustermann (xy123@example.com)'));
-  await (await p.$$('#savedContactsList .contact-edit-btn'))[0].click();
-  await p.fill('#savedContactsList .contact-edit-input', '   ');
-  await p.click('#savedContactsList .contact-edit-save');
-  const contactsEmpty = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
-  check('I Leerer Name wird nicht gespeichert', contactsEmpty[0].name === 'Erika Mustermann');
+  // I: Adressbuch im Reiter E-Mail (auswählen, Name ändern, neu, löschen, Hinweis beim Empfänger)
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test', agentEmail: 'agent@example.com' }));
+  await p.evaluate(() => { localStorage.setItem('ki_agent_contacts_v1', JSON.stringify([{ name: 'Falscher Name', email: 'xy123@example.com', used: 5 }, { name: 'Anna', email: 'anna@example.com', used: 9 }, { name: 'Bernd', email: 'b@example.com' }, { name: 'Carla', email: 'c@example.com' }, { name: 'Dora', email: 'd@example.com' }])); renderContactsUI(); });
+  check('I Einrichtung hat keine Kontaktliste mehr', !(await p.$('#savedContactsList')) && !(await p.$('#newContactName')));
+  const chips = await p.$$eval('#quickContactChips button', bs => bs.map(x => x.textContent));
+  check('I Schnellauswahl: nur Namen, zuletzt benutzte zuerst, „Alle …“', chips[0] === 'Anna' && chips[1] === 'Falscher Name' && chips.length === 5 && chips[4] === 'Alle 5 …', chips.join(' | '));
+  await p.click('#btnOpenAddressBook');
+  check('I Adressbuch öffnet sich, alphabetisch', (await p.isVisible('#addressBookModal')) && (await p.$$eval('#addressBookList .contact-pick', bs => bs.map(x => x.textContent))).join(',').startsWith('AAnnaanna@'), '');
+  await p.fill('#addressBookSearch', 'xy1');
+  check('I Suche findet Kontakt über Adresse', (await p.$$('#addressBookList .contact-row')).length === 1);
+  await p.click('#addressBookList .contact-edit-btn');
+  await p.fill('#contactFormName', 'Erika Mustermann');
+  await p.screenshot({ path: S + '/adressbuch.png' });
+  await p.click('#contactFormSave');
+  let cs = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
+  check('I Name geändert, Adresse unverändert', cs[0].name === 'Erika Mustermann' && cs[0].email === 'xy123@example.com' && cs.length === 5, JSON.stringify(cs[0]));
+  await p.fill('#addressBookSearch', '');
+  await p.click('#addressBookList .contact-edit-btn');
+  await p.fill('#contactFormName', '   ');
+  await p.click('#contactFormSave');
+  cs = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
+  check('I Leerer Name wird nicht gespeichert', cs.every(c => c.name.trim()));
+  await p.click('#contactForm button:has-text("Abbrechen")');
+  await p.fill('#addressBookSearch', 'Erika');
+  await p.click('#addressBookList .contact-pick');
+  check('I Antippen übernimmt Empfänger und schließt', (await p.inputValue('#mailTo')) === 'xy123@example.com' && !(await p.isVisible('#addressBookModal')));
+  await p.waitForTimeout(500);
+  check('I Hinweis zeigt Namen zum Empfänger', (await p.textContent('#recipientHint')).includes('✓ Erika Mustermann'));
+  await p.evaluate(() => { document.getElementById('mailTo').value = 'h.k-1977@example.de'; });
+  await p.waitForTimeout(600);
+  check('I Unbekannte Adresse: Hinweis mit vorgeschlagenem Namen', (await p.textContent('#recipientHint')).includes('„H K 1977“') && (await p.textContent('#recipientHint')).includes('Namen festlegen'));
+  await p.click('#recipientHint button');
+  check('I „Namen festlegen“ füllt Adresse im Formular vor', (await p.inputValue('#contactFormEmail')) === 'h.k-1977@example.de');
+  await p.fill('#contactFormName', 'Hans Kunz');
+  await p.click('#contactFormSave');
+  await p.click('#addressBookModal button:has-text("Schließen")');
+  await p.waitForTimeout(500);
+  check('I Neuer Kontakt angelegt, Hinweis aktualisiert', (await p.textContent('#recipientHint')).includes('✓ Hans Kunz'));
   const match = await p.evaluate(() => (findBestContactMatch('Schreib eine Mail an Erika Mustermann') || {}).email);
-  check('I Spracheingabe findet neuen Namen', match === 'xy123@example.com', String(match));
+  check('I Spracheingabe findet geänderten Namen', match === 'xy123@example.com', String(match));
+  await p.click('#btnOpenAddressBook');
+  await p.fill('#addressBookSearch', 'Dora');
+  await p.click('#addressBookList .contact-edit-btn');
+  log.dialogAnswer = true;
+  await p.click('#contactFormDelete');
+  cs = await p.evaluate(() => JSON.parse(localStorage.getItem('ki_agent_contacts_v1')));
+  check('I Löschen mit Rückfrage', log.dialogs.some(d => d.includes('Dora')) && !cs.some(c => c.name === 'Dora') && cs.length === 5);
+  await p.click('#addressBookModal button:has-text("Schließen")');
+  // Versand an neue Adresse: Hinweis „Neu im Adressbuch … Name ändern“
+  await p.route('https://gmail.googleapis.com/**', r => r.request().url().includes('/messages/send') ? r.fulfill({ contentType: 'application/json', body: '{"id":"1"}' }) : r.fulfill({ contentType: 'application/json', body: '{"messages":[]}' }));
+  await p.evaluate(() => { accessToken = 'test-token'; document.getElementById('mailTo').value = 'zz9@example.com'; document.getElementById('mailSubject').value = 'x'; document.getElementById('mailBody').value = 'Hallo'; });
+  await p.evaluate(() => confirmAndSendGmailMessage());
+  await p.waitForTimeout(800);
+  check('I Nach Versand: „Neu im Adressbuch“ mit Name-ändern-Knopf', (await p.textContent('#sendNewContactNote')).includes('Neu im Adressbuch als „Zz9“') && (await p.isVisible('#btnFixNewContact')));
+  await p.click('#btnFixNewContact');
+  check('I Name-ändern öffnet Formular des neuen Kontakts', (await p.inputValue('#contactFormEmail')) === 'zz9@example.com' && (await p.inputValue('#contactFormName')) === 'Zz9');
+  check('I Keine Programmfehler', log.errors.length === 0, log.errors.join(' | '));
+  await b.close();
+
+  // J: Dokumente – deutscher Knopf zur Dateiauswahl
+  ({ b, p, log } = await setup({ provider: 'claude', claudeKey: 'sk-ant-test' }));
+  await p.click(`[onclick="switchTab('docs')"]`);
+  check('J Datei-Knopf auf Deutsch, kein „Choose File“', (await p.isVisible('#btnPickDocFile')) && !(await p.isVisible('#docFileInput')) && (await p.textContent('#btnPickDocFile')).includes('Datei oder Foto auswählen'));
   await b.close();
 
   console.log(results.join('\n'));
